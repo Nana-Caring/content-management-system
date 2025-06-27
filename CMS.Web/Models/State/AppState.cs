@@ -2,13 +2,14 @@ namespace CMS.Web.Models.State
 {
     public class AppState
     {
-        public UserState User { get; set; } = new();
+        public UserInfo? UserInfo { get; set; }
+        public bool IsLoggedIn => UserInfo != null && UserInfo.IsAuthenticated;
         public NavigationState Navigation { get; set; } = new();
         public NotificationState Notifications { get; set; } = new();
         public LoadingState Loading { get; set; } = new();
     }
 
-    public class UserState
+    public class UserInfo
     {
         public bool IsAuthenticated { get; set; }
         public string? UserId { get; set; }

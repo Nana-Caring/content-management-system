@@ -11,7 +11,7 @@ namespace CMS.Web.Models
     {
         protected readonly IAppStateManager _stateManager;
 
-        public UserState CurrentUser { get; private set; } = new();
+        public UserInfo CurrentUser { get; private set; } = new();
         public NavigationState Navigation { get; private set; } = new();
         public LoadingState Loading { get; private set; } = new();
         public NotificationState Notifications { get; private set; } = new();
@@ -36,12 +36,15 @@ namespace CMS.Web.Models
                 await UpdateUserStateFromClaims();
             }
 
+            // Make AppState available in ViewData for the layout
+            ViewData["AppState"] = await _stateManager.GetAppStateAsync();
+
             await next();
         }
 
         protected virtual async Task LoadCurrentState()
         {
-            CurrentUser = await _stateManager.GetUserStateAsync();
+            CurrentUser = await _stateManager.GetUserInfoAsync();
             Navigation = await _stateManager.GetNavigationStateAsync();
             Loading = await _stateManager.GetLoadingStateAsync();
             Notifications = await _stateManager.GetNotificationsAsync();
@@ -57,7 +60,7 @@ namespace CMS.Web.Models
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                var userState = new UserState
+                var userInfo = new UserInfo
                 {
                     IsAuthenticated = true,
                     UserId = User.FindFirst("UserId")?.Value ?? "",
@@ -68,8 +71,8 @@ namespace CMS.Web.Models
                     LastActivity = DateTime.UtcNow
                 };
 
-                await _stateManager.SetUserStateAsync(userState);
-                CurrentUser = userState;
+                await _stateManager.SetUserInfoAsync(userInfo);
+                CurrentUser = userInfo;
             }
         }
 

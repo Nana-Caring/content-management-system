@@ -48,34 +48,49 @@ namespace CMS.Web.Services
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     });
 
-                    return loginResponse ?? new AdminLoginResponse
+                    if (loginResponse != null && loginResponse.Success)
                     {
-                        Success = false,
-                        Message = "Invalid response format"
-                    };
+                        _logger.LogInformation($"Admin login successful for email: {request.Email}");
+                        return loginResponse;
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Admin login failed - invalid response format for email: {request.Email}");
+                        return new AdminLoginResponse
+                        {
+                            Message = "Invalid response format from server"
+                        };
+                    }
                 }
                 else
                 {
-                    // Try to parse error response
+                    _logger.LogWarning($"Admin login failed with status {response.StatusCode} for email: {request.Email}");
+                    
+                    // Try to parse error response for a meaningful message
                     try
                     {
-                        var errorResponse = JsonSerializer.Deserialize<AdminLoginResponse>(responseContent, new JsonSerializerOptions
-                        {
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                        });
+                        var errorData = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                        var errorMessage = "Authentication failed";
                         
-                        return errorResponse ?? new AdminLoginResponse
+                        if (errorData.TryGetProperty("message", out var msgElement))
                         {
-                            Success = false,
-                            Message = $"Authentication failed with status: {response.StatusCode}"
+                            errorMessage = msgElement.GetString() ?? errorMessage;
+                        }
+                        else if (errorData.TryGetProperty("error", out var errElement))
+                        {
+                            errorMessage = errElement.GetString() ?? errorMessage;
+                        }
+                        
+                        return new AdminLoginResponse
+                        {
+                            Message = errorMessage
                         };
                     }
                     catch
                     {
                         return new AdminLoginResponse
                         {
-                            Success = false,
-                            Message = $"Authentication failed: {response.StatusCode} - {responseContent}"
+                            Message = $"Authentication failed: {response.StatusCode}"
                         };
                     }
                 }
@@ -85,7 +100,6 @@ namespace CMS.Web.Services
                 _logger.LogError(ex, "HTTP request failed during admin authentication");
                 return new AdminLoginResponse
                 {
-                    Success = false,
                     Message = "Network error occurred. Please try again."
                 };
             }
@@ -94,7 +108,6 @@ namespace CMS.Web.Services
                 _logger.LogError(ex, "Unexpected error during admin authentication");
                 return new AdminLoginResponse
                 {
-                    Success = false,
                     Message = "An unexpected error occurred. Please try again."
                 };
             }

@@ -10,12 +10,13 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-0">@Model.WelcomeMessage</h1>
+                    <h1 class="h3 mb-0">Welcome back, @(User.Identity?.Name ?? "Admin")!</h1>
                     <p class="text-muted">Here's what's happening with your platform today.</p>
                 </div>
                 <div>
-                    <button class="btn btn-primary" onclick="cms.notify('info', 'Test', 'This is a test notification!')">
-                        <i class="bi bi-bell"></i> Test Notification
+                    <span class="badge bg-success me-2">✓ System Online</span>
+                    <button class="btn btn-primary btn-sm" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
                 </div>
             </div>

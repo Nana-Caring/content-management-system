@@ -6,12 +6,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using CMS.Web.Services;
 using CMS.Web.Models;
+using CMS.Web.Models.State;
 
 namespace CMS.Web.Pages
 {
     public class LoginModel : PageModel
     {
         private readonly IAuthService _authService;
+        private readonly IAppStateManager _appStateManager;
         private readonly ILogger<LoginModel> _logger;
 
         [BindProperty]
@@ -20,9 +22,10 @@ namespace CMS.Web.Pages
         [TempData]
         public string? ErrorMessage { get; set; }
 
-        public LoginModel(IAuthService authService, ILogger<LoginModel> logger)
+        public LoginModel(IAuthService authService, IAppStateManager appStateManager, ILogger<LoginModel> logger)
         {
             _authService = authService;
+            _appStateManager = appStateManager;
             _logger = logger;
         }
 
@@ -72,6 +75,20 @@ namespace CMS.Web.Pages
                         CookieAuthenticationDefaults.AuthenticationScheme,
                         new ClaimsPrincipal(claimsIdentity),
                         authProperties);
+
+                    // Store user state in session using AppStateManager
+                    var userInfo = new UserInfo
+                    {
+                        IsAuthenticated = true,
+                        UserId = result.Data.Id,
+                        Username = result.Data.Username,
+                        Email = result.Data.Email,
+                        Role = result.Data.Role,
+                        Token = result.Token
+                    };
+
+                    await _appStateManager.SetUserInfoAsync(userInfo);
+                    await _appStateManager.SetCurrentPageAsync("Dashboard");
 
                     _logger.LogInformation($"Admin user {Input.Username} successfully authenticated");
 

@@ -1,15 +1,19 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using CMS.Web.Models;
+using CMS.Web.Services;
 using System.Collections.Generic;
 using System;
-using CMS.Web.Models;
 
 namespace CMS.Web.Pages.Products
 {
     [Authorize]
-    public class IndexModel : PageModel
+    public class IndexModel : BasePageModel
     {
         public List<Product> Products { get; set; }
+
+        public IndexModel(IAppStateManager stateManager) : base(stateManager)
+        {
+        }
 
         public void OnGet()
         {

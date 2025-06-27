@@ -5,9 +5,9 @@ namespace CMS.Web.Services
     public interface IAppStateManager
     {
         // User State Management
-        Task SetUserStateAsync(UserState userState);
-        Task<UserState> GetUserStateAsync();
-        Task ClearUserStateAsync();
+        Task SetUserInfoAsync(UserInfo userInfo);
+        Task<UserInfo> GetUserInfoAsync();
+        Task ClearUserInfoAsync();
         Task UpdateUserPreferenceAsync(string key, object value);
         
         // Navigation State Management
@@ -41,6 +41,10 @@ namespace CMS.Web.Services
         // General State
         Task<AppState> GetAppStateAsync();
         Task ClearAllStateAsync();
+        
+        // Debug Methods
+        Task<string> GetStateDebugInfoAsync();
+        Task LogCurrentStateAsync(string context = "");
     }
 
     public class AppStateManager : IAppStateManager
@@ -55,32 +59,32 @@ namespace CMS.Web.Services
         }
 
         // User State Management
-        public async Task SetUserStateAsync(UserState userState)
+        public async Task SetUserInfoAsync(UserInfo userInfo)
         {
-            userState.LastActivity = DateTime.UtcNow;
-            _stateService.SetState(StateKeys.USER_STATE, userState);
-            _logger.LogDebug($"User state set for user: {userState.Username}");
+            userInfo.LastActivity = DateTime.UtcNow;
+            _stateService.SetState(StateKeys.USER_STATE, userInfo);
+            _logger.LogDebug($"User info set for user: {userInfo.Username}");
             await Task.CompletedTask;
         }
 
-        public async Task<UserState> GetUserStateAsync()
+        public async Task<UserInfo> GetUserInfoAsync()
         {
-            var userState = _stateService.GetState<UserState>(StateKeys.USER_STATE);
-            return await Task.FromResult(userState ?? new UserState());
+            var userInfo = _stateService.GetState<UserInfo>(StateKeys.USER_STATE);
+            return await Task.FromResult(userInfo ?? new UserInfo());
         }
 
-        public async Task ClearUserStateAsync()
+        public async Task ClearUserInfoAsync()
         {
             _stateService.RemoveState(StateKeys.USER_STATE);
-            _logger.LogDebug("User state cleared");
+            _logger.LogDebug("User info cleared");
             await Task.CompletedTask;
         }
 
         public async Task UpdateUserPreferenceAsync(string key, object value)
         {
-            var userState = await GetUserStateAsync();
-            userState.Preferences[key] = value;
-            await SetUserStateAsync(userState);
+            var userInfo = await GetUserInfoAsync();
+            userInfo.Preferences[key] = value;
+            await SetUserInfoAsync(userInfo);
         }
 
         // Navigation State Management
@@ -253,7 +257,7 @@ namespace CMS.Web.Services
         {
             return new AppState
             {
-                User = await GetUserStateAsync(),
+                UserInfo = await GetUserInfoAsync(),
                 Navigation = await GetNavigationStateAsync(),
                 Notifications = await GetNotificationsAsync(),
                 Loading = await GetLoadingStateAsync()
@@ -265,6 +269,53 @@ namespace CMS.Web.Services
             _stateService.ClearState();
             _logger.LogInformation("All application state cleared");
             await Task.CompletedTask;
+        }
+
+        // Debug Methods
+        public async Task<string> GetStateDebugInfoAsync()
+        {
+            var appState = await GetAppStateAsync();
+            var debugInfo = new
+            {
+                Timestamp = DateTime.UtcNow,
+                User = new
+                {
+                    IsAuthenticated = appState.UserInfo?.IsAuthenticated ?? false,
+                    Email = appState.UserInfo?.Email ?? "N/A",
+                    Role = appState.UserInfo?.Role ?? "N/A",
+                    LastActivity = appState.UserInfo?.LastActivity?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A"
+                },
+                Navigation = new
+                {
+                    CurrentPage = appState.Navigation.CurrentPage ?? "N/A",
+                    PreviousPage = appState.Navigation.PreviousPage ?? "N/A",
+                    HistoryCount = appState.Navigation.NavigationHistory.Count
+                },
+                Notifications = new
+                {
+                    Total = appState.Notifications.Items.Count,
+                    Unread = appState.Notifications.UnreadCount,
+                    Recent = appState.Notifications.Items.Take(3).Select(n => new { n.Type, n.Title, n.CreatedAt })
+                },
+                Loading = new
+                {
+                    IsGlobalLoading = appState.Loading.IsGlobalLoading,
+                    ComponentsLoading = appState.Loading.ComponentLoading.Count,
+                    ActiveComponents = appState.Loading.ComponentLoading.Where(kvp => kvp.Value).Select(kvp => kvp.Key)
+                }
+            };
+
+            return System.Text.Json.JsonSerializer.Serialize(debugInfo, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            });
+        }
+
+        public async Task LogCurrentStateAsync(string context = "")
+        {
+            var debugInfo = await GetStateDebugInfoAsync();
+            _logger.LogInformation($"[STATE DEBUG{(string.IsNullOrEmpty(context) ? "" : $" - {context}")}] Current Application State:\n{debugInfo}");
         }
     }
 }

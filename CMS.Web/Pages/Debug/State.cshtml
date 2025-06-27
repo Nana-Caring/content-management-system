@@ -1,0 +1,276 @@
+@page "/debug/state"
+@model CMS.Web.Pages.Debug.StateModel
+@{
+    ViewData["Title"] = "State Management Debug";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-1">🔍 State Management Debug</h2>
+                    <p class="text-muted mb-0">Monitor and debug your application state in real-time</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="post" asp-page-handler="Refresh" class="d-inline">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh State
+                        </button>
+                    </form>
+                    <form method="post" asp-page-handler="ClearState" class="d-inline" 
+                          onsubmit="return confirm('Are you sure you want to clear all application state? This will log you out.')">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-trash"></i> Clear State
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @TempData["Message"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- State Information Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-check fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="card-title mb-0">Authentication</h6>
+                                    <p class="card-text mb-0">@(Model.CurrentUser?.IsAuthenticated == true ? "Authenticated" : "Not Authenticated")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-geo-alt fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="card-title mb-0">Current Page</h6>
+                                    <p class="card-text mb-0">@(Model.Navigation?.CurrentPage ?? "Unknown")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-bell fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="card-title mb-0">Notifications</h6>
+                                    <p class="card-text mb-0">@Model.Notifications.Items.Count Total</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="card-title mb-0">Last Refresh</h6>
+                                    <p class="card-text mb-0">@Model.LastRefresh.ToString("HH:mm:ss")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed State Information -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-person-circle me-2"></i>User State
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>@(Model.CurrentUser?.Email ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>@(Model.CurrentUser?.Role ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>User ID:</strong></td>
+                                    <td>@(Model.CurrentUser?.UserId ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Activity:</strong></td>
+                                    <td>@(Model.CurrentUser?.LastActivity?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Preferences:</strong></td>
+                                    <td>@Model.CurrentUser?.Preferences?.Count items</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-compass me-2"></i>Navigation State
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Current Page:</strong></td>
+                                    <td>@(Model.Navigation?.CurrentPage ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Previous Page:</strong></td>
+                                    <td>@(Model.Navigation?.PreviousPage ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>History Count:</strong></td>
+                                    <td>@Model.Navigation?.NavigationHistory?.Count</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Breadcrumbs:</strong></td>
+                                    <td>@Model.Navigation?.BreadcrumbData?.Count items</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading and Notifications -->
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-hourglass-split me-2"></i>Loading State
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Global Loading:</strong></td>
+                                    <td>
+                                        @if (Model.Loading?.IsGlobalLoading == true)
+                                        {
+                                            <span class="badge bg-warning">Loading</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Ready</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Component Loading:</strong></td>
+                                    <td>@Model.Loading?.ComponentLoading?.Count components</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Loading Messages:</strong></td>
+                                    <td>@Model.Loading?.LoadingMessages?.Count messages</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-bell me-2"></i>Notifications
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Total Notifications:</strong></td>
+                                    <td>@Model.Notifications?.Items?.Count</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Unread Count:</strong></td>
+                                    <td>
+                                        @if (Model.Notifications?.UnreadCount > 0)
+                                        {
+                                            <span class="badge bg-danger">@Model.Notifications.UnreadCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">0</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raw JSON Debug Data -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-code-square me-2"></i>Raw State Data (JSON)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>@Model.StateDebugInfo</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(function() {
+            document.querySelector('[asp-page-handler="Refresh"]').click();
+        }, 30000);
+        
+        // Add copy to clipboard functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeBlock = document.querySelector('pre code');
+            if (codeBlock) {
+                codeBlock.addEventListener('click', function() {
+                    navigator.clipboard.writeText(codeBlock.textContent);
+                    
+                    // Show brief notification
+                    const toast = document.createElement('div');
+                    toast.className = 'position-fixed top-0 end-0 m-3 alert alert-success';
+                    toast.textContent = 'State data copied to clipboard!';
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 2000);
+                });
+            }
+        });
+    </script>
+}

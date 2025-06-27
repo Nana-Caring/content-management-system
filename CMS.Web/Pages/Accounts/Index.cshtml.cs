@@ -1,16 +1,20 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using CMS.Web.Models;
+using CMS.Web.Services;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace CMS.Web.Pages.Accounts
 {
     [Authorize]
-    public class IndexModel : PageModel
+    public class IndexModel : BasePageModel
     {
         public List<Account> Accounts { get; set; }
+
+        public IndexModel(IAppStateManager stateManager) : base(stateManager)
+        {
+        }
 
         public void OnGet(string search)
         {
