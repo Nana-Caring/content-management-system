@@ -1,0 +1,46 @@
+@page
+@model CMS.Web.Pages.Products.IndexModel
+
+<h2 class="mb-4">Products</h2>
+
+<a asp-page="./Create" class="btn btn-primary mb-3">Add New Product</a>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>API Link</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Products != null && Model.Products.Any())
+    {
+        foreach (var product in Model.Products)
+        {
+            <tr>
+                <td>@product.Id</td>
+                <td>@product.Name</td>
+                <td>
+                    <a href="@product.ApiLink" target="_blank">@product.ApiLink</a>
+                </td>
+                <td>@product.Description</td>
+                <td>@product.CreatedAt.ToString("yyyy-MM-dd")</td>
+                <td>
+                    <a asp-page="./Edit" asp-route-id="@product.Id" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-page="./Delete" asp-route-id="@product.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="6" class="text-center">No products found.</td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,63 @@
+﻿@page
+@model CMS.Web.Pages.Transactions.IndexModel
+
+<h2 class="mb-4">Transactions</h2>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="Search by Account Number or Description..." value="@Request.Query["search"]" />
+        <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Account Number</th>
+            <th scope="col">Type</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Date</th>
+            <th scope="col">Description</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Transactions != null && Model.Transactions.Any())
+    {
+        foreach (var transaction in Model.Transactions)
+        {
+            <tr>
+                <td>@transaction.Id</td>
+                <td>@transaction.Account?.AccountNumber</td>
+                <td>@transaction.Type</td>
+                <td>@transaction.Amount.ToString("C")</td>
+                <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                <td>@transaction.Description</td>
+                <td>
+                    <a asp-page="./Details" asp-route-id="@transaction.Id" class="btn btn-sm btn-info" title="View Details">
+                        <span class="visually-hidden">Details</span>
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a asp-page="./Edit" asp-route-id="@transaction.Id" class="btn btn-sm btn-warning" title="Edit">
+                        <span class="visually-hidden">Edit</span>
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a asp-page="./Delete" asp-route-id="@transaction.Id" class="btn btn-sm btn-danger" title="Delete">
+                        <span class="visually-hidden">Delete</span>
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="7" class="text-center">No transactions found.</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<a asp-page="./Create" class="btn btn-primary mt-3">Create New Transaction</a>

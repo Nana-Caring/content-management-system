@@ -1,0 +1,70 @@
+@page
+@model CMS.Web.Pages.KYC.IndexModel
+
+<h2 class="mb-4">KYC Verification</h2>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Document Type</th>
+            <th>Document</th>
+            <th>Status</th>
+            <th>Submitted At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.KycRequests != null && Model.KycRequests.Any())
+    {
+        foreach (var kyc in Model.KycRequests)
+        {
+            <tr>
+                <td>@kyc.User.FullName</td>
+                <td>@kyc.User.Email</td>
+                <td>@kyc.DocumentType</td>
+                <td>
+                    <a href="@kyc.DocumentUrl" target="_blank" class="btn btn-sm btn-info">View</a>
+                </td>
+                <td>
+                    @if (kyc.Status == "Pending")
+                    {
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    }
+                    else if (kyc.Status == "Approved")
+                    {
+                        <span class="badge bg-success">Approved</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Rejected</span>
+                    }
+                </td>
+                <td>@kyc.SubmittedAt.ToString("yyyy-MM-dd")</td>
+                <td>
+                    @if (kyc.Status == "Pending")
+                    {
+                        <form method="post" asp-page-handler="Approve" asp-route-id="@kyc.Id" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="post" asp-page-handler="Reject" asp-route-id="@kyc.Id" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">No actions</span>
+                    }
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="7" class="text-center">No KYC requests found.</td>
+        </tr>
+    }
+    </tbody>
+</table>

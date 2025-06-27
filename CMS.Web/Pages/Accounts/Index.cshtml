@@ -1,0 +1,47 @@
+﻿@page
+@model CMS.Web.Pages.Accounts.IndexModel
+
+<h2 class="mb-4">Accounts</h2>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Account Number</th>
+            <th>Account Name</th>
+            <th>Account Type</th>
+            <th>Balance</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Accounts != null && Model.Accounts.Any())
+    {
+        foreach (var account in Model.Accounts)
+        {
+            <tr>
+                <td>@account.Id</td>
+                <td>@account.AccountNumber</td>
+                <td>@account.AccountName</td>
+                <td>@account.AccountType</td>
+                <td>@account.Balance.ToString("C")</td>
+                <td>@account.CreatedAt.ToString("yyyy-MM-dd")</td>
+                <td>
+                    <a asp-page="./Details" asp-route-id="@account.Id" class="btn btn-sm btn-info">Details</a>
+                    <a asp-page="./Edit" asp-route-id="@account.Id" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-page="./Delete" asp-route-id="@account.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="7" class="text-center">No accounts found.</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+<a asp-page="./Create" class="btn btn-primary mt-3">Create New Account</a>
