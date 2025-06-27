@@ -1,0 +1,58 @@
+@page
+@model CMS.Web.Pages.TestLoginModel
+@{
+    ViewData["Title"] = "Test Login Credentials";
+}
+
+<h2>Test Login Credentials</h2>
+<p>Use this page to test different username/password combinations with the API.</p>
+
+<div style="max-width: 500px; margin: 20px 0;">
+    <form method="post">
+        <div style="margin-bottom: 15px;">
+            <label asp-for="Input.Username">Username:</label>
+            <input asp-for="Input.Username" style="width: 100%; padding: 8px; margin-top: 5px;" />
+            <span asp-validation-for="Input.Username" style="color: red;"></span>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label asp-for="Input.Password">Password:</label>
+            <input asp-for="Input.Password" type="password" style="width: 100%; padding: 8px; margin-top: 5px;" />
+            <span asp-validation-for="Input.Password" style="color: red;"></span>
+        </div>
+        
+        <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px;">
+            Test Login
+        </button>
+    </form>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.LastResponse))
+{
+    <div style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;">
+        <h4>Last Test Result: <span style="color: @(Model.LastStatus == "SUCCESS" ? "green" : "red");">@Model.LastStatus</span></h4>
+        <p><strong>Response:</strong> @Model.LastResponse</p>
+    </div>
+}
+
+<div style="margin-top: 30px; padding: 15px; border: 1px solid #007bff; border-radius: 4px; background: #e7f3ff;">
+    <h4>Common Admin Credentials to Try:</h4>
+    <ul>
+        <li><strong>admin</strong> / <strong>password</strong></li>
+        <li><strong>admin</strong> / <strong>admin</strong></li>
+        <li><strong>administrator</strong> / <strong>password</strong></li>
+        <li><strong>root</strong> / <strong>password</strong></li>
+        <li><strong>admin@nana.com</strong> / <strong>password</strong></li>
+        <li><strong>admin@nanacaring.com</strong> / <strong>password</strong></li>
+        <li><strong>superadmin</strong> / <strong>admin123</strong></li>
+    </ul>
+    <p><em>Try these combinations or contact the API owner for the correct credentials.</em></p>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="/Login" style="color: #007bff; text-decoration: none;">← Back to Login Page</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

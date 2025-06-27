@@ -210,6 +210,13 @@
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage)) {
                     <div class="error-message">
                         <p>@Model.ErrorMessage</p>
+                        @if (Model.ErrorMessage.Contains("Invalid admin credentials")) {
+                            <small style="display: block; margin-top: 8px; font-size: 11px;">
+                                💡 Try these admin credentials:<br>
+                                • admin@nana.com / nanacaring2025<br><br>
+                                Please check your email and password. Contact your administrator if you need access credentials.
+                            </small>
+                        }
                     </div>
                 }
                 <p class="form-description">Provide your email and password</p>
@@ -223,6 +230,11 @@
                 </div>
                 <div class="form-navigation">
                     <button type="submit" class="login-submit-btn">Login →</button>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="/TestLogin" style="color: #666; font-size: 11px; text-decoration: none;">
+                        🔧 Test Different Credentials
+                    </a>
                 </div>
             </form>
         </div>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Collections.Generic;
 using System;
@@ -5,6 +6,7 @@ using CMS.Web.Models;
 
 namespace CMS.Web.Pages.Products
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         public List<Product> Products { get; set; }

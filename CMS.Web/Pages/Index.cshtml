@@ -1,10 +1,202 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">@Model.WelcomeMessage</h1>
+                    <p class="text-muted">Here's what's happening with your platform today.</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="cms.notify('info', 'Test', 'This is a test notification!')">
+                        <i class="bi bi-bell"></i> Test Notification
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers.ToString("N0")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Accounts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalAccounts.ToString("N0")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-wallet2 fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending KYC</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PendingKyc</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-shield-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Transactions</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">$@Model.TotalTransactions.ToString("N2")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-arrow-left-right fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a asp-page="/Users/Index" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-people d-block mb-1"></i>
+                                <small>Manage Users</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a asp-page="/Accounts/Index" class="btn btn-outline-success w-100">
+                                <i class="bi bi-wallet2 d-block mb-1"></i>
+                                <small>View Accounts</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a asp-page="/Transactions/Index" class="btn btn-outline-info w-100">
+                                <i class="bi bi-arrow-left-right d-block mb-1"></i>
+                                <small>Transactions</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a asp-page="/Products/Index" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-box-seam d-block mb-1"></i>
+                                <small>Products</small>
+                            </a>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <a asp-page="/KYC/Index" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-shield-check d-block mb-1"></i>
+                                <small>KYC Requests</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User State Debug Info (Development Only) -->
+    @if (ViewContext.HttpContext.RequestServices.GetService<IWebHostEnvironment>()?.IsDevelopment() == true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-secondary">State Management Debug Info</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Current User State:</h6>
+                                <pre class="text-small">@System.Text.Json.JsonSerializer.Serialize(Model.CurrentUser, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true })</pre>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Navigation State:</h6>
+                                <pre class="text-small">@System.Text.Json.JsonSerializer.Serialize(Model.Navigation, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true })</pre>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="cms.state.debug()">
+                                Debug Client State
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="cms.setLoading(true, 'Testing loading state...'); setTimeout(() => cms.setLoading(false), 2000)">
+                                Test Loading
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .text-xs {
+        font-size: .75rem;
+    }
+    .font-weight-bold {
+        font-weight: 700;
+    }
+    .text-gray-800 {
+        color: #5a5c69;
+    }
+    .text-gray-300 {
+        color: #dddfeb;
+    }
+    pre {
+        font-size: 0.8rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using CMS.Web.Models;
@@ -6,6 +7,7 @@ using System.Linq;
 
 namespace CMS.Web.Pages.Transactions
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         public List<Transaction> Transactions { get; set; }
