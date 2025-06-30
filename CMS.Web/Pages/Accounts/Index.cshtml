@@ -6,23 +6,29 @@
 
 <style>
     .professional-table {
-        font-size: 0.875rem;
-        line-height: 1.5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
     
     .professional-table th {
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1rem 0.75rem;
+        letter-spacing: 0.8px;
+        padding: 1.2rem 1rem;
         border-bottom: 2px solid #dee2e6;
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        color: white;
     }
     
     .professional-table td {
-        padding: 0.875rem 0.75rem;
+        font-size: 0.9rem;
+        padding: 1rem;
         vertical-align: middle;
         border-bottom: 1px solid #f1f3f4;
+        color: #2c3e50;
+        line-height: 1.5;
     }
     
     .professional-table tbody tr {
@@ -30,9 +36,9 @@
     }
     
     .professional-table tbody tr:hover {
-        background-color: #f8f9fa;
+        background-color: rgba(102, 126, 234, 0.05);
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .account-card {
@@ -76,20 +82,23 @@
     
     .account-type-badge {
         font-size: 0.75rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 6px;
-        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     .id-badge {
         background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%);
         color: #198754;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.75rem;
-        padding: 0.3rem 0.6rem;
-        border-radius: 8px;
+        padding: 0.35rem 0.7rem;
+        border-radius: 10px;
+        font-family: 'Courier New', Consolas, monospace;
+        letter-spacing: 0.5px;
     }
     
     .sort-link {

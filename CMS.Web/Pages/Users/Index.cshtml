@@ -6,23 +6,29 @@
 
 <style>
     .professional-table {
-        font-size: 0.875rem;
-        line-height: 1.5;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
     
     .professional-table th {
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1rem 0.75rem;
+        letter-spacing: 0.8px;
+        padding: 1.2rem 1rem;
         border-bottom: 2px solid #dee2e6;
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        color: white;
     }
     
     .professional-table td {
-        padding: 0.875rem 0.75rem;
+        font-size: 0.9rem;
+        padding: 1rem;
         vertical-align: middle;
         border-bottom: 1px solid #f1f3f4;
+        color: #2c3e50;
+        line-height: 1.5;
     }
     
     .professional-table tbody tr {
@@ -30,9 +36,9 @@
     }
     
     .professional-table tbody tr:hover {
-        background-color: #f8f9fa;
+        background-color: rgba(102, 126, 234, 0.05);
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .user-card {
@@ -76,20 +82,23 @@
     
     .role-badge {
         font-size: 0.75rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 6px;
-        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     
     .id-badge {
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
         color: #5e35b1;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.75rem;
-        padding: 0.3rem 0.6rem;
-        border-radius: 8px;
+        padding: 0.35rem 0.7rem;
+        border-radius: 10px;
+        font-family: 'Courier New', Consolas, monospace;
+        letter-spacing: 0.5px;
     }
     
     .sort-link {
@@ -99,6 +108,9 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.8rem;
     }
     
     .sort-link:hover {
@@ -345,21 +357,21 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" 
-                                         style="width: 36px; height: 36px; font-size: 0.875rem; color: white; font-weight: 600;">
+                                         style="width: 40px; height: 40px; font-size: 0.9rem; color: white; font-weight: 600;">
                                         @(user.FirstName.FirstOrDefault())@(user.Surname.FirstOrDefault())
                                     </div>
                                     <div>
-                                        <div class="fw-semibold text-dark">@user.FullName</div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.95rem;">@user.FullName</div>
                                         @if (!string.IsNullOrEmpty(user.FirstName) && !string.IsNullOrEmpty(user.Surname))
                                         {
-                                            <small class="text-muted">@user.FirstName @(!string.IsNullOrEmpty(user.MiddleName) ? user.MiddleName + " " : "")@user.Surname</small>
+                                            <small class="text-muted" style="font-size: 0.8rem;">@user.FirstName @(!string.IsNullOrEmpty(user.MiddleName) ? user.MiddleName + " " : "")@user.Surname</small>
                                         }
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <div class="text-dark">@user.Email</div>
-                                <small class="text-muted"><i class="fas fa-envelope me-1"></i>Email</small>
+                                <div class="text-dark fw-medium" style="font-size: 0.9rem;">@user.Email</div>
+                                <small class="text-muted" style="font-size: 0.75rem;"><i class="fas fa-envelope me-1"></i>Email</small>
                             </td>
                             <td>
                                 <span class="role-badge badge @(user.Role.ToLower() switch {
@@ -374,30 +386,30 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(user.IdNumber))
                                 {
-                                    <code class="bg-light px-2 py-1 rounded">@user.IdNumber</code>
+                                    <code class="bg-light px-2 py-1 rounded" style="font-size: 0.85rem; font-family: 'Courier New', Consolas, monospace;">@user.IdNumber</code>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted" style="font-size: 0.85rem;">—</span>
                                 }
                             </td>
                             <td>
                                 @if (!string.IsNullOrEmpty(user.Relation))
                                 {
-                                    <span class="badge bg-light text-dark border">@user.Relation</span>
+                                    <span class="badge bg-light text-dark border" style="font-size: 0.75rem; font-weight: 500;">@user.Relation</span>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted" style="font-size: 0.85rem;">—</span>
                                 }
                             </td>
                             <td>
-                                <div class="text-dark fw-medium">@user.CreatedAt.ToString("MMM dd, yyyy")</div>
-                                <small class="text-muted">@user.CreatedAt.ToString("HH:mm")</small>
+                                <div class="text-dark fw-medium" style="font-size: 0.85rem;">@user.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">@user.CreatedAt.ToString("HH:mm")</small>
                             </td>
                             <td>
-                                <div class="text-dark fw-medium">@user.UpdatedAt.ToString("MMM dd, yyyy")</div>
-                                <small class="text-muted">@user.UpdatedAt.ToString("HH:mm")</small>
+                                <div class="text-dark fw-medium" style="font-size: 0.85rem;">@user.UpdatedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">@user.UpdatedAt.ToString("HH:mm")</small>
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
