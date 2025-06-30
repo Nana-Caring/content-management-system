@@ -1,48 +1,518 @@
 ﻿@page
 @model CMS.Web.Pages.Users.IndexModel
 @{
-    ViewData["Title"] = "Users";
+    ViewData["Title"] = "Users Management";
 }
 
-<h2 class="mb-4">Users</h2>
-
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Phone Number</th>
-            <th>Created At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (Model.Users != null && Model.Users.Any())
-    {
-        foreach (var user in Model.Users)
-        {
-            <tr>
-                <td>@user.Id</td>
-                <td>@user.FullName</td>
-                <td>@user.Email</td>
-                <td>@user.PhoneNumber</td>
-                <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
-                <td>
-                    <a asp-page="./Details" asp-route-id="@user.Id" class="btn btn-sm btn-info">Details</a>
-                    <a asp-page="./Edit" asp-route-id="@user.Id" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-page="./Delete" asp-route-id="@user.Id" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-        }
+<style>
+    .professional-table {
+        font-size: 0.875rem;
+        line-height: 1.5;
     }
-    else
-    {
-        <tr>
-            <td colspan="6" class="text-center">No users found.</td>
-        </tr>
+    
+    .professional-table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
     }
-    </tbody>
-</table>
+    
+    .professional-table td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .professional-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .user-card {
+        border: none;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .modern-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .id-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        color: #5e35b1;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .sort-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sort-link:hover {
+        color: #e3f2fd !important;
+        transform: translateY(-1px);
+    }
+    
+    .sort-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
 
-<a asp-page="./Create" class="btn btn-primary mt-3">Create New User</a>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-2 fw-bold">Users Management</h1>
+            <p class="mb-0 opacity-75">Manage and monitor all user accounts in the system</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <span class="stats-badge badge">
+                Total: @Model.Users.Count Users
+            </span>
+            <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                <i class="fas fa-sliders-h me-2"></i>Advanced Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filter Panel -->
+<div class="collapse @((!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue) ? "show" : "")" id="filterPanel">
+    <div class="filter-card card mb-4">
+        <div class="card-header bg-transparent border-0 pb-0">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-sliders-h text-white" style="font-size: 0.875rem;"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold">Advanced Filters</h6>
+                    <small class="text-muted">Refine your search with multiple criteria</small>
+                </div>
+            </div>
+        </div>
+        <div class="card-body pt-3">
+            <form method="get">
+                <div class="row g-3">
+                    <!-- Search -->
+                    <div class="col-md-4">
+                        <label for="search" class="form-label fw-semibold">
+                            <i class="fas fa-search me-1 text-primary"></i>Search
+                        </label>
+                        <input type="text" class="form-control border-0 bg-light" 
+                               id="search" name="search" value="@Model.SearchTerm" 
+                               placeholder="Name, email, ID number...">
+                    </div>
+                    
+                    <!-- Role Filter -->
+                    <div class="col-md-2">
+                        <label for="roleFilter" class="form-label fw-semibold">
+                            <i class="fas fa-user-tag me-1 text-success"></i>Role
+                        </label>
+                        <select class="form-select border-0 bg-light" id="roleFilter" name="roleFilter">
+                            <option value="">All Roles</option>
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role" selected="@(Model.RoleFilter == role)">@role</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- Relation Filter -->
+                    <div class="col-md-2">
+                        <label for="relationFilter" class="form-label fw-semibold">
+                            <i class="fas fa-link me-1 text-info"></i>Relation
+                        </label>
+                        <select class="form-select border-0 bg-light" id="relationFilter" name="relationFilter">
+                            <option value="">All Relations</option>
+                            @foreach (var relation in Model.AvailableRelations)
+                            {
+                                <option value="@relation" selected="@(Model.RelationFilter == relation)">@relation</option>
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div class="col-md-2">
+                        <label for="createdFrom" class="form-label fw-semibold">
+                            <i class="fas fa-calendar-alt me-1 text-warning"></i>From Date
+                        </label>
+                        <input type="date" class="form-control border-0 bg-light" 
+                               id="createdFrom" name="createdFrom" 
+                               value="@(Model.CreatedFromDate?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="createdTo" class="form-label fw-semibold">
+                            <i class="fas fa-calendar-check me-1 text-warning"></i>To Date
+                        </label>
+                        <input type="date" class="form-control border-0 bg-light" 
+                               id="createdTo" name="createdTo" 
+                               value="@(Model.CreatedToDate?.ToString("yyyy-MM-dd"))">
+                    </div>
+                </div>
+                
+                <!-- Hidden sort parameters -->
+                <input type="hidden" name="sortBy" value="@Model.SortBy">
+                <input type="hidden" name="sortDirection" value="@Model.SortDirection">
+                
+                <!-- Filter Actions -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary modern-btn">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <a href="?" class="btn btn-outline-secondary modern-btn">
+                            <i class="fas fa-times me-2"></i>Clear All
+                        </a>
+                        @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
+                        {
+                            <span class="badge bg-success align-self-center">
+                                <i class="fas fa-filter me-1"></i>Filters Active
+                            </span>
+                        }
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="user-card card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="professional-table table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("Id")" class="sort-link">
+                                <span>ID</span>
+                                <i class="@Model.GetSortIcon("Id") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("FullName")" class="sort-link">
+                                <span>Full Name</span>
+                                <i class="@Model.GetSortIcon("FullName") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("Email")" class="sort-link">
+                                <span>Email</span>
+                                <i class="@Model.GetSortIcon("Email") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("Role")" class="sort-link">
+                                <span>Role</span>
+                                <i class="@Model.GetSortIcon("Role") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("IdNumber")" class="sort-link">
+                                <span>ID Number</span>
+                                <i class="@Model.GetSortIcon("IdNumber") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("Relation")" class="sort-link">
+                                <span>Relation</span>
+                                <i class="@Model.GetSortIcon("Relation") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("CreatedAt")" class="sort-link">
+                                <span>Created</span>
+                                <i class="@Model.GetSortIcon("CreatedAt") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
+                            <a href="@Model.GetSortUrl("UpdatedAt")" class="sort-link">
+                                <span>Updated</span>
+                                <i class="@Model.GetSortIcon("UpdatedAt") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Users != null && Model.Users.Any())
+                {
+                    foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <span class="id-badge">
+                                    #@user.Id
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                         style="width: 36px; height: 36px; font-size: 0.875rem; color: white; font-weight: 600;">
+                                        @(user.FirstName.FirstOrDefault())@(user.Surname.FirstOrDefault())
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">@user.FullName</div>
+                                        @if (!string.IsNullOrEmpty(user.FirstName) && !string.IsNullOrEmpty(user.Surname))
+                                        {
+                                            <small class="text-muted">@user.FirstName @(!string.IsNullOrEmpty(user.MiddleName) ? user.MiddleName + " " : "")@user.Surname</small>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-dark">@user.Email</div>
+                                <small class="text-muted"><i class="fas fa-envelope me-1"></i>Email</small>
+                            </td>
+                            <td>
+                                <span class="role-badge badge @(user.Role.ToLower() switch {
+                                    "admin" => "bg-gradient bg-danger",
+                                    "user" => "bg-gradient bg-primary", 
+                                    "dependent" => "bg-gradient bg-info",
+                                    _ => "bg-gradient bg-secondary"
+                                })">
+                                    @user.Role
+                                </span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(user.IdNumber))
+                                {
+                                    <code class="bg-light px-2 py-1 rounded">@user.IdNumber</code>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(user.Relation))
+                                {
+                                    <span class="badge bg-light text-dark border">@user.Relation</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium">@user.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@user.CreatedAt.ToString("HH:mm")</small>
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium">@user.UpdatedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@user.UpdatedAt.ToString("HH:mm")</small>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal" 
+                                        data-user-id="@user.Id" 
+                                        data-user-name="@user.FullName"
+                                        title="Delete User">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="border-0">
+                            <div class="empty-state">
+                                <i class="fas fa-users fa-4x"></i>
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
+                                {
+                                    <h5 class="mt-3 mb-2">No users found</h5>
+                                    <p class="mb-3">No users match your current filter criteria.</p>
+                                    <a href="?" class="btn btn-outline-primary modern-btn">
+                                        <i class="fas fa-times me-2"></i>Clear Filters
+                                    </a>
+                                }
+                                else
+                                {
+                                    <h5 class="mt-3 mb-2">No users available</h5>
+                                    <p class="mb-0">There are currently no users in the system.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+                        <i class="fas fa-exclamation-triangle text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold">Confirm Deletion</h5>
+                        <small class="opacity-75">This action cannot be undone</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <div class="bg-danger bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-times text-danger fa-2x"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Delete User Account</h6>
+                    <p class="text-muted mb-0">
+                        Are you sure you want to delete <strong id="userName" class="text-dark"></strong>?
+                    </p>
+                </div>
+                <div class="alert alert-warning border-0 bg-warning bg-opacity-10" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small class="mb-0">
+                            <strong>Warning:</strong> This will permanently remove the user and all associated data from the system.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary modern-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" id="deleteUserId" name="id" />
+                    <button type="submit" class="btn btn-danger modern-btn" asp-page-handler="Delete">
+                        <i class="fas fa-trash-alt me-2"></i>Delete User
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const userName = button.getAttribute('data-user-name');
+            
+            document.getElementById('deleteUserId').value = userId;
+            document.getElementById('userName').textContent = userName;
+        });
+    }
+    
+    // Auto-collapse filter panel if no filters are active
+    const filterPanel = document.getElementById('filterPanel');
+    const hasActiveFilters = @Html.Raw(Json.Serialize(!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue));
+    
+    if (!hasActiveFilters) {
+        const collapseElement = new bootstrap.Collapse(filterPanel, {
+            toggle: false
+        });
+    }
+});
+</script>

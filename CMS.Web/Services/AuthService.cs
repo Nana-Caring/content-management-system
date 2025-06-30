@@ -13,7 +13,7 @@ namespace CMS.Web.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<AuthService> _logger;
-        private const string API_BASE_URL = "https://nanacaring-backend.onrender.com/api";
+        private const string API_BASE_URL = "https://nanacaring-backend.onrender.com";
 
         public AuthService(HttpClient httpClient, ILogger<AuthService> logger)
         {
@@ -23,94 +23,114 @@ namespace CMS.Web.Services
 
         public async Task<AdminLoginResponse> AuthenticateAdminAsync(AdminLoginRequest request)
         {
-            try
+            var endpoints = new[]
             {
-                var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                "/auth/admin-login",
+                "/auth/login",
+                "/api/auth/admin-login",
+                "/api/auth/login",
+                "/admin/login",
+                "/admin/auth/login"
+            };
 
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                _logger.LogInformation($"Attempting admin login for email: {request.Email}");
-                
-                var response = await _httpClient.PostAsync($"{API_BASE_URL}/auth/admin-login", content);
-                
-                var responseContent = await response.Content.ReadAsStringAsync();
-                
-                _logger.LogInformation($"API Response Status: {response.StatusCode}");
-                _logger.LogInformation($"API Response Content: {responseContent}");
-
-                if (response.IsSuccessStatusCode)
+            foreach (var endpoint in endpoints)
+            {
+                try
                 {
-                    var loginResponse = JsonSerializer.Deserialize<AdminLoginResponse>(responseContent, new JsonSerializerOptions
+                    var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     });
 
-                    if (loginResponse != null && loginResponse.Success)
-                    {
-                        _logger.LogInformation($"Admin login successful for email: {request.Email}");
-                        return loginResponse;
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Admin login failed - invalid response format for email: {request.Email}");
-                        return new AdminLoginResponse
-                        {
-                            Message = "Invalid response format from server"
-                        };
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning($"Admin login failed with status {response.StatusCode} for email: {request.Email}");
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
                     
-                    // Try to parse error response for a meaningful message
-                    try
+                    _logger.LogInformation($"Attempting admin login for email: {request.Email} at endpoint: {endpoint}");
+                    
+                    var response = await _httpClient.PostAsync($"{API_BASE_URL}{endpoint}", content);
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    
+                    _logger.LogInformation($"Endpoint {endpoint} - Status: {response.StatusCode}");
+                    _logger.LogInformation($"Endpoint {endpoint} - Response: {responseContent}");
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        var errorData = JsonSerializer.Deserialize<JsonElement>(responseContent);
-                        var errorMessage = "Authentication failed";
-                        
-                        if (errorData.TryGetProperty("message", out var msgElement))
+                        try
                         {
-                            errorMessage = msgElement.GetString() ?? errorMessage;
+                            var loginResponse = JsonSerializer.Deserialize<AdminLoginResponse>(responseContent, new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                            });
+
+                            if (loginResponse != null)
+                            {
+                                _logger.LogInformation($"Successful login at endpoint: {endpoint}");
+                                _logger.LogInformation($"Login response - Success: {loginResponse.Success}, Token: {(string.IsNullOrEmpty(loginResponse.Token) ? "None" : "Present")}");
+                                return loginResponse;
+                            }
                         }
-                        else if (errorData.TryGetProperty("error", out var errElement))
+                        catch (JsonException jsonEx)
                         {
-                            errorMessage = errElement.GetString() ?? errorMessage;
+                            _logger.LogError(jsonEx, $"Failed to deserialize login response from {endpoint}");
+                            _logger.LogInformation($"Raw response content: {responseContent}");
+                            
+                            // Try to create a response from raw JSON if it contains an access token
+                            if (responseContent.Contains("accessToken") || responseContent.Contains("access_token") || responseContent.Contains("token"))
+                            {
+                                try
+                                {
+                                    var rawResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                                    var token = "";
+                                    
+                                    if (rawResponse.TryGetProperty("accessToken", out var accessTokenElement))
+                                        token = accessTokenElement.GetString() ?? "";
+                                    else if (rawResponse.TryGetProperty("access_token", out var access_tokenElement))
+                                        token = access_tokenElement.GetString() ?? "";
+                                    else if (rawResponse.TryGetProperty("token", out var tokenElement))
+                                        token = tokenElement.GetString() ?? "";
+
+                                    if (!string.IsNullOrEmpty(token))
+                                    {
+                                        return new AdminLoginResponse
+                                        {
+                                            AccessToken = token,
+                                            User = new AdminUser
+                                            {
+                                                Id = 1,
+                                                Email = request.Email,
+                                                FirstName = "Admin",
+                                                Surname = "User",
+                                                Role = "admin"
+                                            }
+                                        };
+                                    }
+                                }
+                                catch (Exception parseEx)
+                                {
+                                    _logger.LogError(parseEx, "Failed to parse raw token response");
+                                }
+                            }
                         }
-                        
-                        return new AdminLoginResponse
-                        {
-                            Message = errorMessage
-                        };
                     }
-                    catch
+                    else if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
                     {
-                        return new AdminLoginResponse
-                        {
-                            Message = $"Authentication failed: {response.StatusCode}"
+                        // If it's not 404, this might be the right endpoint but wrong credentials
+                        // Return the response so we can see the error
+                        return new AdminLoginResponse 
+                        { 
+                            Message = $"Login failed at {endpoint}: {responseContent}"
                         };
                     }
                 }
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed during admin authentication");
-                return new AdminLoginResponse
+                catch (Exception ex)
                 {
-                    Message = "Network error occurred. Please try again."
-                };
+                    _logger.LogError(ex, $"Error testing endpoint {endpoint}");
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unexpected error during admin authentication");
-                return new AdminLoginResponse
-                {
-                    Message = "An unexpected error occurred. Please try again."
-                };
-            }
+
+            return new AdminLoginResponse 
+            { 
+                Message = "No valid login endpoint found"
+            };
         }
     }
 }

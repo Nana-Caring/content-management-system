@@ -29,12 +29,12 @@ namespace CMS.Web.Services
         
         // Form State Management
         Task SaveFormDataAsync(string formKey, object formData);
-        Task<T?> GetFormDataAsync<T>(string formKey);
+        Task<T?> GetFormDataAsync<T>(string formKey) where T : class;
         Task ClearFormDataAsync(string formKey);
         
         // Search and Pagination
         Task SaveSearchFiltersAsync(string pageKey, object filters);
-        Task<T?> GetSearchFiltersAsync<T>(string pageKey);
+        Task<T?> GetSearchFiltersAsync<T>(string pageKey) where T : class;
         Task SavePaginationStateAsync(string pageKey, int page, int pageSize);
         Task<(int page, int pageSize)> GetPaginationStateAsync(string pageKey);
         
@@ -204,7 +204,7 @@ namespace CMS.Web.Services
             await Task.CompletedTask;
         }
 
-        public async Task<T?> GetFormDataAsync<T>(string formKey)
+        public async Task<T?> GetFormDataAsync<T>(string formKey) where T : class
         {
             var key = $"{StateKeys.FORM_DATA}_{formKey}";
             var formData = _stateService.GetState<T>(key);
@@ -226,7 +226,7 @@ namespace CMS.Web.Services
             await Task.CompletedTask;
         }
 
-        public async Task<T?> GetSearchFiltersAsync<T>(string pageKey)
+        public async Task<T?> GetSearchFiltersAsync<T>(string pageKey) where T : class
         {
             var key = $"{StateKeys.SEARCH_FILTERS}_{pageKey}";
             var filters = _stateService.GetState<T>(key);

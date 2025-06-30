@@ -30,10 +30,17 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 
 // Add HTTP client for external API calls
-builder.Services.AddHttpClient<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IAuthService, AuthService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(2); // 2 minute timeout for cold starts and slow responses
+});
 
 // Add state management services
-builder.Services.AddScoped<IStateService, SessionStateService>();
+builder.Services.AddScoped<IStateService, HybridStateService>();
 builder.Services.AddScoped<IAppStateManager, AppStateManager>();
 
 // Add authentication services

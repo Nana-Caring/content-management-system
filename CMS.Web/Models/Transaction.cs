@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace CMS.Web.Models
 {
@@ -30,16 +31,19 @@ namespace CMS.Web.Models
         /// <summary>
         /// Type of transaction (e.g., "Credit" or "Debit").
         /// </summary>
-        public string Type { get; set; }
+        [Required]
+        public string Type { get; set; } = string.Empty;
 
         /// <summary>
         /// Description or note for the transaction.
         /// </summary>
-        public string Description { get; set; }
+        [Required]
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// Navigation property to the related account.
         /// </summary>
-        public Account Account { get; set; }
+        [Required]
+        public Account Account { get; set; } = null!;
     }
 }

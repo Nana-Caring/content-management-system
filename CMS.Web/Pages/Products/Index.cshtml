@@ -1,49 +1,437 @@
 @page
 @model CMS.Web.Pages.Products.IndexModel
 @{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Products Management";
 }
 
-<h2 class="mb-4">Products</h2>
-
-<a asp-page="./Create" class="btn btn-primary mb-3">Add New Product</a>
-
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>API Link</th>
-            <th>Description</th>
-            <th>Created At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (Model.Products != null && Model.Products.Any())
-    {
-        foreach (var product in Model.Products)
-        {
-            <tr>
-                <td>@product.Id</td>
-                <td>@product.Name</td>
-                <td>
-                    <a href="@product.ApiLink" target="_blank">@product.ApiLink</a>
-                </td>
-                <td>@product.Description</td>
-                <td>@product.CreatedAt.ToString("yyyy-MM-dd")</td>
-                <td>
-                    <a asp-page="./Edit" asp-route-id="@product.Id" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-page="./Delete" asp-route-id="@product.Id" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-        }
+<style>
+    .professional-table {
+        font-size: 0.875rem;
+        line-height: 1.5;
     }
-    else
-    {
-        <tr>
-            <td colspan="6" class="text-center">No products found.</td>
-        </tr>
+    
+    .professional-table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
     }
-    </tbody>
-</table>
+    
+    .professional-table td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .professional-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .product-card {
+        border: none;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
+    }
+    
+    .modern-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .product-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .id-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        color: #5e35b1;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .sort-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sort-link:hover {
+        color: #e3f2fd !important;
+        transform: translateY(-1px);
+    }
+    
+    .sort-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(171, 71, 188, 0.3);
+    }
+    
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .api-link {
+        color: #1976d2;
+        text-decoration: none;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        background: #f5f5f5;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    .api-link:hover {
+        background: #e3f2fd;
+        color: #0d47a1;
+        text-decoration: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .add-product-btn {
+        background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .add-product-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-2 fw-bold">Products Management</h1>
+            <p class="mb-0 opacity-75">Manage and configure product offerings and API integrations</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <span class="stats-badge badge">
+                Total: @Model.Products.Count Products
+            </span>
+            <a asp-page="./Create" class="add-product-btn">
+                <i class="fas fa-plus"></i>Add New Product
+            </a>
+            <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                <i class="fas fa-filter me-2"></i>Advanced Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Filter Panel -->
+<div class="collapse mb-4" id="filterPanel">
+    <div class="card filter-card">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-sliders-h me-2"></i>Advanced Search & Filters
+            </h6>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" value="@Model.SearchTerm" 
+                           placeholder="Search by product name, description, API link...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" name="dateRange" value="@Request.Query["dateRange"]">
+                        <option value="">All Time</option>
+                        <option value="today" selected="@(Request.Query["dateRange"] == "today")">Today</option>
+                        <option value="week" selected="@(Request.Query["dateRange"] == "week")">This Week</option>
+                        <option value="month" selected="@(Request.Query["dateRange"] == "month")">This Month</option>
+                        <option value="year" selected="@(Request.Query["dateRange"] == "year")">This Year</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" name="sortBy" value="@Request.Query["sortBy"]">
+                        <option value="name" selected="@(Request.Query["sortBy"] == "name")">Name</option>
+                        <option value="created" selected="@(Request.Query["sortBy"] == "created")">Created Date</option>
+                        <option value="id" selected="@(Request.Query["sortBy"] == "id")">ID</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary modern-btn">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card product-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 professional-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Id" asp-route-sortDirection="@(Model.GetNextSortDirection("Id"))" class="sort-link">
+                                ID
+                                @if (Model.SortField == "Id")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Name" asp-route-sortDirection="@(Model.GetNextSortDirection("Name"))" class="sort-link">
+                                Product Name
+                                @if (Model.SortField == "Name")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>API Integration</th>
+                        <th>Description</th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="CreatedAt" asp-route-sortDirection="@(Model.GetNextSortDirection("CreatedAt"))" class="sort-link">
+                                Created At
+                                @if (Model.SortField == "CreatedAt")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Products != null && Model.Products.Any())
+                {
+                    foreach (var product in Model.Products)
+                    {
+                        <tr>
+                            <td>
+                                <span class="id-badge">#@product.Id</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@(product.Name ?? "Unnamed Product")</div>
+                                <small class="text-muted">Product ID: @product.Id</small>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.ApiLink))
+                                {
+                                    <a href="@product.ApiLink" target="_blank" class="api-link" title="Open API Link">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        @(product.ApiLink.Length > 30 ? product.ApiLink.Substring(0, 30) + "..." : product.ApiLink)
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No API configured</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.Description))
+                                {
+                                    <div>@(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No description</span>
+                                }
+                            </td>
+                            <td>
+                                <div>@product.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@product.CreatedAt.ToString("HH:mm")</small>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a asp-page="./Edit" asp-route-id="@product.Id" class="btn btn-sm btn-warning modern-btn" title="Edit Product">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger modern-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal" 
+                                            data-product-id="@product.Id" 
+                                            data-product-name="@(product.Name ?? "Unnamed Product")"
+                                            title="Delete Product">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 empty-state">
+                            <div class="text-muted">
+                                <i class="fas fa-box fa-3x mb-3"></i>
+                                <p>No products found.</p>
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                                {
+                                    <p>Try adjusting your search terms.</p>
+                                }
+                                else
+                                {
+                                    <p>Start by adding your first product.</p>
+                                    <a asp-page="./Create" class="btn btn-primary modern-btn mt-2">
+                                        <i class="fas fa-plus me-2"></i>Add New Product
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete product <strong id="productName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone and may affect any integrations using this product.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="deleteLink" href="#" class="btn btn-danger">Delete Product</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const productId = button.getAttribute('data-product-id');
+            const productName = button.getAttribute('data-product-name');
+            
+            document.getElementById('productName').textContent = productName;
+            document.getElementById('deleteLink').href = './Delete?id=' + productId;
+        });
+    }
+});
+</script>

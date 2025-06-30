@@ -1,66 +1,426 @@
 ﻿@page
 @model CMS.Web.Pages.Transactions.IndexModel
 @{
-    ViewData["Title"] = "Transactions";
+    ViewData["Title"] = "Transactions Management";
 }
 
-<h2 class="mb-4">Transactions</h2>
+<style>
+    .professional-table {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    
+    .professional-table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .professional-table td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .professional-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .transaction-card {
+        border: none;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .transaction-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
+    }
+    
+    .sort-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sort-link:hover {
+        color: #e3f2fd !important;
+        transform: translateY(-1px);
+    }
+    
+    .sort-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .modern-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .transaction-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .id-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        color: #5e35b1;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .amount-positive {
+        color: #2e7d32;
+        font-weight: 600;
+    }
+    
+    .amount-negative {
+        color: #d32f2f;
+        font-weight: 600;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(255, 213, 79, 0.3);
+    }
+    
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+</style>
 
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text" name="search" class="form-control" placeholder="Search by Account Number or Description..." value="@Request.Query["search"]" />
-        <button class="btn btn-outline-secondary" type="submit">Search</button>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-2 fw-bold">Transactions Management</h1>
+            <p class="mb-0 opacity-75">Monitor all financial transactions in the system</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <span class="stats-badge badge">
+                Total: @Model.Transactions.Count Transactions
+            </span>
+            <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                <i class="fas fa-filter me-2"></i>Advanced Filters
+            </button>
+        </div>
     </div>
-</form>
+</div>
 
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Account Number</th>
-            <th scope="col">Type</th>
-            <th scope="col">Amount</th>
-            <th scope="col">Date</th>
-            <th scope="col">Description</th>
-            <th scope="col">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (Model.Transactions != null && Model.Transactions.Any())
-    {
-        foreach (var transaction in Model.Transactions)
-        {
-            <tr>
-                <td>@transaction.Id</td>
-                <td>@transaction.Account?.AccountNumber</td>
-                <td>@transaction.Type</td>
-                <td>@transaction.Amount.ToString("C")</td>
-                <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
-                <td>@transaction.Description</td>
-                <td>
-                    <a asp-page="./Details" asp-route-id="@transaction.Id" class="btn btn-sm btn-info" title="View Details">
-                        <span class="visually-hidden">Details</span>
-                        <i class="bi bi-eye"></i>
-                    </a>
-                    <a asp-page="./Edit" asp-route-id="@transaction.Id" class="btn btn-sm btn-warning" title="Edit">
-                        <span class="visually-hidden">Edit</span>
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <a asp-page="./Delete" asp-route-id="@transaction.Id" class="btn btn-sm btn-danger" title="Delete">
-                        <span class="visually-hidden">Delete</span>
-                        <i class="bi bi-trash"></i>
-                    </a>
-                </td>
-            </tr>
-        }
-    }
-    else
-    {
-        <tr>
-            <td colspan="7" class="text-center">No transactions found.</td>
-        </tr>
-    }
-    </tbody>
-</table>
+<!-- Advanced Filter Panel -->
+<div class="collapse mb-4" id="filterPanel">
+    <div class="card filter-card">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-sliders-h me-2"></i>Advanced Search & Filters
+            </h6>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" value="@Model.SearchTerm" 
+                           placeholder="Search by description, type, ID...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Transaction Type</label>
+                    <select class="form-select" name="typeFilter" value="@Request.Query["typeFilter"]">
+                        <option value="">All Types</option>
+                        <option value="credit" selected="@(Request.Query["typeFilter"] == "credit")">Credit</option>
+                        <option value="debit" selected="@(Request.Query["typeFilter"] == "debit")">Debit</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Amount Range</label>
+                    <select class="form-select" name="amountRange" value="@Request.Query["amountRange"]">
+                        <option value="">All Amounts</option>
+                        <option value="0-100" selected="@(Request.Query["amountRange"] == "0-100")">$0 - $100</option>
+                        <option value="100-1000" selected="@(Request.Query["amountRange"] == "100-1000")">$100 - $1,000</option>
+                        <option value="1000+" selected="@(Request.Query["amountRange"] == "1000+")">$1,000+</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary modern-btn">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-<a asp-page="./Create" class="btn btn-primary mt-3">Create New Transaction</a>
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" class="form-control" name="search" value="@Model.SearchTerm" 
+                       placeholder="Search by description, type, or amount...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card transaction-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 professional-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Id" asp-route-sortDirection="@(Model.GetNextSortDirection("Id"))" class="sort-link">
+                                ID
+                                @if (Model.SortField == "Id")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="AccountId" asp-route-sortDirection="@(Model.GetNextSortDirection("AccountId"))" class="sort-link">
+                                Account ID
+                                @if (Model.SortField == "AccountId")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Type" asp-route-sortDirection="@(Model.GetNextSortDirection("Type"))" class="sort-link">
+                                Type
+                                @if (Model.SortField == "Type")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Amount" asp-route-sortDirection="@(Model.GetNextSortDirection("Amount"))" class="sort-link">
+                                Amount
+                                @if (Model.SortField == "Amount")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Date" asp-route-sortDirection="@(Model.GetNextSortDirection("Date"))" class="sort-link">
+                                Date
+                                @if (Model.SortField == "Date")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Transactions != null && Model.Transactions.Any())
+                {
+                    foreach (var transaction in Model.Transactions)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark id-badge">#@transaction.Id</span></td>
+                            <td><code>@transaction.AccountId</code></td>
+                            <td>
+                                @if (transaction.Type?.ToLower() == "credit")
+                                {
+                                    <span class="badge bg-success transaction-badge">Credit</span>
+                                }
+                                else if (transaction.Type?.ToLower() == "debit")
+                                {
+                                    <span class="badge bg-danger transaction-badge">Debit</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary transaction-badge">@(transaction.Type ?? "Unknown")</span>
+                                }
+                            </td>
+                            <td>
+                                @if (transaction.Type?.ToLower() == "credit")
+                                {
+                                    <strong class="text-success amount-positive">+@transaction.Amount.ToString("C")</strong>
+                                }
+                                else
+                                {
+                                    <strong class="text-danger amount-negative">-@transaction.Amount.ToString("C")</strong>
+                                }
+                            </td>
+                            <td>@transaction.Date.ToString("MMM dd, yyyy")</td>
+                            <td>@(transaction.Description ?? "No description")</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal" 
+                                        data-transaction-id="@transaction.Id" 
+                                        data-transaction-desc="@(transaction.Description ?? "Transaction #" + transaction.Id)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 empty-state">
+                            <div class="text-muted">
+                                <i class="fas fa-exchange-alt fa-3x mb-3"></i>
+                                <p>No transactions found.</p>
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                                {
+                                    <p>Try adjusting your search terms.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete transaction <strong id="transactionDesc"></strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" id="deleteTransactionId" name="id" />
+                    <button type="submit" class="btn btn-danger" asp-page-handler="Delete">Delete Transaction</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const transactionId = button.getAttribute('data-transaction-id');
+            const transactionDesc = button.getAttribute('data-transaction-desc');
+            
+            document.getElementById('deleteTransactionId').value = transactionId;
+            document.getElementById('transactionDesc').textContent = transactionDesc;
+        });
+    }
+});
+</script>

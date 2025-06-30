@@ -1,0 +1,45 @@
+@if (!string.IsNullOrEmpty(ErrorMessage) && (ErrorMessage.Contains("backend") || ErrorMessage.Contains("unavailable") || ErrorMessage.Contains("service")))
+{
+    <div class="alert alert-info border-0 mb-4" role="alert">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="spinner-border spinner-border-sm text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <div class="col">
+                <h6 class="alert-heading mb-1">
+                    <i class="fas fa-server me-2"></i>Backend Service Status
+                </h6>
+                <p class="mb-2">@ErrorMessage</p>
+                <div class="progress mb-2" style="height: 4px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-info" onclick="location.reload();">
+                        <i class="fas fa-sync me-1"></i>Retry Now
+                    </button>
+                    <small class="text-muted align-self-center">
+                        <i class="fas fa-clock me-1"></i>Service typically starts in 30-60 seconds
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger border-0" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-circle text-danger me-3"></i>
+            <div>
+                <strong>Error:</strong> @ErrorMessage
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string ErrorMessage { get; set; } = string.Empty;
+}

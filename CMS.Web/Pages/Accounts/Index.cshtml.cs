@@ -3,41 +3,85 @@ using Microsoft.AspNetCore.Mvc;
 using CMS.Web.Models;
 using CMS.Web.Services;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace CMS.Web.Pages.Accounts
 {
     [Authorize]
     public class IndexModel : BasePageModel
     {
-        public List<Account> Accounts { get; set; }
+        private readonly IApiService _apiService;
+        public List<Account> Accounts { get; set; } = new List<Account>();
+        public string? ErrorMessage { get; set; }
+        public string? SearchTerm { get; set; }
 
-        public IndexModel(IAppStateManager stateManager) : base(stateManager)
+        public IndexModel(IAppStateManager stateManager, IApiService apiService) : base(stateManager)
         {
+            _apiService = apiService;
         }
 
-        public void OnGet(string search)
+        public async Task OnGetAsync(string search)
         {
-            // Replace with your actual data retrieval logic (e.g., from a database)
-            var allAccounts = new List<Account>
+            ViewData["Title"] = "Accounts Management";
+            SearchTerm = search;
+            
+            try
             {
-                // Example:
-                // new Account { Id = 1, AccountNumber = "12345", AccountName = "Main Account", AccountType = "Savings", Balance = 1000, CreatedAt = DateTime.UtcNow }
-            };
+                var allAccounts = await _apiService.GetAccountsAsync();
+                
+                if (allAccounts == null)
+                {
+                    ErrorMessage = "Unable to connect to the backend service. The service may be starting up or experiencing issues. Please wait a moment and refresh the page.";
+                    return;
+                }
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                Accounts = allAccounts
-                    .Where(a =>
-                        (a.AccountNumber?.Contains(search) ?? false) ||
-                        (a.AccountName?.Contains(search) ?? false) ||
-                        (a.AccountType?.Contains(search) ?? false))
-                    .ToList();
+                if (!allAccounts.Any())
+                {
+                    ErrorMessage = "No accounts were found in the system. This could be normal if no accounts have been created yet.";
+                }
+                
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    Accounts = allAccounts.Where(a => 
+                        (a.AccountName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (a.AccountNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (a.AccountType != null && a.AccountType.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    ).ToList();
+                }
+                else
+                {
+                    Accounts = allAccounts;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Accounts = allAccounts;
+                ErrorMessage = "The backend service is currently unavailable. This may be due to a cold start or temporary service disruption. Please try refreshing the page in a few moments.";
+                // Log the full exception for debugging
+                Console.WriteLine($"Accounts loading error: {ex}");
             }
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            try
+            {
+                var success = await _apiService.DeleteAccountAsync(id);
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Account deleted successfully.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to delete account.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while deleting the account.";
+                // Log the exception for debugging
+                Console.WriteLine($"Error deleting account: {ex.Message}");
+            }
+
+            return RedirectToPage();
         }
     }
 }

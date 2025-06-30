@@ -9,20 +9,22 @@ namespace CMS.Web.Pages;
 public class IndexModel : BasePageModel
 {
     private readonly ILogger<IndexModel> _logger;
+    private readonly IApiService _apiService;
 
     public string WelcomeMessage { get; set; } = "";
-    public int TotalUsers { get; set; }
-    public int TotalAccounts { get; set; }
-    public int PendingKyc { get; set; }
-    public decimal TotalTransactions { get; set; }
+    public DashboardStats Stats { get; set; } = new DashboardStats();
+    public string? ErrorMessage { get; set; }
 
-    public IndexModel(IAppStateManager stateManager, ILogger<IndexModel> logger) : base(stateManager)
+    public IndexModel(IAppStateManager stateManager, ILogger<IndexModel> logger, IApiService apiService) : base(stateManager)
     {
         _logger = logger;
+        _apiService = apiService;
     }
 
     public async Task OnGetAsync()
     {
+        ViewData["Title"] = "Dashboard";
+        
         try
         {
             // Set loading state
@@ -33,7 +35,7 @@ public class IndexModel : BasePageModel
                 ? $"Welcome back, {CurrentUser.Username}!" 
                 : "Welcome to CMS Dashboard!";
 
-            // Load dashboard data (replace with actual data loading)
+            // Load dashboard data from API
             await LoadDashboardData();
 
             // Add welcome notification for first-time users
@@ -53,6 +55,7 @@ public class IndexModel : BasePageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading dashboard");
+            ErrorMessage = "Failed to load dashboard data. Please refresh the page.";
             await AddNotification("error", "Error", "Failed to load dashboard data. Please refresh the page.");
             await SetLoading(false);
         }
@@ -60,15 +63,19 @@ public class IndexModel : BasePageModel
 
     private async Task LoadDashboardData()
     {
-        // Simulate loading data - replace with actual database calls
-        await Task.Delay(500); // Simulate API delay
-
-        // Sample data - replace with actual queries
-        TotalUsers = 1250;
-        TotalAccounts = 890;
-        PendingKyc = 45;
-        TotalTransactions = 125000.50m;
-
-        _logger.LogInformation($"Dashboard data loaded for user: {CurrentUser.Username}");
+        try
+        {
+            // Load stats from the API
+            Stats = await _apiService.GetDashboardStatsAsync();
+            
+            _logger.LogInformation($"Dashboard data loaded for user: {CurrentUser.Username}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading dashboard stats from API");
+            // Use default/empty stats on error
+            Stats = new DashboardStats();
+            throw; // Re-throw to be handled by the calling method
+        }
     }
 }

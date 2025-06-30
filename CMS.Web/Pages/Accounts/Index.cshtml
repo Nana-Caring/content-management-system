@@ -1,50 +1,395 @@
 ﻿@page
 @model CMS.Web.Pages.Accounts.IndexModel
 @{
-    ViewData["Title"] = "Accounts";
+    ViewData["Title"] = "Accounts Management";
 }
 
-<h2 class="mb-4">Accounts</h2>
-
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Account Number</th>
-            <th>Account Name</th>
-            <th>Account Type</th>
-            <th>Balance</th>
-            <th>Created At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (Model.Accounts != null && Model.Accounts.Any())
-    {
-        foreach (var account in Model.Accounts)
-        {
-            <tr>
-                <td>@account.Id</td>
-                <td>@account.AccountNumber</td>
-                <td>@account.AccountName</td>
-                <td>@account.AccountType</td>
-                <td>@account.Balance.ToString("C")</td>
-                <td>@account.CreatedAt.ToString("yyyy-MM-dd")</td>
-                <td>
-                    <a asp-page="./Details" asp-route-id="@account.Id" class="btn btn-sm btn-info">Details</a>
-                    <a asp-page="./Edit" asp-route-id="@account.Id" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-page="./Delete" asp-route-id="@account.Id" class="btn btn-sm btn-danger">Delete</a>
-                </td>
-            </tr>
-        }
+<style>
+    .professional-table {
+        font-size: 0.875rem;
+        line-height: 1.5;
     }
-    else
-    {
-        <tr>
-            <td colspan="7" class="text-center">No accounts found.</td>
-        </tr>
+    
+    .professional-table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
     }
-    </tbody>
-</table>
+    
+    .professional-table td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .professional-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .account-card {
+        border: none;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .account-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .modern-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .account-type-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .id-badge {
+        background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%);
+        color: #198754;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .sort-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sort-link:hover {
+        color: #e3f2fd !important;
+        transform: translateY(-1px);
+    }
+    
+    .sort-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+    }
+    
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .account-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: white;
+    }
+</style>
 
-<a asp-page="./Create" class="btn btn-primary mt-3">Create New Account</a>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-2 fw-bold">Accounts Management</h1>
+            <p class="mb-0 opacity-75">Monitor and manage all financial accounts in the system</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <span class="stats-badge badge">
+                Total: @Model.Accounts.Count Accounts
+            </span>
+            <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                <i class="fas fa-sliders-h me-2"></i>Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Accounts Management</h2>
+    <span class="badge bg-success fs-6">Total: @Model.Accounts.Count</span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-warning alert-dismissible fade show border-0" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle text-warning me-3"></i>
+            <div>
+                <strong>Service Notice:</strong>
+                <div>@Model.ErrorMessage</div>
+                @if (Model.ErrorMessage.Contains("backend service") || Model.ErrorMessage.Contains("unavailable"))
+                {
+                    <small class="text-muted mt-1 d-block">
+                        <i class="fas fa-clock me-1"></i>
+                        The backend service may be starting up. This typically takes 30-60 seconds.
+                    </small>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload();">
+                        <i class="fas fa-sync me-1"></i>Refresh Page
+                    </button>
+                }
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" class="form-control" name="search" value="@Model.SearchTerm" 
+                       placeholder="Search by account name, number, or type...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="account-card card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="professional-table table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="border-0">ID</th>
+                        <th class="border-0">Account Details</th>
+                        <th class="border-0">Type</th>
+                        <th class="border-0">Balance</th>
+                        <th class="border-0">Currency</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0">Created</th>
+                        <th class="border-0 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Accounts != null && Model.Accounts.Any())
+                {
+                    foreach (var account in Model.Accounts)
+                    {
+                        <tr>
+                            <td>
+                                <span class="id-badge">
+                                    #@account.Id.Substring(0, 8)...
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="account-avatar bg-@(account.AccountType.ToLower() switch {
+                                        "main" => "success",
+                                        "education" => "primary",
+                                        "healthcare" => "danger",
+                                        "clothing" => "info",
+                                        "entertainment" => "warning",
+                                        "baby care" => "secondary",
+                                        "pregnancy" => "dark",
+                                        "savings" => "success",
+                                        _ => "secondary"
+                                    }) me-3">
+                                        <i class="fas fa-@(account.AccountType.ToLower() switch {
+                                            "main" => "university",
+                                            "education" => "graduation-cap",
+                                            "healthcare" => "heartbeat",
+                                            "clothing" => "tshirt",
+                                            "entertainment" => "gamepad",
+                                            "baby care" => "baby",
+                                            "pregnancy" => "female",
+                                            "savings" => "piggy-bank",
+                                            _ => "wallet"
+                                        })"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark">@account.AccountName</div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-credit-card me-1"></i>@account.AccountNumber
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="account-type-badge badge bg-@(account.AccountType.ToLower() switch {
+                                    "main" => "gradient bg-success",
+                                    "education" => "gradient bg-primary",
+                                    "healthcare" => "gradient bg-danger",
+                                    "clothing" => "gradient bg-info",
+                                    "entertainment" => "gradient bg-warning",
+                                    "baby care" => "gradient bg-secondary",
+                                    "pregnancy" => "gradient bg-dark",
+                                    "savings" => "gradient bg-success",
+                                    _ => "gradient bg-secondary"
+                                })">
+                                    @account.AccountType
+                                </span>
+                                @if (!account.IsMainAccount)
+                                {
+                                    <br><small class="text-muted">Sub-account</small>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-bold text-@(account.Balance > 0 ? "success" : "muted")">
+                                    @account.Balance.ToString("C")
+                                </div>
+                                @if (account.Balance == 0)
+                                {
+                                    <small class="text-muted">No transactions</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@account.Currency</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-@(account.Status.ToLower() == "active" ? "success" : "secondary")">
+                                    <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                                    @account.Status.ToUpper()
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium">@DateTime.Parse(account.CreationDate).ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@account.CreatedAt.ToString("HH:mm")</small>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal" 
+                                        data-account-id="@account.Id" 
+                                        data-account-name="@account.AccountName"
+                                        title="Delete Account">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="border-0">
+                            <div class="empty-state">
+                                <i class="fas fa-credit-card fa-4x"></i>
+                                <h5 class="mt-3 mb-2">No accounts found</h5>
+                                <p class="mb-0">There are currently no accounts in the system.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete account <strong id="accountName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone and may affect related transactions.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" id="deleteAccountId" name="id" />
+                    <button type="submit" class="btn btn-danger" asp-page-handler="Delete">Delete Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const accountId = button.getAttribute('data-account-id');
+            const accountName = button.getAttribute('data-account-name');
+            
+            document.getElementById('deleteAccountId').value = accountId;
+            document.getElementById('accountName').textContent = accountName;
+        });
+    }
+});
+</script>

@@ -13,8 +13,8 @@ namespace CMS.Web.Services
         Task<bool> ExistsAsync(string key);
         
         // Sync methods for compatibility
-        T? GetState<T>(string key);
-        void SetState<T>(string key, T value);
+        T? GetState<T>(string key) where T : class;
+        void SetState<T>(string key, T value) where T : class;
         void RemoveState(string key);
         void ClearState();
         bool HasState(string key);
@@ -120,7 +120,7 @@ namespace CMS.Web.Services
         }
 
         // Synchronous methods for compatibility
-        public T? GetState<T>(string key)
+        public T? GetState<T>(string key) where T : class
         {
             try
             {
@@ -140,7 +140,7 @@ namespace CMS.Web.Services
             }
         }
 
-        public void SetState<T>(string key, T value)
+        public void SetState<T>(string key, T value) where T : class
         {
             try
             {

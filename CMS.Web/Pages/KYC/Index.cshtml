@@ -4,70 +4,430 @@
     ViewData["Title"] = "KYC Verification";
 }
 
-<h2 class="mb-4">KYC Verification</h2>
+<style>
+    .professional-table {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    
+    .professional-table th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .professional-table td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .professional-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .professional-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .kyc-card {
+        border: none;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .kyc-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .filter-card {
+        border: none;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        border-radius: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .stats-badge {
+        background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%);
+        border: none;
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #fff;
+    }
+    
+    .modern-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .id-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        color: #5e35b1;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+    }
+    
+    .sort-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .sort-link:hover {
+        color: #e3f2fd !important;
+        transform: translateY(-1px);
+    }
+    
+    .sort-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(38, 198, 218, 0.3);
+    }
+    
+    .empty-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-right: 0.75rem;
+    }
+    
+    .doc-link {
+        background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+        color: white !important;
+        text-decoration: none;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .doc-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(66, 165, 245, 0.4);
+        color: white !important;
+    }
+</style>
 
-<table class="table table-bordered table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>User</th>
-            <th>Email</th>
-            <th>Document Type</th>
-            <th>Document</th>
-            <th>Status</th>
-            <th>Submitted At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @if (Model.KycRequests != null && Model.KycRequests.Any())
-    {
-        foreach (var kyc in Model.KycRequests)
-        {
-            <tr>
-                <td>@kyc.User.FullName</td>
-                <td>@kyc.User.Email</td>
-                <td>@kyc.DocumentType</td>
-                <td>
-                    <a href="@kyc.DocumentUrl" target="_blank" class="btn btn-sm btn-info">View</a>
-                </td>
-                <td>
-                    @if (kyc.Status == "Pending")
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 mb-2 fw-bold">KYC Verification Management</h1>
+            <p class="mb-0 opacity-75">Review and manage Know Your Customer verification requests</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <span class="stats-badge badge">
+                Total: @Model.KycRequests.Count Requests
+            </span>
+            <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                <i class="fas fa-filter me-2"></i>Advanced Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Filter Panel -->
+<div class="collapse mb-4" id="filterPanel">
+    <div class="card filter-card">
+        <div class="card-body">
+            <h6 class="card-title mb-3">
+                <i class="fas fa-sliders-h me-2"></i>Advanced Search & Filters
+            </h6>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" value="@Model.SearchTerm" 
+                           placeholder="Search by user name, email, document type...">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="statusFilter" value="@Request.Query["statusFilter"]">
+                        <option value="">All Status</option>
+                        <option value="pending" selected="@(Request.Query["statusFilter"] == "pending")">Pending</option>
+                        <option value="approved" selected="@(Request.Query["statusFilter"] == "approved")">Approved</option>
+                        <option value="rejected" selected="@(Request.Query["statusFilter"] == "rejected")">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Document Type</label>
+                    <select class="form-select" name="docTypeFilter" value="@Request.Query["docTypeFilter"]">
+                        <option value="">All Types</option>
+                        <option value="passport" selected="@(Request.Query["docTypeFilter"] == "passport")">Passport</option>
+                        <option value="license" selected="@(Request.Query["docTypeFilter"] == "license")">Driver's License</option>
+                        <option value="id" selected="@(Request.Query["docTypeFilter"] == "id")">National ID</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary modern-btn">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card kyc-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 professional-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="User" asp-route-sortDirection="@(Model.GetNextSortDirection("User"))" class="sort-link">
+                                User
+                                @if (Model.SortField == "User")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Email</th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="DocumentType" asp-route-sortDirection="@(Model.GetNextSortDirection("DocumentType"))" class="sort-link">
+                                Document Type
+                                @if (Model.SortField == "DocumentType")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Document</th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="Status" asp-route-sortDirection="@(Model.GetNextSortDirection("Status"))" class="sort-link">
+                                Status
+                                @if (Model.SortField == "Status")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>
+                            <a asp-page="./Index" asp-route-search="@Model.SearchTerm" asp-route-sortField="SubmittedAt" asp-route-sortDirection="@(Model.GetNextSortDirection("SubmittedAt"))" class="sort-link">
+                                Submitted At
+                                @if (Model.SortField == "SubmittedAt")
+                                {
+                                    <i class="fas fa-sort-@(Model.SortDirection == "asc" ? "up" : "down") sort-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-sort sort-icon"></i>
+                                }
+                            </a>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.KycRequests != null && Model.KycRequests.Any())
+                {
+                    foreach (var kyc in Model.KycRequests)
                     {
-                        <span class="badge bg-warning text-dark">Pending</span>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar">
+                                        @if (!string.IsNullOrEmpty(kyc.User?.FullName))
+                                        {
+                                            @kyc.User.FullName.Split(' ').Select(n => n.FirstOrDefault()).Take(2).Aggregate("", (a, b) => a + b)
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-user"></i>
+                                        }
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">@(kyc.User?.FullName ?? "Unknown User")</div>
+                                        <small class="text-muted">ID: @kyc.UserId</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>@(kyc.User?.Email ?? "No email")</div>
+                                <small class="text-muted">@(kyc.User?.Phone ?? "No phone")</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info status-badge">@(kyc.DocumentType ?? "Unknown")</span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(kyc.DocumentUrl))
+                                {
+                                    <a href="@kyc.DocumentUrl" target="_blank" class="doc-link">
+                                        <i class="fas fa-file-alt me-1"></i>View Document
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No document</span>
+                                }
+                            </td>
+                            <td>
+                                @if (kyc.Status?.ToLower() == "pending")
+                                {
+                                    <span class="badge bg-warning text-dark status-badge">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                }
+                                else if (kyc.Status?.ToLower() == "approved")
+                                {
+                                    <span class="badge bg-success status-badge">
+                                        <i class="fas fa-check me-1"></i>Approved
+                                    </span>
+                                }
+                                else if (kyc.Status?.ToLower() == "rejected")
+                                {
+                                    <span class="badge bg-danger status-badge">
+                                        <i class="fas fa-times me-1"></i>Rejected
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary status-badge">
+                                        <i class="fas fa-question me-1"></i>@(kyc.Status ?? "Unknown")
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div>@kyc.SubmittedAt.ToString("MMM dd, yyyy")</div>
+                                <small class="text-muted">@kyc.SubmittedAt.ToString("HH:mm")</small>
+                            </td>
+                            <td>
+                                @if (kyc.Status?.ToLower() == "pending")
+                                {
+                                    <div class="btn-group" role="group">
+                                        <form method="post" asp-page-handler="Approve" asp-route-id="@kyc.Id" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-success modern-btn" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="Reject" asp-route-id="@kyc.Id" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger modern-btn" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">
+                                        <i class="fas fa-check-circle me-1"></i>Completed
+                                    </span>
+                                }
+                            </td>
+                        </tr>
                     }
-                    else if (kyc.Status == "Approved")
-                    {
-                        <span class="badge bg-success">Approved</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Rejected</span>
-                    }
-                </td>
-                <td>@kyc.SubmittedAt.ToString("yyyy-MM-dd")</td>
-                <td>
-                    @if (kyc.Status == "Pending")
-                    {
-                        <form method="post" asp-page-handler="Approve" asp-route-id="@kyc.Id" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                        </form>
-                        <form method="post" asp-page-handler="Reject" asp-route-id="@kyc.Id" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <span class="text-muted">No actions</span>
-                    }
-                </td>
-            </tr>
-        }
-    }
-    else
-    {
-        <tr>
-            <td colspan="7" class="text-center">No KYC requests found.</td>
-        </tr>
-    }
-    </tbody>
-</table>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 empty-state">
+                            <div class="text-muted">
+                                <i class="fas fa-id-card fa-3x mb-3"></i>
+                                <p>No KYC requests found.</p>
+                                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                                {
+                                    <p>Try adjusting your search terms.</p>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
