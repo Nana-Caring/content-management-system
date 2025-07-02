@@ -1,0 +1,352 @@
+@page "/Users/Details/{id:int}"
+@model CMS.Web.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = $"User Profile - {Model.User?.FullName}";
+}
+
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 600;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border: none;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    
+    .info-card h5 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        color: #2c3e50;
+        font-weight: 500;
+        text-align: right;
+        max-width: 60%;
+        word-break: break-word;
+    }
+    
+    .empty-value {
+        color: #adb5bd;
+        font-style: italic;
+    }
+    
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .role-admin { background: #dc354550; color: #dc3545; }
+    .role-user { background: #0d6efd50; color: #0d6efd; }
+    .role-funder { background: #19875450; color: #198754; }
+    .role-dependent { background: #0dcaf050; color: #0dcaf0; }
+</style>
+
+@if (Model.User == null)
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        User not found.
+    </div>
+    <a href="/Users" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Users
+    </a>
+}
+else
+{
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="profile-avatar me-3">
+                    @Model.User.FullName.Substring(0, 1).ToUpper()
+                </div>
+                <div>
+                    <h1 class="h3 mb-1">@Model.User.FullName</h1>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="status-badge role-@Model.User.Role.ToLower()">@Model.User.Role</span>
+                        <small class="opacity-75">User ID: #@Model.User.Id</small>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="/Users" class="btn btn-light btn-sm me-2">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Users
+                </a>
+                <button class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Edit Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Basic Information -->
+            <div class="info-card">
+                <h5><i class="bi bi-person-circle text-primary"></i>Basic Information</h5>
+                <div class="info-row">
+                    <span class="info-label">User ID</span>
+                    <span class="info-value">#@Model.User.Id</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">First Name</span>
+                    <span class="info-value">@(!string.IsNullOrEmpty(Model.User.FirstName) ? Model.User.FirstName : "—")</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Middle Name</span>
+                    <span class="info-value @(!string.IsNullOrEmpty(Model.User.MiddleName) ? "" : "empty-value")">
+                        @(!string.IsNullOrEmpty(Model.User.MiddleName) ? Model.User.MiddleName : "Not provided")
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Surname</span>
+                    <span class="info-value">@(!string.IsNullOrEmpty(Model.User.Surname) ? Model.User.Surname : "—")</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Role</span>
+                    <span class="info-value">
+                        <span class="status-badge role-@Model.User.Role.ToLower()">@Model.User.Role</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="info-card">
+                <h5><i class="bi bi-person-lines-fill text-info"></i>Contact Information</h5>
+                <div class="info-row">
+                    <span class="info-label">Email Address</span>
+                    <span class="info-value">
+                        <a href="mailto:@Model.User.Email" class="text-decoration-none">@Model.User.Email</a>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ID Number</span>
+                    <span class="info-value @(!string.IsNullOrEmpty(Model.User.IdNumber) ? "" : "empty-value")">
+                        @(!string.IsNullOrEmpty(Model.User.IdNumber) ? Model.User.IdNumber : "Not provided")
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone Number</span>
+                    <span class="info-value @(!string.IsNullOrEmpty(Model.User.PhoneNumber) ? "" : "empty-value")">
+                        @if (!string.IsNullOrEmpty(Model.User.PhoneNumber))
+                        {
+                            <a href="tel:@Model.User.PhoneNumber" class="text-decoration-none">@Model.User.PhoneNumber</a>
+                        }
+                        else
+                        {
+                            <span>Not provided</span>
+                        }
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Relation</span>
+                    <span class="info-value @(!string.IsNullOrEmpty(Model.User.Relation) ? "" : "empty-value")">
+                        @(!string.IsNullOrEmpty(Model.User.Relation) ? Model.User.Relation : "Not specified")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Postal Address -->
+            <div class="info-card">
+                <h5><i class="bi bi-mailbox text-success"></i>Postal Address</h5>
+                @if (!string.IsNullOrEmpty(Model.User.PostalAddressFull))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Address Line 1</span>
+                        <span class="info-value">@(Model.User.PostalAddressLine1 ?? "—")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.User.PostalAddressLine2))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Address Line 2</span>
+                            <span class="info-value">@Model.User.PostalAddressLine2</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <span class="info-label">City</span>
+                        <span class="info-value">@(Model.User.PostalCity ?? "—")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Province</span>
+                        <span class="info-value">@(Model.User.PostalProvince ?? "—")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Postal Code</span>
+                        <span class="info-value">@(Model.User.PostalCode ?? "—")</span>
+                    </div>
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-1">Complete Address:</small>
+                        <div class="fw-medium">@Model.User.PostalAddressFull</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-mailbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">No postal address information provided</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Home Address -->
+            <div class="info-card">
+                <h5><i class="bi bi-house text-warning"></i>Home Address</h5>
+                @if (!string.IsNullOrEmpty(Model.User.HomeAddressFull))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Address Line 1</span>
+                        <span class="info-value">@(Model.User.HomeAddressLine1 ?? "—")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.User.HomeAddressLine2))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Address Line 2</span>
+                            <span class="info-value">@Model.User.HomeAddressLine2</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <span class="info-label">City</span>
+                        <span class="info-value">@(Model.User.HomeCity ?? "—")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Province</span>
+                        <span class="info-value">@(Model.User.HomeProvince ?? "—")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Postal Code</span>
+                        <span class="info-value">@(Model.User.HomeCode ?? "—")</span>
+                    </div>
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <small class="text-muted d-block mb-1">Complete Address:</small>
+                        <div class="fw-medium">@Model.User.HomeAddressFull</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-house text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2 mb-0">No home address information provided</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="info-card">
+                <h5><i class="bi bi-clock-history text-secondary"></i>System Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <span class="info-label">Account Created</span>
+                            <span class="info-value">
+                                <div>@Model.User.CreatedAt.ToString("MMMM dd, yyyy")</div>
+                                <small class="text-muted">@Model.User.CreatedAt.ToString("h:mm tt")</small>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <span class="info-label">Last Updated</span>
+                            <span class="info-value">
+                                <div>@Model.User.UpdatedAt.ToString("MMMM dd, yyyy")</div>
+                                <small class="text-muted">@Model.User.UpdatedAt.ToString("h:mm tt")</small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Information -->
+    @if (Model.User.Accounts?.Any() == true)
+    {
+        <div class="info-card">
+            <h5><i class="bi bi-wallet2 text-primary"></i>Associated Accounts</h5>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Account Number</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var account in Model.User.Accounts)
+                        {
+                            <tr>
+                                <td><code>@account.AccountNumber</code></td>
+                                <td>R @account.Balance.ToString("N2")</td>
+                                <td>
+                                    <span class="badge bg-success">Active</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}

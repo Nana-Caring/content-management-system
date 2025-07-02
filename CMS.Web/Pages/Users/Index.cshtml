@@ -4,31 +4,221 @@
     ViewData["Title"] = "Users Management";
 }
 
+@section Scripts {
+    <meta name="__RequestVerificationToken" content="@Html.AntiForgeryToken()" />
+}
+
+<!-- Hidden form for anti-forgery token -->
+<form style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- Professional Loader Overlay -->
+<div id="professional-loader" class="loader-overlay">
+    <div class="loader-container">
+        <div class="loader-content">
+            <div class="logo-container">
+                <div class="logo-circle">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <div class="loader-text">
+                <span id="loader-message">Loading users...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+    /* Professional Loader Styles */
+    .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .loader-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .loader-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .logo-container {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+    .logo-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    .logo-circle i {
+        font-size: 2rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .spinner-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(102, 126, 234, 0.2);
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: relative;
+    }
+
+    .spinner::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border: 2px solid transparent;
+        border-top: 2px solid #764ba2;
+        border-radius: 50%;
+        animation: spin 2s linear infinite reverse;
+    }
+
+    .loader-text {
+        color: #495057;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        animation: textPulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @@keyframes logoFloat {
+        0%, 100% { 
+            transform: translateY(0px) scale(1);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        50% { 
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        }
+    }
+
+    @@keyframes textPulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+
+    /* Mobile responsive loader */
+    @@media (max-width: 768px) {
+        .loader-container {
+            padding: 1rem;
+        }
+        
+        .logo-circle {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .logo-circle i {
+            font-size: 1.5rem;
+        }
+        
+        .spinner-container {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .loader-text {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Ensure loader is above all other content */
+    .loader-overlay {
+        z-index: 99999 !important;
+    }
+
+    /* Original table and page styles */
     .professional-table {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        font-size: 0.9rem;
-        line-height: 1.6;
+        font-size: 0.75rem;
+        line-height: 1.4;
     }
     
     .professional-table th {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.8px;
-        padding: 1.2rem 1rem;
+        letter-spacing: 0.6px;
+        padding: 0.8rem 0.6rem;
         border-bottom: 2px solid #dee2e6;
         background: linear-gradient(135deg, #343a40 0%, #495057 100%);
         color: white;
     }
     
     .professional-table td {
-        font-size: 0.9rem;
-        padding: 1rem;
+        font-size: 0.75rem;
+        padding: 0.6rem 0.5rem;
         vertical-align: middle;
         border-bottom: 1px solid #f1f3f4;
         color: #2c3e50;
-        line-height: 1.5;
+        line-height: 1.3;
     }
     
     .professional-table tbody tr {
@@ -141,6 +331,155 @@
     .empty-state i {
         color: #dee2e6;
         margin-bottom: 1rem;
+    }
+    
+    /* Action Button Styles */
+    .btn-group {
+        display: flex;
+        gap: 3px;
+        justify-content: center;
+    }
+    
+    .btn-group .btn {
+        padding: 0.35rem 0.7rem;
+        margin: 0;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        min-width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        border-width: 1.5px;
+    }
+    
+    .btn-group .btn i {
+        font-size: 0.8rem;
+    }
+    
+    .modern-btn {
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    
+    .modern-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    /* Actions column minimum width */
+    .actions-column {
+        min-width: 160px;
+        width: 160px;
+    }
+    
+    /* Pagination Styles */
+    .pagination-container {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .pagination-info {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .pagination .page-link {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 4px;
+        margin: 0 2px;
+        border: 1px solid #dee2e6;
+        color: #495057;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    /* Smaller font sizes for various elements */
+    .fw-bold {
+        font-size: 0.75rem !important;
+    }
+    
+    .text-muted {
+        font-size: 0.65rem !important;
+    }
+    
+    .badge {
+        font-size: 0.65rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .id-badge {
+        font-size: 0.7rem !important;
+    }
+    
+    /* Responsive styles for action buttons */
+    @@media (max-width: 768px) {
+        .btn-group {
+            gap: 1px;
+        }
+        
+        .btn-group .btn {
+            padding: 0.25rem 0.4rem;
+            min-width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
+        }
+        
+        .btn-group .btn i {
+            font-size: 0.7rem;
+        }
+        
+        .actions-column {
+            min-width: 120px;
+            width: 120px;
+        }
+    }
+    
+    /* Ensure buttons are always visible */
+    .btn-group .btn {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    /* Add hover effects for better UX */
+    tbody tr:hover .btn-group .btn {
+        opacity: 1;
+        transform: scale(1.05);
     }
 </style>
 
@@ -305,12 +644,6 @@
                             </a>
                         </th>
                         <th class="border-0">
-                            <a href="@Model.GetSortUrl("Email")" class="sort-link">
-                                <span>Email</span>
-                                <i class="@Model.GetSortIcon("Email") sort-icon"></i>
-                            </a>
-                        </th>
-                        <th class="border-0">
                             <a href="@Model.GetSortUrl("Role")" class="sort-link">
                                 <span>Role</span>
                                 <i class="@Model.GetSortIcon("Role") sort-icon"></i>
@@ -329,6 +662,12 @@
                             </a>
                         </th>
                         <th class="border-0">
+                            <a href="@Model.GetSortUrl("PhoneNumber")" class="sort-link">
+                                <span>Phone</span>
+                                <i class="@Model.GetSortIcon("PhoneNumber") sort-icon"></i>
+                            </a>
+                        </th>
+                        <th class="border-0">
                             <a href="@Model.GetSortUrl("CreatedAt")" class="sort-link">
                                 <span>Created</span>
                                 <i class="@Model.GetSortIcon("CreatedAt") sort-icon"></i>
@@ -340,7 +679,8 @@
                                 <i class="@Model.GetSortIcon("UpdatedAt") sort-icon"></i>
                             </a>
                         </th>
-                        <th class="border-0 text-center">Actions</th>
+                        <th class="border-0 text-center">Status</th>
+                        <th class="border-0 actions-column text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -368,10 +708,6 @@
                                         }
                                     </div>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="text-dark fw-medium" style="font-size: 0.9rem;">@user.Email</div>
-                                <small class="text-muted" style="font-size: 0.75rem;"><i class="fas fa-envelope me-1"></i>Email</small>
                             </td>
                             <td>
                                 <span class="role-badge badge @(user.Role.ToLower() switch {
@@ -404,6 +740,19 @@
                                 }
                             </td>
                             <td>
+                                @if (!string.IsNullOrEmpty(user.PhoneNumber))
+                                {
+                                    <div class="text-dark fw-medium" style="font-size: 0.9rem;">
+                                        <i class="fas fa-phone me-1 text-muted" style="font-size: 0.8rem;"></i>
+                                        <a href="tel:@user.PhoneNumber" class="text-decoration-none">@user.PhoneNumber</a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size: 0.85rem;">—</span>
+                                }
+                            </td>
+                            <td>
                                 <div class="text-dark fw-medium" style="font-size: 0.85rem;">@user.CreatedAt.ToString("MMM dd, yyyy")</div>
                                 <small class="text-muted" style="font-size: 0.75rem;">@user.CreatedAt.ToString("HH:mm")</small>
                             </td>
@@ -412,14 +761,73 @@
                                 <small class="text-muted" style="font-size: 0.75rem;">@user.UpdatedAt.ToString("HH:mm")</small>
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#deleteModal" 
-                                        data-user-id="@user.Id" 
-                                        data-user-name="@user.FullName"
-                                        title="Delete User">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                @if (user.IsBlocked)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-ban me-1"></i>Blocked
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(user.BlockReason))
+                                    {
+                                        <div>
+                                            <small class="text-muted" style="font-size: 0.7rem;" title="@user.BlockReason">
+                                                @(user.BlockReason.Length > 20 ? user.BlockReason.Substring(0, 20) + "..." : user.BlockReason)
+                                            </small>
+                                        </div>
+                                    }
+                                }
+                                else if (!string.IsNullOrEmpty(user.Status) && user.Status.ToLower() == "suspended")
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-pause me-1"></i>Suspended
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(user.BlockReason))
+                                    {
+                                        <div>
+                                            <small class="text-muted" style="font-size: 0.7rem;" title="@user.BlockReason">
+                                                @(user.BlockReason.Length > 20 ? user.BlockReason.Substring(0, 20) + "..." : user.BlockReason)
+                                            </small>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Active
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-center actions-column">
+                                <div class="btn-group" role="group" aria-label="User actions">
+                                    <a href="/Users/Details/@user.Id" class="btn btn-sm btn-outline-primary modern-btn" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-warning modern-btn" 
+                                            title="Edit User">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    @if (user.IsBlocked || (!string.IsNullOrEmpty(user.Status) && user.Status.ToLower() == "suspended"))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-success modern-btn" 
+                                                onclick="unblockUser(@user.Id, '@user.FullName')"
+                                                title="Unblock/Unsuspend User">
+                                            <i class="fas fa-unlock"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
+                                                onclick="blockUser(@user.Id, '@user.FullName')"
+                                                title="Block User">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-warning modern-btn" 
+                                                onclick="suspendUser(@user.Id, '@user.FullName')"
+                                                title="Suspend User">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }
@@ -450,40 +858,114 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination Controls -->
+        @if (Model.TotalUsers > 0)
+        {
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalUsers)) of @Model.TotalUsers users
+                </div>
+                
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="User pagination">
+                        <ul class="pagination pagination-sm mb-0">
+                            <!-- Previous Button -->
+                            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                <a class="page-link" href="@(Model.HasPreviousPage ? Model.GetPageUrl(Model.CurrentPage - 1) : "#")" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            
+                            <!-- Page Numbers -->
+                            @{
+                                int startPage = Math.Max(1, Model.CurrentPage - 2);
+                                int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                            }
+                            
+                            @if (startPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Model.GetPageUrl(1)">1</a>
+                                </li>
+                                @if (startPage > 2)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+                            }
+                            
+                            @for (int i = startPage; i <= endPage; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Model.GetPageUrl(i)">@i</a>
+                                </li>
+                            }
+                            
+                            @if (endPage < Model.TotalPages)
+                            {
+                                @if (endPage < Model.TotalPages - 1)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+                                <li class="page-item">
+                                    <a class="page-link" href="@Model.GetPageUrl(Model.TotalPages)">@Model.TotalPages</a>
+                                </li>
+                            }
+                            
+                            <!-- Next Button -->
+                            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                <a class="page-link" href="@(Model.HasNextPage ? Model.GetPageUrl(Model.CurrentPage + 1) : "#")" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            </div>
+        }
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
+<!-- Block Confirmation Modal -->
+<div class="modal fade" id="blockModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white border-0">
+            <div class="modal-header bg-warning text-dark border-0">
                 <div class="d-flex align-items-center">
-                    <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
-                        <i class="fas fa-exclamation-triangle text-white"></i>
+                    <div class="bg-dark bg-opacity-20 rounded-circle p-2 me-3">
+                        <i class="fas fa-ban text-dark"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title mb-0 fw-bold">Confirm Deletion</h5>
-                        <small class="opacity-75">This action cannot be undone</small>
+                        <h5 class="modal-title mb-0 fw-bold">Block User</h5>
+                        <small class="opacity-75">Restrict user access</small>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="text-center mb-3">
-                    <div class="bg-danger bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-user-times text-danger fa-2x"></i>
+                    <div class="bg-warning bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-lock text-warning fa-2x"></i>
                     </div>
-                    <h6 class="fw-bold mb-2">Delete User Account</h6>
-                    <p class="text-muted mb-0">
-                        Are you sure you want to delete <strong id="userName" class="text-dark"></strong>?
+                    <h6 class="fw-bold mb-2">Block User Account</h6>
+                    <p class="text-muted mb-3">
+                        Are you sure you want to block <strong id="blockUserName" class="text-dark"></strong>?
                     </p>
                 </div>
-                <div class="alert alert-warning border-0 bg-warning bg-opacity-10" role="alert">
+                <div class="mb-3">
+                    <label for="blockReason" class="form-label fw-medium">Reason for blocking:</label>
+                    <textarea class="form-control" id="blockReason" rows="3" placeholder="Enter the reason for blocking this user..."></textarea>
+                </div>
+                <div class="alert alert-info border-0 bg-info bg-opacity-10" role="alert">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <i class="fas fa-info-circle text-info me-2"></i>
                         <small class="mb-0">
-                            <strong>Warning:</strong> This will permanently remove the user and all associated data from the system.
+                            The user will be immediately unable to access the system. You can unblock them later if needed.
                         </small>
                     </div>
                 </div>
@@ -492,28 +974,490 @@
                 <button type="button" class="btn btn-outline-secondary modern-btn" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <form id="deleteForm" method="post" style="display: inline;">
-                    <input type="hidden" id="deleteUserId" name="id" />
-                    <button type="submit" class="btn btn-danger modern-btn" asp-page-handler="Delete">
-                        <i class="fas fa-trash-alt me-2"></i>Delete User
-                    </button>
-                </form>
+                <button type="button" class="btn btn-warning modern-btn" onclick="confirmBlock()">
+                    <i class="fas fa-ban me-2"></i>Block User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unblock Confirmation Modal -->
+<div class="modal fade" id="unblockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+                        <i class="fas fa-unlock text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold">Unblock User</h5>
+                        <small class="opacity-75">Restore user access</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <div class="bg-success bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-check text-success fa-2x"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Unblock User Account</h6>
+                    <p class="text-muted mb-0">
+                        Are you sure you want to unblock <strong id="unblockUserName" class="text-dark"></strong>?
+                    </p>
+                </div>
+                <div class="alert alert-success border-0 bg-success bg-opacity-10" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <small class="mb-0">
+                            The user will regain full access to the system immediately.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary modern-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success modern-btn" onclick="confirmUnblock()">
+                    <i class="fas fa-unlock me-2"></i>Unblock User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Suspend Confirmation Modal -->
+<div class="modal fade" id="suspendModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark border-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-dark bg-opacity-20 rounded-circle p-2 me-3">
+                        <i class="fas fa-pause text-dark"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold">Suspend User</h5>
+                        <small class="opacity-75">Temporarily restrict access</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <div class="bg-warning bg-opacity-10 rounded-circle mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-clock text-warning fa-2x"></i>
+                    </div>
+                    <h6 class="fw-bold mb-2">Suspend User Account</h6>
+                    <p class="text-muted mb-3">
+                        Are you sure you want to suspend <strong id="suspendUserName" class="text-dark"></strong>?
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label for="suspendReason" class="form-label fw-medium">Reason for suspension:</label>
+                    <textarea class="form-control" id="suspendReason" rows="3" placeholder="Enter the reason for suspending this user..."></textarea>
+                </div>
+                <div class="alert alert-warning border-0 bg-warning bg-opacity-10" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <small class="mb-0">
+                            The user will be temporarily unable to access the system. This is a reversible action.
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary modern-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-warning modern-btn" onclick="confirmSuspend()">
+                    <i class="fas fa-pause me-2"></i>Suspend User
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const deleteModal = document.getElementById('deleteModal');
-    if (deleteModal) {
-        deleteModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const userId = button.getAttribute('data-user-id');
-            const userName = button.getAttribute('data-user-name');
+let currentUserId = null;
+let currentUserName = null;
+
+// Helper function to get anti-forgery token
+function getAntiForgeryToken() {
+    // Try to get from meta tag first (if available), then from any existing form
+    const metaToken = document.querySelector('meta[name="__RequestVerificationToken"]')?.getAttribute('content');
+    const formToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    return metaToken || formToken || '';
+}
+
+// Block user function
+function blockUser(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('blockUserName').textContent = userName;
+    document.getElementById('blockReason').value = '';
+    
+    const blockModal = new bootstrap.Modal(document.getElementById('blockModal'));
+    blockModal.show();
+}
+
+// Unblock user function
+function unblockUser(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('unblockUserName').textContent = userName;
+    
+    const unblockModal = new bootstrap.Modal(document.getElementById('unblockModal'));
+    unblockModal.show();
+}
+
+// Suspend user function
+function suspendUser(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('suspendUserName').textContent = userName;
+    document.getElementById('suspendReason').value = '';
+    
+    const suspendModal = new bootstrap.Modal(document.getElementById('suspendModal'));
+    suspendModal.show();
+}
+
+// Confirm block action
+async function confirmBlock() {
+    const reason = document.getElementById('blockReason').value.trim();
+    
+    if (!reason) {
+        alert('Please provide a reason for blocking this user.');
+        return;
+    }
+    
+    return await blockUserWithLoader(currentUserId, reason);
+}
+
+// Confirm unblock action
+async function confirmUnblock() {
+    return await unblockUserWithLoader(currentUserId);
+}
+
+// Confirm suspend action
+async function confirmSuspend() {
+    const reason = document.getElementById('suspendReason').value.trim();
+    
+    if (!reason) {
+        alert('Please provide a reason for suspending this user.');
+        return;
+    }
+    
+    return await suspendUserWithLoader(currentUserId, reason);
+}
+
+// Notification function
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${iconClass} me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Professional Loader Functions
+function showLoader(message = 'Loading...') {
+    const loader = document.getElementById('professional-loader');
+    const messageElement = document.getElementById('loader-message');
+    
+    if (loader && messageElement) {
+        messageElement.textContent = message;
+        loader.classList.add('active');
+    }
+}
+
+function hideLoader() {
+    const loader = document.getElementById('professional-loader');
+    if (loader) {
+        loader.classList.remove('active');
+    }
+}
+
+// Show loader with delay to avoid flicker on fast loads
+function showLoaderWithDelay(message = 'Loading...', delay = 200) {
+    const loaderId = Date.now();
+    
+    const timer = setTimeout(() => {
+        showLoader(message);
+    }, delay);
+    
+    return {
+        loaderId,
+        cancel: () => clearTimeout(timer),
+        hide: () => {
+            clearTimeout(timer);
+            hideLoader();
+        }
+    };
+}
+
+// Enhanced user action functions with loader integration
+async function blockUserWithLoader(userId, reason) {
+    const loaderController = showLoaderWithDelay('Blocking user...', 100);
+    
+    try {
+        const response = await fetch(`/Users?handler=BlockUser&userId=${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({ reason: reason })
+        });
+        
+        if (response.ok) {
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                result = { message: 'User blocked successfully' };
+            }
             
-            document.getElementById('deleteUserId').value = userId;
-            document.getElementById('userName').textContent = userName;
+            // Close modal
+            const blockModal = bootstrap.Modal.getInstance(document.getElementById('blockModal'));
+            blockModal.hide();
+            
+            // Show success message
+            showNotification(result.message || 'User blocked successfully', 'success');
+            
+            // Update loader message
+            document.getElementById('loader-message').textContent = 'Refreshing data...';
+            
+            // Refresh the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            loaderController.hide();
+            let errorMessage = 'Failed to block user';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || errorMessage;
+                } else {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            showNotification(errorMessage, 'error');
+        }
+    } catch (error) {
+        loaderController.hide();
+        console.error('Error blocking user:', error);
+        showNotification('An error occurred while blocking the user', 'error');
+    }
+}
+
+async function unblockUserWithLoader(userId) {
+    const loaderController = showLoaderWithDelay('Unblocking user...', 100);
+    
+    try {
+        const response = await fetch(`/Users?handler=UnblockUser&userId=${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        });
+        
+        if (response.ok) {
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                result = { message: 'User unblocked successfully' };
+            }
+            
+            showNotification(result.message || 'User unblocked successfully', 'success');
+            
+            // Update loader message
+            document.getElementById('loader-message').textContent = 'Refreshing data...';
+            
+            // Refresh the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            loaderController.hide();
+            let errorMessage = 'Failed to unblock user';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || errorMessage;
+                } else {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            showNotification(errorMessage, 'error');
+        }
+    } catch (error) {
+        loaderController.hide();
+        console.error('Error unblocking user:', error);
+        showNotification('An error occurred while unblocking the user', 'error');
+    }
+}
+
+async function suspendUserWithLoader(userId, reason) {
+    const loaderController = showLoaderWithDelay('Suspending user...', 100);
+    
+    try {
+        const response = await fetch(`/Users?handler=SuspendUser&userId=${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({ reason: reason })
+        });
+        
+        if (response.ok) {
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                result = { message: 'User suspended successfully' };
+            }
+            
+            // Close modal
+            const suspendModal = bootstrap.Modal.getInstance(document.getElementById('suspendModal'));
+            suspendModal.hide();
+            
+            // Show success message
+            showNotification(result.message || 'User suspended successfully', 'success');
+            
+            // Update loader message
+            document.getElementById('loader-message').textContent = 'Refreshing data...';
+            
+            // Refresh the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            loaderController.hide();
+            let errorMessage = 'Failed to suspend user';
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    errorMessage = error.message || errorMessage;
+                } else {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            showNotification(errorMessage, 'error');
+        }
+    } catch (error) {
+        loaderController.hide();
+        console.error('Error suspending user:', error);
+        showNotification('An error occurred while suspending the user', 'error');
+    }
+}
+
+// Integrate loader with navigation and form submissions
+function handleNavigationWithLoader(url, message = 'Loading page...') {
+    showLoader(message);
+    window.location.href = url;
+}
+
+function handleFormSubmissionWithLoader(form, message = 'Applying filters...') {
+    showLoader(message);
+    form.submit();
+}
+
+// Page load integration
+document.addEventListener('DOMContentLoaded', function() {
+    // Show loader on initial page load if we have many users
+    const userCount = @Model.TotalUsers;
+    const currentPage = @Model.CurrentPage;
+    
+    // Show loader for initial large data loads
+    if (userCount > 50 && currentPage === 1) {
+        const initialLoader = showLoaderWithDelay('Loading user data...', 100);
+        
+        // Hide loader once the page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                initialLoader.hide();
+            }, 500); // Small delay to ensure smooth transition
+        });
+    }
+    
+    // Add loader to pagination links
+    document.querySelectorAll('.pagination .page-link').forEach(link => {
+        if (!link.closest('.page-item').classList.contains('disabled')) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('href');
+                if (url && url !== '#') {
+                    handleNavigationWithLoader(url, 'Loading page...');
+                }
+            });
+        }
+    });
+    
+    // Add loader to sort links
+    document.querySelectorAll('.sort-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            if (url) {
+                handleNavigationWithLoader(url, 'Sorting data...');
+            }
+        });
+    });
+    
+    // Add loader to filter form submission
+    const filterForm = document.querySelector('#filterPanel form');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleFormSubmissionWithLoader(this, 'Applying filters...');
         });
     }
     
@@ -525,6 +1469,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const collapseElement = new bootstrap.Collapse(filterPanel, {
             toggle: false
         });
+    }
+    
+    // Hide loader on page unload/navigation
+    window.addEventListener('beforeunload', function() {
+        hideLoader();
+    });
+});
+
+// Handle browser back/forward navigation
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        hideLoader();
     }
 });
 </script>

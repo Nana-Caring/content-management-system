@@ -26,6 +26,14 @@ namespace CMS.Web.Pages.Users
         public string SortBy { get; set; } = "CreatedAt";
         public string SortDirection { get; set; } = "desc";
         
+        // Pagination properties
+        public int CurrentPage { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+        public int TotalUsers { get; set; }
+        public int TotalPages => (int)Math.Ceiling((double)TotalUsers / PageSize);
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
+        
         // Available filter options
         public List<string> AvailableRoles { get; set; } = new List<string>();
         public List<string> AvailableRelations { get; set; } = new List<string>();
@@ -36,7 +44,7 @@ namespace CMS.Web.Pages.Users
         }
 
         public async Task OnGetAsync(string? search, string? roleFilter, string? relationFilter, 
-            DateTime? createdFrom, DateTime? createdTo, string? sortBy, string? sortDirection)
+            DateTime? createdFrom, DateTime? createdTo, string? sortBy, string? sortDirection, int? page)
         {
             ViewData["Title"] = "Users Management";
             
@@ -48,6 +56,7 @@ namespace CMS.Web.Pages.Users
             CreatedToDate = createdTo;
             SortBy = sortBy ?? "CreatedAt";
             SortDirection = sortDirection ?? "desc";
+            CurrentPage = page ?? 1;
             
             try
             {
@@ -60,8 +69,12 @@ namespace CMS.Web.Pages.Users
                 // Apply filters
                 var filteredUsers = ApplyFilters(allUsers);
                 
-                // Apply sorting
-                Users = ApplySorting(filteredUsers);
+                // Store total count before pagination
+                TotalUsers = filteredUsers.Count;
+                
+                // Apply sorting and pagination
+                var sortedUsers = ApplySorting(filteredUsers);
+                Users = ApplyPagination(sortedUsers);
             }
             catch (Exception ex)
             {
@@ -145,6 +158,9 @@ namespace CMS.Web.Pages.Users
                 case "relation":
                     sorted = SortDirection == "desc" ? sorted.OrderByDescending(u => u.Relation ?? "") : sorted.OrderBy(u => u.Relation ?? "");
                     break;
+                case "phonenumber":
+                    sorted = SortDirection == "desc" ? sorted.OrderByDescending(u => u.PhoneNumber ?? "") : sorted.OrderBy(u => u.PhoneNumber ?? "");
+                    break;
                 case "updatedat":
                     sorted = SortDirection == "desc" ? sorted.OrderByDescending(u => u.UpdatedAt) : sorted.OrderBy(u => u.UpdatedAt);
                     break;
@@ -155,6 +171,12 @@ namespace CMS.Web.Pages.Users
             }
 
             return sorted.ToList();
+        }
+
+        private List<User> ApplyPagination(List<User> users)
+        {
+            var skip = (CurrentPage - 1) * PageSize;
+            return users.Skip(skip).Take(PageSize).ToList();
         }
 
         public string GetSortIcon(string columnName)
@@ -193,6 +215,32 @@ namespace CMS.Web.Pages.Users
             return $"?{string.Join("&", parameters)}";
         }
 
+        public string GetPageUrl(int page)
+        {
+            var parameters = new List<string>();
+            
+            if (!string.IsNullOrEmpty(SearchTerm))
+                parameters.Add($"search={Uri.EscapeDataString(SearchTerm)}");
+                
+            if (!string.IsNullOrEmpty(RoleFilter))
+                parameters.Add($"roleFilter={Uri.EscapeDataString(RoleFilter)}");
+                
+            if (!string.IsNullOrEmpty(RelationFilter))
+                parameters.Add($"relationFilter={Uri.EscapeDataString(RelationFilter)}");
+                
+            if (CreatedFromDate.HasValue)
+                parameters.Add($"createdFrom={CreatedFromDate.Value:yyyy-MM-dd}");
+                
+            if (CreatedToDate.HasValue)
+                parameters.Add($"createdTo={CreatedToDate.Value:yyyy-MM-dd}");
+            
+            parameters.Add($"sortBy={SortBy}");
+            parameters.Add($"sortDirection={SortDirection}");
+            parameters.Add($"page={page}");
+            
+            return $"?{string.Join("&", parameters)}";
+        }
+
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             try
@@ -216,5 +264,79 @@ namespace CMS.Web.Pages.Users
 
             return RedirectToPage();
         }
+
+        public async Task<IActionResult> OnPostBlockUserAsync(int userId, [FromBody] BlockUserRequest request)
+        {
+            try
+            {
+                var result = await _apiService.BlockUserAsync(userId, request.Reason);
+                
+                if (result.Success)
+                {
+                    return new JsonResult(new { message = result.Message });
+                }
+                else
+                {
+                    Response.StatusCode = 400;
+                    return new JsonResult(new { message = result.Message });
+                }
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return new JsonResult(new { message = $"An error occurred while blocking the user: {ex.Message}" });
+            }
+        }
+
+        public async Task<IActionResult> OnPostUnblockUserAsync(int userId)
+        {
+            try
+            {
+                var result = await _apiService.UnblockUserAsync(userId);
+                
+                if (result.Success)
+                {
+                    return new JsonResult(new { message = result.Message });
+                }
+                else
+                {
+                    Response.StatusCode = 400;
+                    return new JsonResult(new { message = result.Message });
+                }
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return new JsonResult(new { message = $"An error occurred while unblocking the user: {ex.Message}" });
+            }
+        }
+
+        public async Task<IActionResult> OnPostSuspendUserAsync(int userId, [FromBody] BlockUserRequest request)
+        {
+            try
+            {
+                var result = await _apiService.SuspendUserAsync(userId, request.Reason);
+                
+                if (result.Success)
+                {
+                    return new JsonResult(new { message = result.Message });
+                }
+                else
+                {
+                    Response.StatusCode = 400;
+                    return new JsonResult(new { message = result.Message });
+                }
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return new JsonResult(new { message = $"An error occurred while suspending the user: {ex.Message}" });
+            }
+        }
+    }
+
+    public class BlockUserRequest
+    {
+        public string Reason { get; set; } = string.Empty;
     }
 }

@@ -10,6 +10,9 @@ namespace CMS.Web.Services
         Task<List<User>> GetUsersAsync();
         Task<User?> GetUserByIdAsync(int id);
         Task<bool> DeleteUserAsync(int id);
+        Task<ApiResponse<User>> BlockUserAsync(int userId, string reason);
+        Task<ApiResponse<User>> UnblockUserAsync(int userId);
+        Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason);
 
         // Accounts
         Task<List<Account>> GetAccountsAsync();
@@ -242,6 +245,157 @@ namespace CMS.Web.Services
             return await DeleteAsync($"/admin/users/{id}");
         }
 
+        public async Task<ApiResponse<User>> BlockUserAsync(int userId, string reason)
+        {
+            try
+            {
+                var requestData = new { reason = reason };
+                var response = await PutAsync($"/admin/users/{userId}/block", requestData);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<BlockUserResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return new ApiResponse<User> 
+                        { 
+                            Success = true, 
+                            Message = result?.Message ?? "User blocked successfully",
+                            Data = result?.User 
+                        };
+                    }
+                    return new ApiResponse<User> { Success = true, Message = "User blocked successfully" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<User> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to block user: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error blocking user {userId}");
+                return new ApiResponse<User> { Success = false, Message = "An error occurred while blocking the user" };
+            }
+        }
+
+        public async Task<ApiResponse<User>> UnblockUserAsync(int userId)
+        {
+            try
+            {
+                var response = await PutAsync($"/admin/users/{userId}/unblock", new { });
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<BlockUserResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return new ApiResponse<User> 
+                        { 
+                            Success = true, 
+                            Message = result?.Message ?? "User unblocked successfully",
+                            Data = result?.User 
+                        };
+                    }
+                    return new ApiResponse<User> { Success = true, Message = "User unblocked successfully" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<User> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to unblock user: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error unblocking user {userId}");
+                return new ApiResponse<User> { Success = false, Message = "An error occurred while unblocking the user" };
+            }
+        }
+
+        public async Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason)
+        {
+            try
+            {
+                var requestData = new { reason = reason };
+                var response = await PutAsync($"/admin/users/{userId}/suspend", requestData);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<BlockUserResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return new ApiResponse<User> 
+                        { 
+                            Success = true, 
+                            Message = result?.Message ?? "User suspended successfully",
+                            Data = result?.User 
+                        };
+                    }
+                    return new ApiResponse<User> { Success = true, Message = "User suspended successfully" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<User> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to suspend user: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error suspending user {userId}");
+                return new ApiResponse<User> { Success = false, Message = "An error occurred while suspending the user" };
+            }
+        }
+
+        private async Task<HttpResponseMessage> PutAsync(string endpoint, object data)
+        {
+            try
+            {
+                await SetAuthenticationHeaders();
+                
+                var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                _logger.LogInformation($"Making PUT request to: {API_BASE_URL}{endpoint}");
+                
+                var response = await _httpClient.PutAsync($"{API_BASE_URL}{endpoint}", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation($"API Response Status: {response.StatusCode}");
+                _logger.LogInformation($"API Response Content: {responseContent}");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error making PUT request to {endpoint}");
+                throw;
+            }
+        }
+
         // Accounts
         public async Task<List<Account>> GetAccountsAsync()
         {
@@ -378,6 +532,19 @@ namespace CMS.Web.Services
     }
 
     // API Response Models
+    public class ApiResponse<T>
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public T? Data { get; set; }
+    }
+
+    public class BlockUserResponse
+    {
+        public string Message { get; set; } = string.Empty;
+        public User? User { get; set; }
+    }
+
     public class ApiStatsResponse
     {
         public int Users { get; set; }
