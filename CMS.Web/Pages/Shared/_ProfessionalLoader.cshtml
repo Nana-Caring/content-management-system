@@ -1,0 +1,346 @@
+<!-- Professional Loader Overlay - Global Component -->
+<div id="professional-loader" class="loader-overlay">
+    <div class="loader-container">
+        <div class="loader-content">
+            <div class="logo-container">
+                <div class="logo-circle">
+                    <i class="fas fa-cog" id="loader-icon"></i>
+                </div>
+            </div>
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <div class="loader-text">
+                <span id="loader-message">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Professional Loader Styles - Global */
+    .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .loader-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .loader-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .logo-container {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+    .logo-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(255, 213, 79, 0.3);
+        animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    .logo-circle i {
+        font-size: 2rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .spinner-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(255, 213, 79, 0.2);
+        border-top: 3px solid #ffd54f;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        position: relative;
+    }
+
+    .spinner::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border: 2px solid transparent;
+        border-top: 2px solid #ff8a65;
+        border-radius: 50%;
+        animation: spin 2s linear infinite reverse;
+    }
+
+    .loader-text {
+        color: #495057;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        animation: textPulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @@keyframes logoFloat {
+        0%, 100% { 
+            transform: translateY(0px) scale(1);
+            box-shadow: 0 8px 32px rgba(255, 213, 79, 0.3);
+        }
+        50% { 
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 12px 40px rgba(255, 213, 79, 0.4);
+        }
+    }
+
+    @@keyframes textPulse {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+    }
+
+    /* Mobile responsive loader */
+    @@media (max-width: 768px) {
+        .loader-container {
+            padding: 1rem;
+        }
+        
+        .logo-circle {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .logo-circle i {
+            font-size: 1.5rem;
+        }
+        
+        .spinner-container {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .loader-text {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Ensure loader is above all other content */
+    .loader-overlay {
+        z-index: 99999 !important;
+    }
+
+    /* Page-specific icon themes */
+    .loader-theme-transactions .logo-circle {
+        background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+    }
+
+    .loader-theme-users .logo-circle {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .loader-theme-accounts .logo-circle {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .loader-theme-products .logo-circle {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .loader-theme-kyc .logo-circle {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .loader-theme-default .logo-circle {
+        background: linear-gradient(135deg, #ffd54f 0%, #ff8a65 100%);
+    }
+</style>
+
+<script>
+    // Global Professional Loader Functions
+    window.ProfessionalLoader = {
+        // Show loader with message and optional theme
+        show: function(message = 'Loading...', theme = 'default') {
+            const loader = document.getElementById('professional-loader');
+            const messageElement = document.getElementById('loader-message');
+            
+            if (loader && messageElement) {
+                messageElement.textContent = message;
+                
+                // Apply theme
+                loader.className = `loader-overlay loader-theme-${theme}`;
+                
+                loader.classList.add('active');
+            }
+        },
+
+        // Hide loader
+        hide: function() {
+            const loader = document.getElementById('professional-loader');
+            if (loader) {
+                loader.classList.remove('active');
+            }
+        },
+
+        // Show loader with delay to avoid flicker on fast loads
+        showWithDelay: function(message = 'Loading...', delay = 200, theme = 'default') {
+            const loaderId = Date.now();
+            
+            const timer = setTimeout(() => {
+                this.show(message, theme);
+            }, delay);
+            
+            return {
+                loaderId,
+                cancel: () => clearTimeout(timer),
+                hide: () => {
+                    clearTimeout(timer);
+                    this.hide();
+                }
+            };
+        },
+
+        // Update loader icon for different page types
+        setIcon: function(iconClass) {
+            const iconElement = document.getElementById('loader-icon');
+            if (iconElement) {
+                iconElement.className = iconClass;
+            }
+        },
+
+        // Set loader theme and icon based on page type
+        setPageTheme: function(pageType) {
+            const themes = {
+                'transactions': { theme: 'transactions', icon: 'fas fa-exchange-alt' },
+                'users': { theme: 'users', icon: 'fas fa-users' },
+                'accounts': { theme: 'accounts', icon: 'fas fa-wallet' },
+                'products': { theme: 'products', icon: 'fas fa-box' },
+                'kyc': { theme: 'kyc', icon: 'fas fa-user-check' },
+                'default': { theme: 'default', icon: 'fas fa-cog' }
+            };
+
+            const config = themes[pageType] || themes['default'];
+            this.setIcon(config.icon);
+            
+            // Store theme for future use
+            this._currentTheme = config.theme;
+        },
+
+        // Get current theme
+        getCurrentTheme: function() {
+            return this._currentTheme || 'default';
+        },
+
+        // Navigation with loader
+        navigateWithLoader: function(url, message = 'Loading page...') {
+            this.show(message, this.getCurrentTheme());
+            window.location.href = url;
+        },
+
+        // Form submission with loader
+        submitFormWithLoader: function(form, message = 'Processing...') {
+            this.show(message, this.getCurrentTheme());
+            if (form && typeof form.submit === 'function') {
+                form.submit();
+            }
+        }
+    };
+
+    // Initialize on DOM load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-detect page type from URL or body class
+        const path = window.location.pathname.toLowerCase();
+        let pageType = 'default';
+        
+        if (path.includes('/transactions')) pageType = 'transactions';
+        else if (path.includes('/users')) pageType = 'users';
+        else if (path.includes('/accounts')) pageType = 'accounts';
+        else if (path.includes('/products')) pageType = 'products';
+        else if (path.includes('/kyc')) pageType = 'kyc';
+        
+        // Set initial theme
+        window.ProfessionalLoader.setPageTheme(pageType);
+
+        // Hide loader on page unload/navigation
+        window.addEventListener('beforeunload', function() {
+            window.ProfessionalLoader.hide();
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.ProfessionalLoader.hide();
+            }
+        });
+    });
+
+    // Legacy compatibility functions (for existing code)
+    function showLoader(message = 'Loading...') {
+        window.ProfessionalLoader.show(message);
+    }
+
+    function hideLoader() {
+        window.ProfessionalLoader.hide();
+    }
+
+    function showLoaderWithDelay(message = 'Loading...', delay = 200) {
+        return window.ProfessionalLoader.showWithDelay(message, delay);
+    }
+
+    function handleNavigationWithLoader(url, message = 'Loading page...') {
+        window.ProfessionalLoader.navigateWithLoader(url, message);
+    }
+
+    function handleFormSubmissionWithLoader(form, message = 'Processing...') {
+        window.ProfessionalLoader.submitFormWithLoader(form, message);
+    }
+</script>

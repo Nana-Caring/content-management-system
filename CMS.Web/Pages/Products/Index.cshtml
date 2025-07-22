@@ -4,6 +4,16 @@
     ViewData["Title"] = "Products Management";
 }
 
+<script>
+    // Initialize page-specific loader theme
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set products theme for this page
+        if (window.ProfessionalLoader) {
+            window.ProfessionalLoader.setPageTheme('products');
+        }
+    });
+</script>
+
 <style>
     .professional-table {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -186,6 +196,73 @@
         color: white;
         text-decoration: none;
     }
+
+    /* Scrollable Table Container */
+    .scrollable-table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        background: white;
+        position: relative;
+    }
+
+    .scrollable-table-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .scrollable-table-container::-webkit-scrollbar-track {
+        background: #f1f3f4;
+        border-radius: 4px;
+    }
+
+    .scrollable-table-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+        border-radius: 4px;
+        transition: background 0.2s ease;
+    }
+
+    .scrollable-table-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    }
+
+    /* Sticky Header */
+    .scrollable-table-container thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Scroll to Top Button */
+    .scroll-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(171, 71, 188, 0.3);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        cursor: pointer;
+    }
+
+    .scroll-to-top:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(171, 71, 188, 0.4);
+    }
+
+    .scroll-to-top.show {
+        display: flex;
+    }
 </style>
 
 <div class="page-header">
@@ -278,7 +355,7 @@
 
 <div class="card product-card">
     <div class="card-body">
-        <div class="table-responsive">
+        <div class="scrollable-table-container">
             <table class="table table-hover align-middle mb-0 professional-table">
                 <thead class="table-dark">
                     <tr>
@@ -412,6 +489,11 @@
     </div>
 </div>
 
+<!-- Scroll to Top Button -->
+<button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+    <i class="fas fa-chevron-up"></i>
+</button>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
@@ -442,6 +524,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const productName = button.getAttribute('data-product-name');
             
             document.getElementById('productName').textContent = productName;
+            document.getElementById('deleteLink').href = `./Delete?id=${productId}`;
+        });
+    }
+
+    // Scroll to Top functionality
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+    const scrollableContainer = document.querySelector('.scrollable-table-container');
+    
+    if (scrollableContainer && scrollToTopBtn) {
+        scrollableContainer.addEventListener('scroll', function() {
+            if (scrollableContainer.scrollTop > 300) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        });
+    }
+});
+
+function scrollToTop() {
+    const scrollableContainer = document.querySelector('.scrollable-table-container');
+    if (scrollableContainer) {
+        scrollableContainer.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+</script>
             document.getElementById('deleteLink').href = './Delete?id=' + productId;
         });
     }

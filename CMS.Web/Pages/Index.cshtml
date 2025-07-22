@@ -33,8 +33,8 @@
 
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-start border-4 border-primary shadow h-100">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card shadow h-100" style="box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -46,7 +46,7 @@
                             }
                         </div>
                         <div class="col-auto">
-                            <i class="bi bi-people fa-2x text-muted"></i>
+                            <i class="bi bi-people" style="font-size: 2.8rem; color: #6c757d;"></i>
                         </div>
                     </div>
                 </div>
@@ -57,56 +57,8 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-start border-4 border-success shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Total Accounts</div>
-                            <div class="h5 mb-0 fw-bold text-gray-800">@Model.Stats.TotalAccounts.ToString("N0")</div>
-                            @if (Model.Stats.TotalBalance > 0)
-                            {
-                                <small class="text-muted">Balance: @Model.Stats.TotalBalance.ToString("C")</small>
-                            }
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-wallet2 fa-2x text-muted"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-success stretched-link" asp-page="/Accounts/Index">View Details</a>
-                    <div class="small text-success"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-start border-4 border-warning shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Total Transactions</div>
-                            <div class="h5 mb-0 fw-bold text-gray-800">@Model.Stats.TotalTransactions.ToString("N0")</div>
-                            @if (Model.Stats.TodayTransactionAmount > 0)
-                            {
-                                <small class="text-info">Today: @Model.Stats.TodayTransactionAmount.ToString("C")</small>
-                            }
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-arrow-left-right fa-2x text-muted"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-warning stretched-link" asp-page="/Transactions/Index">View Details</a>
-                    <div class="small text-warning"><i class="fas fa-angle-right"></i></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-start border-4 border-info shadow h-100">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card shadow h-100" style="box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -118,13 +70,33 @@
                             }
                         </div>
                         <div class="col-auto">
-                            <i class="bi bi-shield-check fa-2x text-muted"></i>
+                            <i class="bi bi-shield-check" style="font-size: 2.8rem; color: #6c757d;"></i>
                         </div>
                     </div>
                 </div>
                 <div class="card-footer d-flex align-items-center justify-content-between">
                     <a class="small text-info stretched-link" asp-page="/KYC/Index">View Details</a>
                     <div class="small text-info"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card shadow h-100" style="box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Portal</div>
+                            <small class="text-muted">Access your portal features</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-door-open" style="font-size: 2.8rem; color: #6c757d;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-success stretched-link" asp-page="/Portal/Index">Go to Portal</a>
+                    <div class="small text-success"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
@@ -146,15 +118,9 @@
                             </a>
                         </div>
                         <div class="col-md-2 col-sm-4 col-6 mb-3">
-                            <a asp-page="/Accounts/Index" class="btn btn-outline-success w-100">
-                                <i class="bi bi-wallet2 d-block mb-1"></i>
-                                <small>View Accounts</small>
-                            </a>
-                        </div>
-                        <div class="col-md-2 col-sm-4 col-6 mb-3">
-                            <a asp-page="/Transactions/Index" class="btn btn-outline-info w-100">
-                                <i class="bi bi-arrow-left-right d-block mb-1"></i>
-                                <small>Transactions</small>
+                            <a asp-page="/Portal/Index" class="btn btn-outline-success w-100">
+                                <i class="bi bi-door-open d-block mb-1"></i>
+                                <small>Portal</small>
                             </a>
                         </div>
                         <div class="col-md-2 col-sm-4 col-6 mb-3">

@@ -13,187 +13,7 @@
     @Html.AntiForgeryToken()
 </form>
 
-<!-- Professional Loader Overlay -->
-<div id="professional-loader" class="loader-overlay">
-    <div class="loader-container">
-        <div class="loader-content">
-            <div class="logo-container">
-                <div class="logo-circle">
-                    <i class="fas fa-users"></i>
-                </div>
-            </div>
-            <div class="spinner-container">
-                <div class="spinner"></div>
-            </div>
-            <div class="loader-text">
-                <span id="loader-message">Loading users...</span>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-    /* Professional Loader Styles */
-    .loader-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .loader-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .loader-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 2rem;
-    }
-
-    .loader-content {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-    .logo-container {
-        position: relative;
-        margin-bottom: 0.5rem;
-    }
-
-    .logo-circle {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        animation: logoFloat 3s ease-in-out infinite;
-    }
-
-    .logo-circle i {
-        font-size: 2rem;
-        color: white;
-        font-weight: 600;
-    }
-
-    .spinner-container {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .spinner {
-        width: 60px;
-        height: 60px;
-        border: 3px solid rgba(102, 126, 234, 0.2);
-        border-top: 3px solid #667eea;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        position: relative;
-    }
-
-    .spinner::before {
-        content: '';
-        position: absolute;
-        top: -3px;
-        left: -3px;
-        right: -3px;
-        bottom: -3px;
-        border: 2px solid transparent;
-        border-top: 2px solid #764ba2;
-        border-radius: 50%;
-        animation: spin 2s linear infinite reverse;
-    }
-
-    .loader-text {
-        color: #495057;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        font-size: 1rem;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        animation: textPulse 2s ease-in-out infinite;
-    }
-
-    @@keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @@keyframes logoFloat {
-        0%, 100% { 
-            transform: translateY(0px) scale(1);
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        }
-        50% { 
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
-        }
-    }
-
-    @@keyframes textPulse {
-        0%, 100% { opacity: 0.7; }
-        50% { opacity: 1; }
-    }
-
-    /* Mobile responsive loader */
-    @@media (max-width: 768px) {
-        .loader-container {
-            padding: 1rem;
-        }
-        
-        .logo-circle {
-            width: 60px;
-            height: 60px;
-        }
-        
-        .logo-circle i {
-            font-size: 1.5rem;
-        }
-        
-        .spinner-container {
-            width: 100px;
-            height: 100px;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-        }
-        
-        .loader-text {
-            font-size: 0.9rem;
-        }
-    }
-
-    /* Ensure loader is above all other content */
-    .loader-overlay {
-        z-index: 99999 !important;
-    }
-
     /* Original table and page styles */
     .professional-table {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -392,41 +212,111 @@
         width: 160px;
     }
     
-    /* Pagination Styles */
-    .pagination-container {
-        display: flex;
-        justify-content: between;
-        align-items: center;
-        margin-top: 1rem;
-        padding: 1rem;
+    /* Scrollable Table Styles */
+    .scrollable-table-container {
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        position: relative;
     }
     
-    .pagination-info {
+    .scrollable-table-container::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .scrollable-table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .scrollable-table-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+    
+    .scrollable-table-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+    
+    /* Firefox scrollbar */
+    .scrollable-table-container {
+        scrollbar-width: thin;
+        scrollbar-color: #667eea #f1f1f1;
+    }
+    
+    /* Sticky header for scrollable table */
+    .scrollable-table-container .professional-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Smooth scrolling */
+    .scrollable-table-container {
+        scroll-behavior: smooth;
+    }
+    
+    /* Row hover effect with scroll */
+    .scrollable-table-container .professional-table tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.08);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+    
+    /* Table info overlay */
+    .table-info-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
         font-size: 0.8rem;
         color: #6c757d;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        z-index: 5;
     }
     
-    .pagination .page-link {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.7rem;
-        border-radius: 4px;
-        margin: 0 2px;
-        border: 1px solid #dee2e6;
-        color: #495057;
-    }
-    
-    .pagination .page-link:hover {
-        background-color: #f8f9fa;
-        color: #0d6efd;
-    }
-    
-    .pagination .page-item.active .page-link {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
+    /* Scroll to top button */
+    .scroll-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .scroll-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .scroll-to-top:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
     }
     
     /* Smaller font sizes for various elements */
@@ -491,7 +381,11 @@
         </div>
         <div class="d-flex gap-3 align-items-center">
             <span class="stats-badge badge">
-                Total: @Model.Users.Count Users
+                Total: @Model.TotalUsers Users
+                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
+                {
+                    <span class="text-light opacity-75">| Filtered</span>
+                }
             </span>
             <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
                 <i class="fas fa-sliders-h me-2"></i>Advanced Filters
@@ -627,7 +521,18 @@
 
 <div class="user-card card">
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <!-- Table Info Overlay -->
+        <div class="table-info-overlay">
+            <i class="fas fa-users me-1"></i>
+            @Model.TotalUsers users total
+            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
+            {
+                <span class="text-primary">| Filtered</span>
+            }
+        </div>
+        
+        <!-- Scrollable Table Container -->
+        <div class="scrollable-table-container" id="users-table-container">
             <table class="professional-table table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
@@ -680,7 +585,7 @@
                             </a>
                         </th>
                         <th class="border-0 text-center">Status</th>
-                        <th class="border-0 actions-column text-center">Actions</th>
+                        <!-- Actions column header removed -->
                     </tr>
                 </thead>
                 <tbody>
@@ -688,7 +593,7 @@
                 {
                     foreach (var user in Model.Users)
                     {
-                        <tr>
+                        <tr data-user-id="@user.Id">
                             <td>
                                 <span class="id-badge">
                                     #@user.Id
@@ -796,39 +701,7 @@
                                     </span>
                                 }
                             </td>
-                            <td class="text-center actions-column">
-                                <div class="btn-group" role="group" aria-label="User actions">
-                                    <a href="/Users/Details/@user.Id" class="btn btn-sm btn-outline-primary modern-btn" 
-                                       title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-warning modern-btn" 
-                                            title="Edit User">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    @if (user.IsBlocked || (!string.IsNullOrEmpty(user.Status) && user.Status.ToLower() == "suspended"))
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-success modern-btn" 
-                                                onclick="unblockUser(@user.Id, '@user.FullName')"
-                                                title="Unblock/Unsuspend User">
-                                            <i class="fas fa-unlock"></i>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-danger modern-btn" 
-                                                onclick="blockUser(@user.Id, '@user.FullName')"
-                                                title="Block User">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-warning modern-btn" 
-                                                onclick="suspendUser(@user.Id, '@user.FullName')"
-                                                title="Suspend User">
-                                            <i class="fas fa-pause"></i>
-                                        </button>
-                                    }
-                                </div>
-                            </td>
+                            <!-- Actions column removed; actions will appear in popup/modal -->
                         </tr>
                     }
                 }
@@ -858,78 +731,13 @@
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination Controls -->
-        @if (Model.TotalUsers > 0)
-        {
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalUsers)) of @Model.TotalUsers users
-                </div>
-                
-                @if (Model.TotalPages > 1)
-                {
-                    <nav aria-label="User pagination">
-                        <ul class="pagination pagination-sm mb-0">
-                            <!-- Previous Button -->
-                            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                                <a class="page-link" href="@(Model.HasPreviousPage ? Model.GetPageUrl(Model.CurrentPage - 1) : "#")" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                            
-                            <!-- Page Numbers -->
-                            @{
-                                int startPage = Math.Max(1, Model.CurrentPage - 2);
-                                int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
-                            }
-                            
-                            @if (startPage > 1)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" href="@Model.GetPageUrl(1)">1</a>
-                                </li>
-                                @if (startPage > 2)
-                                {
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                }
-                            }
-                            
-                            @for (int i = startPage; i <= endPage; i++)
-                            {
-                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link" href="@Model.GetPageUrl(i)">@i</a>
-                                </li>
-                            }
-                            
-                            @if (endPage < Model.TotalPages)
-                            {
-                                @if (endPage < Model.TotalPages - 1)
-                                {
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                }
-                                <li class="page-item">
-                                    <a class="page-link" href="@Model.GetPageUrl(Model.TotalPages)">@Model.TotalPages</a>
-                                </li>
-                            }
-                            
-                            <!-- Next Button -->
-                            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                                <a class="page-link" href="@(Model.HasNextPage ? Model.GetPageUrl(Model.CurrentPage + 1) : "#")" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                }
-            </div>
-        }
     </div>
 </div>
+
+<!-- Scroll to Top Button -->
+<button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()" title="Scroll to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
 
 <!-- Block Confirmation Modal -->
 <div class="modal fade" id="blockModal" tabindex="-1">
@@ -1153,71 +961,58 @@ async function confirmSuspend() {
     return await suspendUserWithLoader(currentUserId, reason);
 }
 
-// Notification function
-function showNotification(message, type) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
-    
-    const notification = document.createElement('div');
-    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="fas ${iconClass} me-2"></i>
-            <span>${message}</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification && notification.parentNode) {
-            notification.remove();
+// Professional Loader integration
+const ProfessionalLoader = {
+    show(message = 'Loading...', delay = 0, idPrefix = '') {
+        const loaderId = `${idPrefix}-loader`;
+        const loaderElement = document.createElement('div');
+        loaderElement.id = loaderId;
+        loaderElement.className = 'professional-loader';
+        loaderElement.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="loader-message">${message}</div>
+        `;
+        
+        document.body.appendChild(loaderElement);
+        
+        // Optional: Add a backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'loader-backdrop';
+        document.body.appendChild(backdrop);
+        
+        // Hide loader after delay
+        const timer = setTimeout(() => {
+            this.hide(loaderId, backdrop);
+        }, delay);
+        
+        return {
+            loaderId,
+            cancel: () => clearTimeout(timer),
+            hide: () => {
+                clearTimeout(timer);
+                this.hide(loaderId, backdrop);
+            }
+        };
+    },
+    showWithDelay(message = 'Loading...', delay = 500, idPrefix = '') {
+        return this.show(message, delay, idPrefix);
+    },
+    hide(loaderId, backdrop) {
+        const loaderElement = document.getElementById(loaderId);
+        if (loaderElement) {
+            loaderElement.remove();
         }
-    }, 5000);
-}
-
-// Professional Loader Functions
-function showLoader(message = 'Loading...') {
-    const loader = document.getElementById('professional-loader');
-    const messageElement = document.getElementById('loader-message');
-    
-    if (loader && messageElement) {
-        messageElement.textContent = message;
-        loader.classList.add('active');
-    }
-}
-
-function hideLoader() {
-    const loader = document.getElementById('professional-loader');
-    if (loader) {
-        loader.classList.remove('active');
-    }
-}
-
-// Show loader with delay to avoid flicker on fast loads
-function showLoaderWithDelay(message = 'Loading...', delay = 200) {
-    const loaderId = Date.now();
-    
-    const timer = setTimeout(() => {
-        showLoader(message);
-    }, delay);
-    
-    return {
-        loaderId,
-        cancel: () => clearTimeout(timer),
-        hide: () => {
-            clearTimeout(timer);
-            hideLoader();
+        if (backdrop) {
+            backdrop.remove();
         }
-    };
-}
+    }
+};
 
 // Enhanced user action functions with loader integration
 async function blockUserWithLoader(userId, reason) {
-    const loaderController = showLoaderWithDelay('Blocking user...', 100);
+    const loaderController = ProfessionalLoader.showWithDelay('Blocking user...', 100, 'users');
     
     try {
         const response = await fetch(`/Users?handler=BlockUser&userId=${userId}`, {
@@ -1280,7 +1075,7 @@ async function blockUserWithLoader(userId, reason) {
 }
 
 async function unblockUserWithLoader(userId) {
-    const loaderController = showLoaderWithDelay('Unblocking user...', 100);
+    const loaderController = ProfessionalLoader.showWithDelay('Unblocking user...', 100, 'users');
     
     try {
         const response = await fetch(`/Users?handler=UnblockUser&userId=${userId}`, {
@@ -1299,6 +1094,10 @@ async function unblockUserWithLoader(userId) {
             } else {
                 result = { message: 'User unblocked successfully' };
             }
+            
+            // Close modal
+            const unblockModal = bootstrap.Modal.getInstance(document.getElementById('unblockModal'));
+            unblockModal.hide();
             
             showNotification(result.message || 'User unblocked successfully', 'success');
             
@@ -1337,7 +1136,7 @@ async function unblockUserWithLoader(userId) {
 }
 
 async function suspendUserWithLoader(userId, reason) {
-    const loaderController = showLoaderWithDelay('Suspending user...', 100);
+    const loaderController = ProfessionalLoader.showWithDelay('Suspending user...', 100, 'users');
     
     try {
         const response = await fetch(`/Users?handler=SuspendUser&userId=${userId}`, {
@@ -1399,15 +1198,54 @@ async function suspendUserWithLoader(userId, reason) {
     }
 }
 
-// Integrate loader with navigation and form submissions
-function handleNavigationWithLoader(url, message = 'Loading page...') {
-    showLoader(message);
-    window.location.href = url;
+// Initialize scroll functionality for the users table
+initializeScrollFunctionality();
+
+// Scroll functionality
+function initializeScrollFunctionality() {
+    const tableContainer = document.getElementById('users-table-container');
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+    
+    if (tableContainer && scrollToTopBtn) {
+        // Show/hide scroll to top button based on scroll position
+        tableContainer.addEventListener('scroll', function() {
+            if (this.scrollTop > 200) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        });
+        
+        // Smooth scroll behavior
+        tableContainer.style.scrollBehavior = 'smooth';
+    }
 }
 
-function handleFormSubmissionWithLoader(form, message = 'Applying filters...') {
-    showLoader(message);
-    form.submit();
+function scrollToTop() {
+    const tableContainer = document.getElementById('users-table-container');
+    if (tableContainer) {
+        tableContainer.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Enhanced scroll to specific user
+function scrollToUser(userId) {
+    const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (userRow) {
+        userRow.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+        
+        // Highlight the row briefly
+        userRow.style.backgroundColor = 'rgba(102, 126, 234, 0.2)';
+        setTimeout(() => {
+            userRow.style.backgroundColor = '';
+        }, 2000);
+    }
 }
 
 // Page load integration
@@ -1418,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show loader for initial large data loads
     if (userCount > 50 && currentPage === 1) {
-        const initialLoader = showLoaderWithDelay('Loading user data...', 100);
+        const initialLoader = ProfessionalLoader.showWithDelay('Loading user data...', 100, 'users');
         
         // Hide loader once the page is fully loaded
         window.addEventListener('load', function() {
@@ -1427,19 +1265,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500); // Small delay to ensure smooth transition
         });
     }
-    
-    // Add loader to pagination links
-    document.querySelectorAll('.pagination .page-link').forEach(link => {
-        if (!link.closest('.page-item').classList.contains('disabled')) {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const url = this.getAttribute('href');
-                if (url && url !== '#') {
-                    handleNavigationWithLoader(url, 'Loading page...');
-                }
-            });
-        }
-    });
     
     // Add loader to sort links
     document.querySelectorAll('.sort-link').forEach(link => {
@@ -1460,6 +1285,9 @@ document.addEventListener('DOMContentLoaded', function() {
             handleFormSubmissionWithLoader(this, 'Applying filters...');
         });
     }
+    
+    // Initialize scroll functionality for the users table
+    initializeScrollFunctionality();
     
     // Auto-collapse filter panel if no filters are active
     const filterPanel = document.getElementById('filterPanel');

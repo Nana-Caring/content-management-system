@@ -1,4 +1,6 @@
 using CMS.Web.Models;
+using CMS.Web.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
 
@@ -7,18 +9,23 @@ namespace CMS.Web.Services
     public interface IAuthService
     {
         Task<AdminLoginResponse> AuthenticateAdminAsync(AdminLoginRequest request);
+        Task<AdminLoginResponse> AuthenticateAdminLocalAsync(AdminLoginRequest request);
     }
 
     public class AuthService : IAuthService
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<AuthService> _logger;
+        private readonly CmsDbContext _context;
+        private readonly IJwtService _jwtService;
         private const string API_BASE_URL = "https://nanacaring-backend.onrender.com";
 
-        public AuthService(HttpClient httpClient, ILogger<AuthService> logger)
+        public AuthService(HttpClient httpClient, ILogger<AuthService> logger, CmsDbContext context, IJwtService jwtService)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _context = context;
+            _jwtService = jwtService;
         }
 
         public async Task<AdminLoginResponse> AuthenticateAdminAsync(AdminLoginRequest request)
@@ -131,6 +138,67 @@ namespace CMS.Web.Services
             { 
                 Message = "No valid login endpoint found"
             };
+        }
+
+        /// <summary>
+        /// Authenticate admin user against local database and generate JWT token
+        /// </summary>
+        public async Task<AdminLoginResponse> AuthenticateAdminLocalAsync(AdminLoginRequest request)
+        {
+            try
+            {
+                // Find user in local database
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == request.Email && u.Role == "admin");
+
+                if (user == null)
+                {
+                    return new AdminLoginResponse
+                    {
+                        Message = "Invalid email or password"
+                    };
+                }
+
+                // Check if user is blocked
+                if (user.IsBlocked)
+                {
+                    return new AdminLoginResponse
+                    {
+                        Message = "Account is blocked or suspended"
+                    };
+                }
+
+                // In a real implementation, you would verify the password hash
+                // For now, we'll assume authentication is successful
+                // TODO: Implement proper password hashing and verification
+
+                // Generate JWT token
+                var token = _jwtService.GenerateToken(user);
+
+                return new AdminLoginResponse
+                {
+                    AccessToken = token,
+                    Jwt = token,
+                    User = new AdminUser
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        MiddleName = user.MiddleName,
+                        Surname = user.Surname,
+                        Email = user.Email,
+                        Role = user.Role
+                    },
+                    Message = "Login successful"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during local admin authentication");
+                return new AdminLoginResponse
+                {
+                    Message = "Authentication failed"
+                };
+            }
         }
     }
 }

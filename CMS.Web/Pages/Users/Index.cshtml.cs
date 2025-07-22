@@ -69,12 +69,11 @@ namespace CMS.Web.Pages.Users
                 // Apply filters
                 var filteredUsers = ApplyFilters(allUsers);
                 
-                // Store total count before pagination
+                // Store total count (no pagination, show all filtered users)
                 TotalUsers = filteredUsers.Count;
                 
-                // Apply sorting and pagination
-                var sortedUsers = ApplySorting(filteredUsers);
-                Users = ApplyPagination(sortedUsers);
+                // Apply sorting but NO pagination - show all users
+                Users = ApplySorting(filteredUsers);
             }
             catch (Exception ex)
             {

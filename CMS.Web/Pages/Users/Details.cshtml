@@ -12,6 +12,7 @@
         border-radius: 15px;
         margin-bottom: 2rem;
         box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        cursor: pointer;
     }
     
     .profile-avatar {
@@ -109,8 +110,8 @@
 }
 else
 {
-    <!-- Profile Header -->
-    <div class="profile-header">
+    <!-- Profile Header (clickable for actions) -->
+    <div class="profile-header" id="userActionsTrigger">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
                 <div class="profile-avatar me-3">
@@ -134,6 +135,60 @@ else
             </div>
         </div>
     </div>
+
+    <!-- User Actions Modal -->
+    <div class="modal fade" id="userActionsModal" tabindex="-1" aria-labelledby="userActionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userActionsModalLabel">User Actions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <div class="profile-avatar mx-auto mb-2" style="width:60px;height:60px;">
+                            @Model.User.FullName.Substring(0, 1).ToUpper()
+                        </div>
+                        <h4 class="fw-bold mb-1">@Model.User.FullName</h4>
+                        <span class="status-badge role-@Model.User.Role.ToLower()">@Model.User.Role</span>
+                        <div class="text-muted small mt-1">User ID: #@Model.User.Id</div>
+                    </div>
+                    <div class="d-grid gap-3">
+                        <a href="/Users/Portal/@Model.User.Id" class="btn btn-success btn-lg">
+                            <i class="bi bi-door-open me-2"></i>View Portal
+                        </a>
+                        <a href="/Users/Edit/@Model.User.Id" class="btn btn-warning btn-lg">
+                            <i class="bi bi-pencil me-2"></i>Edit Profile
+                        </a>
+                        <button type="button" class="btn btn-danger btn-lg" onclick="confirmDeleteUser('@Model.User.Id', '@Model.User.FullName')">
+                            <i class="bi bi-trash me-2"></i>Delete User
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var trigger = document.getElementById('userActionsTrigger');
+            var modal = new bootstrap.Modal(document.getElementById('userActionsModal'));
+            if (trigger) {
+                trigger.addEventListener('click', function(e) {
+                    // Only open modal if not clicking a button/link inside header
+                    if (!e.target.closest('a') && !e.target.closest('button')) {
+                        modal.show();
+                    }
+                });
+            }
+        });
+
+        function confirmDeleteUser(userId, userName) {
+            if (confirm('Are you sure you want to delete user ' + userName + '?')) {
+                window.location.href = '/Users/Delete/' + userId;
+            }
+        }
+    </script>
 
     <div class="row">
         <div class="col-md-6">
