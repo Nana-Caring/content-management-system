@@ -85,19 +85,16 @@
             <div class="card shadow h-100" style="box-shadow: 0 8px 32px rgba(0,0,0,0.18);">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Portal</div>
-                            <small class="text-muted">Access your portal features</small>
-                        </div>
+                        
                         <div class="col-auto">
                             <i class="bi bi-door-open" style="font-size: 2.8rem; color: #6c757d;"></i>
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-success stretched-link" asp-page="/Portal/Index">Go to Portal</a>
-                    <div class="small text-success"><i class="fas fa-angle-right"></i></div>
-                </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+        <a href="#" class="small text-success stretched-link go-to-portal-btn">Go to Portal</a>
+        <div class="small text-success"><i class="fas fa-angle-right"></i></div>
+    </div>
             </div>
         </div>
     </div>
@@ -117,12 +114,12 @@
                                 <small>Manage Users</small>
                             </a>
                         </div>
-                        <div class="col-md-2 col-sm-4 col-6 mb-3">
-                            <a asp-page="/Portal/Index" class="btn btn-outline-success w-100">
-                                <i class="bi bi-door-open d-block mb-1"></i>
-                                <small>Portal</small>
-                            </a>
-                        </div>
+            <div class="col-md-2 col-sm-4 col-6 mb-3">
+                <a href="#" class="btn btn-outline-success w-100 user-portal-link">
+                    <i class="bi bi-door-open d-block mb-1"></i>
+                    <small>Portal</small>
+                </a>
+            </div>
                         <div class="col-md-2 col-sm-4 col-6 mb-3">
                             <a asp-page="/Products/Index" class="btn btn-outline-warning w-100">
                                 <i class="bi bi-box-seam d-block mb-1"></i>

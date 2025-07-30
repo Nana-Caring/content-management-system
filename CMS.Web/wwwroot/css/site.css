@@ -38,6 +38,34 @@ body {
   padding: 0;
 }
 
+/* Loader overlay styles */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255,255,255,0.85);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+}
+.loader-logo {
+    width: 90px;
+    height: 90px;
+    animation: loader-spin 1.2s linear infinite;
+    border-radius: 50%;
+    box-shadow: 0 0 16px 0 #00800022;
+    background: #fff;
+    padding: 10px;
+}
+@keyframes loader-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 .sidebar ul li {
   margin: 20px 0;
 }

@@ -6,6 +6,8 @@
 }
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<!-- Font Awesome Pro for password visibility icon -->
+<link rel="stylesheet" href="https://pro.fontawesome.com/releases/v6.0.0-beta3/css/all.css" crossorigin="anonymous" />
 <style>
     body, html {
         height: 100%;
@@ -14,6 +16,7 @@
         font-family: 'Poppins', sans-serif;
         background: #fff;
     }
+@await Html.PartialAsync("~/Pages/Shared/LoaderComponent.cshtml")
     .landing-page {
         min-height: 100vh;
         display: flex;
@@ -226,7 +229,12 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="Input.Password">Password:</label>
-                    <input asp-for="Input.Password" type="password" name="Input.Password" required />
+                    <div style="position:relative; width:100%; display:flex; align-items:center;">
+                        <input asp-for="Input.Password" type="password" name="Input.Password" id="loginPassword" required style="padding-right:36px; width:100%;" />
+                        <button type="button" id="togglePassword" tabindex="-1" aria-label="Show password" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; outline:none; cursor:pointer; padding:0; height:24px; width:24px; display:flex; align-items:center; justify-content:center;">
+                            <i id="togglePasswordIcon" class="fa-solid fa-eye" style="font-size:18px; color:#888;"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-navigation">
                     <button type="submit" class="login-submit-btn">Login →</button>
@@ -235,4 +243,27 @@
             </form>
         </div>
     </div>
+
+<script>
+    // Show loader on form submit
+    document.addEventListener('DOMContentLoaded', function() {
+        var loginForm = document.querySelector('.login-form form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function() {
+                if (window.showLoader) window.showLoader();
+            });
+        }
+    });
+
+    const passwordInput = document.getElementById('loginPassword');
+    const togglePassword = document.getElementById('togglePassword');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+    if (passwordInput && togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            togglePasswordIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        });
+    }
+</script>
 </div>

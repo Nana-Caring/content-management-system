@@ -11,8 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-    <!-- Global Professional Loader Component -->
-    @await Html.PartialAsync("_ProfessionalLoader")
+    <!-- LoaderComponent global includes -->
+    @await Html.PartialAsync("_LoaderComponentIncludes")
+    @await Html.PartialAsync("~/Pages/Shared/LoaderComponent.cshtml")
     
     @{
         var appState = ViewData["AppState"] as CMS.Web.Models.State.AppState;
@@ -32,60 +33,77 @@
 
         <!-- Fixed Sidebar for authenticated users -->
         <nav class="sidebar position-fixed top-0 start-0" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: #f84c7d; color: #fff;">
-            <div class="p-3">
+            <div class="d-flex flex-column h-100 px-3 pt-4 pb-3">
                 <!-- Logo and Brand -->
-                <div class="text-center mb-4">
-                    <img src="~/images/logo.jpg" alt="Logo" class="rounded-circle mb-2" style="width: 60px; height: 60px; object-fit: cover; border: 3px solid #fff; background: #fff;" />
+                <div class="text-center mb-4 pb-2">
+                    <img src="~/images/logo.jpg" alt="Logo" class="rounded-circle mb-2" style="width: 90px; height: 90px; object-fit: cover; border: 3px solid #fff; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.10);" />
+                    <div class="fw-bold mt-2" style="font-size:1.15rem; color:#fff; letter-spacing:1px;">NANA CARING</div>
                 </div>
-                
+
                 <!-- User Info -->
-                <div class="p-3 rounded mb-4" style="background: #fff; color: #008000;">
+                <div class="p-3 rounded mb-4" style="background: #fff; color: #008000; box-shadow: 0 2px 8px rgba(0,128,0,0.08);">
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-person-circle me-2" style="font-size: 2rem;"></i>
+                        <i class="bi bi-person-circle me-3" style="font-size: 2.2rem; color:#008000;"></i>
                         <div>
-                            <div class="fw-bold" style="color: #008000;">@(appState?.UserInfo?.Email ?? "Admin")</div>
-                            <small style="color: #008000;">@(appState?.UserInfo?.Role ?? "Administrator")</small>
+                            <div class="fw-bold" style="color: #008000; font-size:1.05rem;">@(appState?.UserInfo?.Email ?? "Admin")</div>
+                            <small style="color: #008000; font-size:0.95rem;">@(appState?.UserInfo?.Role ?? "Administrator")</small>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Navigation Menu -->
-                <nav class="nav flex-column">
-                    <a asp-page="/Index" class="nav-link d-flex align-items-center mb-2 px-3 py-2 rounded" style="color: #333; font-weight:600;">
-                        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                <nav class="nav flex-column gap-2 mt-2 mb-3">
+                    <a asp-page="/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-speedometer2 me-3" style="font-size:1.3rem;"></i> Dashboard
                     </a>
-                    <a asp-page="/Users/Index" class="nav-link d-flex align-items-center mb-2 px-3 py-2 rounded" style="color: #333; font-weight:600;">
-                        <i class="bi bi-people me-2"></i> Users
+                    <a asp-page="/Users/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-people me-3" style="font-size:1.3rem;"></i> Users
                     </a>
-                    <a asp-page="/Portal/Index" class="nav-link d-flex align-items-center mb-2 px-3 py-2 rounded user-portal-link">
-                        <i class="bi bi-door-open me-2"></i> Portal
+                    <a asp-page="/Portal/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded user-portal-link" style="color: #333; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-door-open me-3" style="font-size:1.3rem;"></i> Portal
                     </a>
-                    <a asp-page="/Products/Index" class="nav-link d-flex align-items-center mb-2 px-3 py-2 rounded" style="color: #333; font-weight:600;">
-                        <i class="bi bi-box-seam me-2"></i> Products
+                    <a asp-page="/Products/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-box-seam me-3" style="font-size:1.3rem;"></i> Products
                     </a>
-                    <a asp-page="/KYC/Index" class="nav-link d-flex align-items-center mb-2 px-3 py-2 rounded" style="color: #333; font-weight:600;">
-                        <i class="bi bi-shield-check me-2"></i> KYC Verification
+                    <a asp-page="/KYC/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-shield-check me-3" style="font-size:1.3rem;"></i> KYC Verification
                     </a>
                 </nav>
+    <!-- Portal Login Modal (restored, outside sidebar/nav for proper stacking) -->
+    <div class="modal fade" id="portalLoginModal" tabindex="-1" aria-labelledby="portalLoginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" data-bs-backdrop="false">
+        <div class="modal-content">
+          <div class="modal-header d-flex flex-column align-items-start" style="background: linear-gradient(135deg, #f84c7d 0%, #ff447b 100%); color: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+            <h5 class="modal-title fw-bold mb-1" id="portalLoginModalLabel"><i class="bi bi-door-open me-2"></i> Portal Login</h5>
+            <small class="mb-2" style="color: #fff; font-size: 1rem; font-weight: 500;">
+              Please authenticate to access confidential user data and sensitive information. This portal is restricted to authorized personnel only. Your credentials will be securely verified.
+            </small>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
+          </div>
+          <div class="modal-body p-4" style="background: #fff; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-shadow: 0 4px 24px rgba(248,76,125,0.10);">
+            <form id="portalLoginForm" autocomplete="off">
+              <div class="mb-4">
+                <label for="portalUsername" class="form-label fw-semibold" style="color:#008000;">Username</label>
+                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="portalUsername" name="username" placeholder="Enter your username" />
+              </div>
+              <div class="mb-4">
+                <label for="portalPassword" class="form-label fw-semibold" style="color:#008000;">Password</label>
+                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="portalPassword" name="password" placeholder="Enter password" />
+              </div>
+              <div class="mb-3 text-center">
+                <span class="text-muted" style="font-size:0.95rem;">
+                  By logging in, you agree to maintain the confidentiality of all user data accessed through this portal.
+                </span>
+              </div>
+              <button type="submit" class="btn w-100 py-2 fw-bold" style="background:#f84c7d; color:#fff; font-size:1.1rem; border-radius:8px; box-shadow: 0 2px 8px rgba(248,76,125,0.10);">Login &amp; Access Portal</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
                 
                 <!-- Bottom System Info -->
-                <div class="position-absolute bottom-0 start-0 end-0 p-3">
-                    <div class="rounded p-3" style="background: #008000; color: #fff; border: 2px solid #fff;">
-                        <div class="text-center">
-                            <div class="small mb-2" style="color: #fff;">
-                                <i class="bi bi-gear-fill me-1"></i>
-                                <strong>Nana CMS v2.1.0</strong>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-center">
-                                <div class="status-indicator rounded-circle me-2" style="width: 8px; height: 8px; background: #fff;"></div>
-                                <small style="color: #fff;">System Monitored</small>
-                            </div>
-                            <div class="mt-2">
-                                <small style="color: #fff;">Last Check: @DateTime.Now.ToString("HH:mm")</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Footer moved below main content -->
             </div>
         </nav>
         
@@ -145,11 +163,12 @@
         </div>
         
         <!-- Main content area with left margin for sidebar -->
-        <div class="main-content" style="margin-left: 280px; min-height: calc(100vh - 80px); background: #fff;">
+        <div class="main-content" style="margin-left: 280px; min-height: calc(100vh - 80px); background: #fff; display: flex; flex-direction: column;">
             <!-- Dynamic Page content - This is where navigation content will be rendered -->
-            <main class="content-container">
+            <main class="content-container" style="flex: 1 0 auto;">
                 <div class="container-fluid px-4 py-4">
                     @RenderBody()
+                    <!-- Portal content removed. Only login form modal remains. -->
                 </div>
             </main>
         </div>
@@ -201,7 +220,74 @@
 
     @RenderSection("Scripts", required: false)
 
+    <script>
+        function showPortalLoginModal() {
+            const modal = new bootstrap.Modal(document.getElementById('portalLoginModal'));
+            modal.show();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Portal link click handler to show login modal
+            const portalLinks = document.querySelectorAll('.user-portal-link, .go-to-portal-btn');
+            portalLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPortalLoginModal();
+                });
+            });
+            // Handle login form submit: POST to /api/portal/admin-login
+            const loginForm = document.getElementById('portalLoginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const username = document.getElementById('portalUsername').value;
+                    const password = document.getElementById('portalPassword').value;
+                    const apiBaseUrl = 'https://nanacaring-backend.onrender.com';
+                    // Send only username and password fields
+                    fetch(apiBaseUrl + '/api/portal/admin-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username: username, password: password })
+                    })
+                    .then(async res => {
+                        let data, rawText;
+                        try {
+                            rawText = await res.text();
+                            data = JSON.parse(rawText);
+                        } catch {
+                            data = {};
+                        }
+                        if (res.ok && data && data.token) {
+                            // Store portal-admin token in localStorage
+                            localStorage.setItem('portal-admin-token', data.token);
+                            // Close modal
+                            bootstrap.Modal.getInstance(document.getElementById('portalLoginModal')).hide();
+                            // Redirect to Portal page
+                            window.location.href = '/Portal/Index';
+                        } else {
+                            let errorMsg = 'Login failed.';
+                            errorMsg += '\nStatus: ' + res.status + ' ' + res.statusText;
+                            errorMsg += '\nResponse: ' + rawText;
+                            alert(errorMsg);
+                        }
+                    })
+                    .catch(err => {
+                        alert('Login failed. Please try again. Error: ' + err);
+                    });
+                });
+            }
+        });
+    </script>
+
     <style>
+        /* Ensure portal login modal appears above all content and is interactive */
+        .modal.fade#portalLoginModal {
+            z-index: 3000 !important;
+        }
+        .modal-backdrop.show {
+            display: none !important;
+        }
         .breadcrumb {
             background: none;
             padding: 0;
@@ -278,6 +364,11 @@
             overflow-y: auto;
             background: #ff447b;
             color: #fff;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            border-right: 4px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 0 0 2px #f84c7d;
+        }
         }
         .sidebar .nav-link {
             transition: all 0.3s ease;
@@ -290,9 +381,10 @@
             font-weight: 600;
         }
         .sidebar .nav-link.active {
-            background-color: #fff !important;
-            color: #f84c7d !important;
-            font-weight: 700;
+    background-color: #fff !important;
+    color: #f84c7d !important;
+    font-weight: 700;
+    border-left: 4px solid #f84c7d;
         }
         .main-content {
             margin-left: 280px;

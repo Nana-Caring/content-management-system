@@ -4,84 +4,79 @@ using CMS.Web.Models;
 using CMS.Web.Services;
 using System.Collections.Generic;
 
-namespace CMS.Web.Pages.Accounts
+namespace CMS.Web.Pages.Portal
 {
-    [Authorize]
+// [Authorize] removed for admin portal
     public class IndexModel : BasePageModel
     {
         private readonly IApiService _apiService;
         public List<Account> Accounts { get; set; } = new List<Account>();
+        public List<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public User? User { get; set; }
+        public bool IsLoggedIn { get; set; } = false;
         public string? ErrorMessage { get; set; }
         public string? SearchTerm { get; set; }
+
+        // Properties for Portal UI
+        public User? UserInfo => User;
+        public int AccountCount => Accounts?.Count ?? 0;
+        public int ActiveAccounts => Accounts?.Count(a => a.Status == "active") ?? 0;
+        public int TransactionCount => Transactions?.Count ?? 0;
+        public int PendingTransactions => Transactions?.Count(t => t.Status == "Pending") ?? 0;
 
         public IndexModel(IAppStateManager stateManager, IApiService apiService) : base(stateManager)
         {
             _apiService = apiService;
         }
 
-        public async Task OnGetAsync(string search)
+        public async Task OnGetAsync()
         {
-            ViewData["Title"] = "Accounts Management";
-            SearchTerm = search;
-            
-            try
+            // Check if admin is logged in
+            if (HttpContext.Session.TryGetValue("AdminLoggedIn", out var _))
             {
-                var allAccounts = await _apiService.GetAccountsAsync();
-                
-                if (allAccounts == null)
-                {
-                    ErrorMessage = "Unable to connect to the backend service. The service may be starting up or experiencing issues. Please wait a moment and refresh the page.";
-                    return;
-                }
-
-                if (!allAccounts.Any())
-                {
-                    ErrorMessage = "No accounts were found in the system. This could be normal if no accounts have been created yet.";
-                }
-                
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    Accounts = allAccounts.Where(a => 
-                        (a.AccountName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (a.AccountNumber?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (a.AccountType != null && a.AccountType.Contains(search, StringComparison.OrdinalIgnoreCase))
-                    ).ToList();
-                }
-                else
-                {
-                    Accounts = allAccounts;
-                }
+                IsLoggedIn = true;
+                // Load dashboard data
+                var users = await _apiService.GetUsersAsync();
+                User = users.FirstOrDefault(); // For demo, show first user
+                Accounts = User?.Accounts?.ToList() ?? new List<Account>();
+                Transactions = await _apiService.GetTransactionsAsync();
             }
-            catch (Exception ex)
+            else
             {
-                ErrorMessage = "The backend service is currently unavailable. This may be due to a cold start or temporary service disruption. Please try refreshing the page in a few moments.";
-                // Log the full exception for debugging
-                Console.WriteLine($"Accounts loading error: {ex}");
+                IsLoggedIn = false;
             }
         }
 
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        public async Task<IActionResult> OnPostAsync(string email, string password, string signout)
         {
-            try
+            if (!string.IsNullOrEmpty(signout))
             {
-                var success = await _apiService.DeleteAccountAsync(id);
-                if (success)
-                {
-                    TempData["SuccessMessage"] = "Account deleted successfully.";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to delete account.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "An error occurred while deleting the account.";
-                // Log the exception for debugging
-                Console.WriteLine($"Error deleting account: {ex.Message}");
+                // Sign out logic
+                HttpContext.Session.Remove("AdminLoggedIn");
+                IsLoggedIn = false;
+                User = null;
+                Accounts = new List<Account>();
+                Transactions = new List<Transaction>();
+                return RedirectToPage();
             }
 
-            return RedirectToPage();
+            // Simple admin login logic (replace with real auth in production)
+            if (email == "admin@nanacms.com" && password == "adminpass")
+            {
+                HttpContext.Session.SetString("AdminLoggedIn", "true");
+                IsLoggedIn = true;
+                var users = await _apiService.GetUsersAsync();
+                User = users.FirstOrDefault(); // For demo, show first user
+                Accounts = User?.Accounts?.ToList() ?? new List<Account>();
+                Transactions = await _apiService.GetTransactionsAsync();
+                return RedirectToPage();
+            }
+            else
+            {
+                ErrorMessage = "Invalid admin credentials.";
+                IsLoggedIn = false;
+                return Page();
+            }
         }
     }
 }
