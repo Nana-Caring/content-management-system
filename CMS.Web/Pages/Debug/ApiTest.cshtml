@@ -1,0 +1,79 @@
+@page
+@model CMS.Web.Pages.Debug.ApiTestModel
+@{
+    ViewData["Title"] = "API Connection Test";
+}
+
+<div class="container mt-4">
+    <h2>API Connection Test</h2>
+    
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <h5>Error:</h5>
+            <p>@Model.ErrorMessage</p>
+        </div>
+    }
+    
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success">
+            <h5>Success:</h5>
+            <p>@Model.SuccessMessage</p>
+        </div>
+    }
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>API Service Test</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Backend URL:</strong> https://nanacaring-backend.onrender.com</p>
+                    <p><strong>User Count:</strong> @Model.UserCount</p>
+                    <p><strong>Connection Status:</strong> 
+                        <span class="badge @(Model.IsConnected ? "bg-success" : "bg-danger")">
+                            @(Model.IsConnected ? "Connected" : "Failed")
+                        </span>
+                    </p>
+                    
+                    @if (Model.Users?.Any() == true)
+                    {
+                        <h6>Sample Users:</h6>
+                        <ul class="list-group">
+                            @foreach (var user in Model.Users.Take(3))
+                            {
+                                <li class="list-group-item">
+                                    <strong>@user.FullName</strong> (@user.Email) - @user.Role
+                                </li>
+                            }
+                        </ul>
+                    }
+                    
+                    <form method="post" class="mt-3">
+                        <button type="submit" class="btn btn-primary">Test Connection</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Debug Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Response Time:</strong> @Model.ResponseTime ms</p>
+                    <p><strong>Last Test:</strong> @Model.LastTestTime?.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                    
+                    @if (!string.IsNullOrEmpty(Model.RawResponse))
+                    {
+                        <h6>Raw API Response (first 500 chars):</h6>
+                        <pre style="font-size: 0.8em; max-height: 200px; overflow-y: auto;">@Model.RawResponse.Substring(0, Math.Min(500, Model.RawResponse.Length))</pre>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

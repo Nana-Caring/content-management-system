@@ -1,88 +1,45 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using CMS.Web.Data;
 using CMS.Web.Models;
+using CMS.Web.Services;
 
 namespace CMS.Web.Pages.Users
 {
-    public class DetailsModel : PageModel
+    public class DetailsModel : BasePageModel
     {
-        private readonly CmsDbContext _context;
+        private readonly IApiService _apiService;
 
-        public DetailsModel(CmsDbContext context)
+        public DetailsModel(IAppStateManager stateManager, IApiService apiService) : base(stateManager)
         {
-            _context = context;
+            _apiService = apiService;
         }
 
         public new User? User { get; set; }
+        public string? ErrorMessage { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            ViewData["Title"] = "User Details";
+            
             try
             {
-                User = await _context.Users
-                    .Include(u => u.Accounts)
-                    .FirstOrDefaultAsync(u => u.Id == id);
+                User = await _apiService.GetUserByIdAsync(id);
 
                 if (User == null)
                 {
-                    return NotFound();
+                    ErrorMessage = "User not found or unable to connect to the backend service.";
+                    return Page();
                 }
 
                 return Page();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // If database is not available, return mock data for development
-                User = CreateMockUser(id);
+                ErrorMessage = $"Error loading user details: {ex.Message}";
+                Console.WriteLine($"Error in DetailsModel.OnGetAsync: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return Page();
             }
-        }
-
-        private User CreateMockUser(int id)
-        {
-            return new User
-            {
-                Id = id,
-                FirstName = "John",
-                MiddleName = "William",
-                Surname = "Doe",
-                Email = "john.doe@example.com",
-                Role = "funder",
-                IdNumber = "1234567890123",
-                Relation = "Parent",
-                PhoneNumber = "+27 82 123 4567",
-                PostalAddressLine1 = "123 Main Street",
-                PostalAddressLine2 = "Apartment 4B",
-                PostalCity = "Cape Town",
-                PostalProvince = "Western Cape",
-                PostalCode = "8001",
-                HomeAddressLine1 = "456 Oak Avenue",
-                HomeAddressLine2 = "",
-                HomeCity = "Johannesburg",
-                HomeProvince = "Gauteng",
-                HomeCode = "2000",
-                CreatedAt = DateTime.Now.AddDays(-30),
-                UpdatedAt = DateTime.Now.AddDays(-1),
-                Accounts = new List<Account>
-                {
-                    new Account
-                    {
-                        Id = "ACC001234567",
-                        AccountNumber = "ACC001234567",
-                        Balance = 15000.50m,
-                        UserId = id
-                    },
-                    new Account
-                    {
-                        Id = "ACC001234568", 
-                        AccountNumber = "ACC001234568",
-                        Balance = 8500.75m,
-                        UserId = id
-                    }
-                }
-            };
         }
     }
 }

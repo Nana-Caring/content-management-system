@@ -62,9 +62,30 @@ namespace CMS.Web.Pages.Users
             {
                 var allUsers = await _apiService.GetUsersAsync();
                 
-                // Populate filter options
-                AvailableRoles = allUsers.Select(u => u.Role).Where(r => !string.IsNullOrEmpty(r)).Distinct().OrderBy(r => r).ToList();
-                AvailableRelations = allUsers.Select(u => u.Relation).Where(r => !string.IsNullOrEmpty(r)).Distinct().OrderBy(r => r).Cast<string>().ToList();
+                if (allUsers == null || !allUsers.Any())
+                {
+                    ErrorMessage = "No users found or unable to connect to the backend service.";
+                    Users = new List<User>();
+                    AvailableRoles = new List<string>();
+                    AvailableRelations = new List<string>();
+                    TotalUsers = 0;
+                    return;
+                }
+                
+                // Populate filter options with null checks
+                AvailableRoles = allUsers
+                    .Where(u => !string.IsNullOrEmpty(u.Role))
+                    .Select(u => u.Role)
+                    .Distinct()
+                    .OrderBy(r => r)
+                    .ToList();
+                    
+                AvailableRelations = allUsers
+                    .Where(u => !string.IsNullOrEmpty(u.Relation))
+                    .Select(u => u.Relation!)
+                    .Distinct()
+                    .OrderBy(r => r)
+                    .ToList();
                 
                 // Apply filters
                 var filteredUsers = ApplyFilters(allUsers);
@@ -77,40 +98,50 @@ namespace CMS.Web.Pages.Users
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Failed to load users. Please try again later.";
+                ErrorMessage = $"Failed to load users. Error: {ex.Message}";
+                // Initialize empty collections to prevent further errors
+                Users = new List<User>();
+                AvailableRoles = new List<string>();
+                AvailableRelations = new List<string>();
+                TotalUsers = 0;
+                
                 // Log the exception for debugging
                 Console.WriteLine($"Error loading users: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
         private List<User> ApplyFilters(List<User> users)
         {
+            if (users == null || !users.Any())
+                return new List<User>();
+                
             var filtered = users.AsEnumerable();
 
-            // Search filter
+            // Search filter with null checks
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
                 filtered = filtered.Where(u =>
-                    u.FirstName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    u.MiddleName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    u.Surname.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    u.IdNumber.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                    (u.Relation != null && u.Relation.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                    u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+                    (!string.IsNullOrEmpty(u.FirstName) && u.FirstName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.MiddleName) && u.MiddleName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.Surname) && u.Surname.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.Email) && u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.IdNumber) && u.IdNumber.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.Relation) && u.Relation.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.FullName) && u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                 );
             }
 
-            // Role filter
+            // Role filter with null check
             if (!string.IsNullOrWhiteSpace(RoleFilter))
             {
-                filtered = filtered.Where(u => u.Role.Equals(RoleFilter, StringComparison.OrdinalIgnoreCase));
+                filtered = filtered.Where(u => !string.IsNullOrEmpty(u.Role) && u.Role.Equals(RoleFilter, StringComparison.OrdinalIgnoreCase));
             }
 
-            // Relation filter
+            // Relation filter with null check
             if (!string.IsNullOrWhiteSpace(RelationFilter))
             {
-                filtered = filtered.Where(u => u.Relation != null && u.Relation.Equals(RelationFilter, StringComparison.OrdinalIgnoreCase));
+                filtered = filtered.Where(u => !string.IsNullOrEmpty(u.Relation) && u.Relation.Equals(RelationFilter, StringComparison.OrdinalIgnoreCase));
             }
 
             // Date range filter
