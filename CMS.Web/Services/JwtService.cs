@@ -10,6 +10,7 @@ namespace CMS.Web.Services
     {
         string GenerateToken(User user);
         ClaimsPrincipal? ValidateToken(string token);
+        string? GetEmailFromToken(string token);
     }
 
     public class JwtService : IJwtService
@@ -77,6 +78,30 @@ namespace CMS.Web.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Token validation failed");
+                return null;
+            }
+        }
+
+        public string? GetEmailFromToken(string token)
+        {
+            try
+            {
+                var principal = ValidateToken(token);
+                if (principal == null)
+                {
+                    return null;
+                }
+
+                // Try to get email from different claim types
+                var emailClaim = principal.FindFirst(ClaimTypes.Email) ?? 
+                                principal.FindFirst("email") ?? 
+                                principal.FindFirst("Email");
+                
+                return emailClaim?.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to extract email from token");
                 return null;
             }
         }
