@@ -1,0 +1,2719 @@
+﻿@page
+@model CMS.Web.Pages.Portal.IndexModel
+@{
+    ViewData["Title"] = "Portal Dashboard";
+}
+
+<link href="~/css/portal.css" rel="stylesheet" />
+<link href="~/css/loader.css" rel="stylesheet" />
+
+<!-- Loading will be handled by the NanaLoader class -->
+
+<!-- Portal Container with Sidebar -->
+<div class="portal-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <!-- Brand -->
+        <div class="sidebar-brand">
+            <h4>
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+                Nana Caring
+            </h4>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <button class="nav-link active" onclick="showSection('dashboard')">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </button>
+            </div>
+            <div class="nav-item">
+                <button class="nav-link" onclick="showSection('profile')">
+                    <i class="bi bi-person"></i>
+                    My Profile
+                </button>
+            </div>
+            <div class="nav-item">
+                <button class="nav-link" onclick="showSection('accounts')">
+                    <i class="bi bi-credit-card-2-front"></i>
+                    My Accounts
+                </button>
+            </div>
+            <div class="nav-item">
+                <button class="nav-link" onclick="showSection('transactions')">
+                    <i class="bi bi-arrow-left-right"></i>
+                    Transactions
+                </button>
+            </div>
+        </nav>
+        
+        <!-- User Profile -->
+        <div class="sidebar-user">
+            <div class="user-avatar" id="sidebarUserAvatar">U</div>
+            <div class="user-info">
+                <p class="user-name" id="sidebarUserName">Loading...</p>
+                <p class="user-role" id="sidebarUserRole">User</p>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item text-danger" asp-page="/Index"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Main Content Area with Dashboard -->
+    <main class="main-content">
+        <!-- Content area with dashboard -->
+        <div class="portal-content">
+            <!-- Dashboard Section (Default Active) -->
+            <section id="dashboard" class="content-section active">
+                <div class="container-fluid">
+                    <!-- Welcome Header -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="glass-card p-4">
+                                <h2 class="fw-bold text-primary mb-2">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </h2>
+                                <p class="text-muted mb-0">Welcome back! Here's an overview of your account activity.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards Row -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3">
+                            <div class="glass-card text-center p-4">
+                                <div class="stat-icon mx-auto mb-3">
+                                    <i class="bi bi-credit-card"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Active Accounts</h6>
+                                <h2 class="fw-bold text-success mb-0" id="dashboardActiveAccounts">0</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="glass-card text-center p-4">
+                                <div class="stat-icon mx-auto mb-3">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Total Balance</h6>
+                                <h2 class="fw-bold text-primary mb-0" id="dashboardTotalBalance">R 0.00</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="glass-card text-center p-4">
+                                <div class="stat-icon mx-auto mb-3">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Transactions</h6>
+                                <h2 class="fw-bold text-info mb-0" id="dashboardTransactions">0</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="glass-card text-center p-4">
+                                <div class="stat-icon mx-auto mb-3">
+                                    <i class="bi bi-people"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Dependents</h6>
+                                <h2 class="fw-bold text-dark mb-0" id="dashboardDependents">0</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Row -->
+                    <div class="row g-4">
+                        <div class="col-lg-8">
+                            <div class="glass-card">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-clock-history me-2"></i>Recent Transactions
+                                    </h5>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="showSection('transactions')">
+                                        View All
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-modern mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Description</th>
+                                                <th>Amount</th>
+                                                <th>Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashboardRecentTransactions">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4 text-muted">
+                                                    <div class="loading-spinner mx-auto mb-2"></div>
+                                                    Loading recent transactions...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="glass-card">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-pie-chart me-2"></i>Quick Actions
+                                    </h5>
+                                </div>
+                                <div class="d-grid gap-3">
+                                    <button class="btn btn-primary-modern" onclick="showSection('accounts')">
+                                        <i class="bi bi-credit-card me-2"></i>View Accounts
+                                    </button>
+                                    <button class="btn btn-success-modern" onclick="showSection('transactions')">
+                                        <i class="bi bi-arrow-up-right me-2"></i>Send Money
+                                    </button>
+                                    <button class="btn btn-info text-white" onclick="showSection('profile')">
+                                        <i class="bi bi-person me-2"></i>Update Profile
+                                    </button>
+                                    <button class="btn btn-warning-modern" onclick="showSection('dependents')">
+                                        <i class="bi bi-person-plus me-2"></i>Add Dependent
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="content-section">
+                <div class="container-fluid p-4">
+                    <div class="glass-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="fw-bold text-primary">
+                                <i class="bi bi-person me-2"></i>My Profile
+                            </h2>
+                            <button class="btn btn-primary-modern" onclick="editProfile()">
+                                <i class="bi bi-pencil-square me-2"></i>Edit Profile
+                            </button>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-lg-4">
+                                <div class="text-center">
+                                    <div class="user-avatar mx-auto mb-3" style="width:120px;height:120px;font-size:3rem;" id="profileAvatar">
+                                        U
+                                    </div>
+                                    <h4 id="profileFullName">Loading...</h4>
+                                    <p class="text-muted" id="profileEmail">Loading...</p>
+                                    <span class="badge bg-success" id="profileStatus">Active</span>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">First Name</label>
+                                        <input type="text" class="form-control" id="profileFirstName" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Last Name</label>
+                                        <input type="text" class="form-control" id="profileLastName" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Email</label>
+                                        <input type="email" class="form-control" id="profileEmailInput" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Phone</label>
+                                        <input type="tel" class="form-control" id="profilePhone" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Date of Birth</label>
+                                        <input type="date" class="form-control" id="profileDateOfBirth" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Gender</label>
+                                        <input type="text" class="form-control" id="profileGender" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">Address</label>
+                                        <textarea class="form-control" id="profileAddress" rows="3" readonly></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Section -->
+            <section id="accounts" class="content-section">
+                <div class="container-fluid p-4">
+                    <div class="glass-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="fw-bold text-primary">
+                                <i class="bi bi-credit-card me-2"></i>My Accounts
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-modern" onclick="refreshAccounts()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                                </button>
+                                <button class="btn btn-primary-modern" onclick="addAccount()">
+                                    <i class="bi bi-plus-circle me-2"></i>Add Account
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-4" id="accountsGrid">
+                            <div class="col-12 text-center py-4">
+                                <div class="loading-spinner mx-auto mb-2"></div>
+                                <div class="text-muted">Loading accounts...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transactions Section -->
+            <section id="transactions" class="content-section">
+                <div class="container-fluid p-4">
+                    <div class="glass-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="fw-bold text-primary">
+                                <i class="bi bi-arrow-left-right me-2"></i>Transactions
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-modern" onclick="refreshTransactions()">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                                </button>
+                                <button class="btn btn-success-modern" onclick="sendMoney()">
+                                    <i class="bi bi-send me-2"></i>Send Money
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Transaction Filters -->
+                        <div class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="transactionTypeFilter">
+                                        <option value="">All Types</option>
+                                        <option value="Credit">Credit</option>
+                                        <option value="Debit">Debit</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="transactionStartDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="transactionEndDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary-modern w-100" onclick="filterTransactions()">
+                                        <i class="bi bi-funnel me-2"></i>Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transaction Statistics -->
+                        <div class="stats-grid mb-4">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <div class="stat-value" id="transactionsTotalCount">0</div>
+                                <div class="stat-label">Total Transactions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-arrow-up-circle"></i>
+                                </div>
+                                <div class="stat-value" id="transactionsCreditCount">0</div>
+                                <div class="stat-label">Credits</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-arrow-down-circle"></i>
+                                </div>
+                                <div class="stat-value" id="transactionsDebitCount">0</div>
+                                <div class="stat-label">Debits</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="bi bi-calculator"></i>
+                                </div>
+                                <div class="stat-value" id="transactionsNetAmount">R 0.00</div>
+                                <div class="stat-label">Net Amount</div>
+                            </div>
+                        </div>
+
+                        <div id="transactionsContentCard" class="glass-card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Transaction Details</h5>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Type</th>
+                                            <th>Reference</th>
+                                            <th>Account</th>
+                                            <th>Source</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsDetailBody">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-4">
+                                                <div class="loading-spinner mx-auto mb-2"></div>
+                                                <div class="text-muted">Loading transactions...</div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Pagination -->
+                            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                                <div class="text-muted">
+                                    Showing <span id="paginationInfo">0-0 of 0</span> transactions
+                                </div>
+                                <nav>
+                                    <ul class="pagination mb-0" id="transactionsPagination">
+                                        <!-- Pagination will be generated here -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav aria-label="Transaction pagination" class="mt-4">
+                            <ul class="pagination justify-content-center" id="transactionPagination">
+                                <!-- Pagination will be populated by JavaScript -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </section>
+
+        <!-- Dependents Section -->
+        <div id="dependents" class="content-section">
+            <div class="glass-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-primary">
+                        <i class="bi bi-people me-2"></i>Dependents
+                    </h2>
+                    <button class="btn btn-primary-modern" onclick="addDependent()">
+                        <i class="bi bi-person-plus me-2"></i>Add Dependent
+                    </button>
+                </div>
+
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-value" id="dependentsTotalCount">0</div>
+                        <div class="stat-label">Total Dependents</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-value" id="dependentsActiveCount">0</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>ID Number</th>
+                                <th>Phone</th>
+                                <th>Relation</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dependentsDetailBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="loading-spinner mx-auto mb-2"></div>
+                                    <div class="text-muted">Loading dependents...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="content-section">
+            <div class="glass-card">
+                <h2 class="fw-bold text-primary mb-4">
+                    <i class="bi bi-gear me-2"></i>Settings
+                </h2>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <h5>Account Settings</h5>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary-modern" onclick="changePassword()">
+                                <i class="bi bi-lock me-2"></i>Change Password
+                            </button>
+                            <button class="btn btn-warning-modern" onclick="updateProfile()">
+                                <i class="bi bi-person-gear me-2"></i>Update Profile
+                            </button>
+                            <button class="btn btn-info text-white" onclick="manageNotifications()">
+                                <i class="bi bi-bell me-2"></i>Notification Settings
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5>Security</h5>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success-modern" onclick="enable2FA()">
+                                <i class="bi bi-shield-check me-2"></i>Enable 2FA
+                            </button>
+                            <button class="btn btn-primary-modern" onclick="viewLoginHistory()">
+                                <i class="bi bi-clock-history me-2"></i>Login History
+                            </button>
+                            <button class="btn btn-danger-modern" onclick="deactivateAccount()">
+                                <i class="bi bi-x-circle me-2"></i>Deactivate Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+                        </button>
+                    </div>
+                </div>
+
+    
+
+              
+
+            <!-- Transactions Section -->
+            <div id="transactions" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">Transaction History</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="exportTransactions()">
+                            <i class="bi bi-download me-1"></i>Export
+                        </button>
+                        <button class="btn btn-primary-gradient" onclick="toggleTransactionFilters()">
+                            <i class="bi bi-funnel me-1"></i>Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transaction Filters -->
+                <div id="transactionFilters" class="filter-card p-4 mb-4" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Transaction Type</label>
+                            <select class="form-select" id="filterType">
+                                <option value="">All Types</option>
+                                <option value="Credit">Credit</option>
+                                <option value="Debit">Debit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="filterStartDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="filterEndDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Amount Range</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" placeholder="Min" id="filterMinAmount">
+                                <input type="number" class="form-control" placeholder="Max" id="filterMaxAmount">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" placeholder="Search description or reference..." id="filterSearch">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Limit</label>
+                            <select class="form-select" id="filterLimit">
+                                <option value="20">20 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary-gradient w-100" onclick="applyTransactionFilters()">
+                                    <i class="bi bi-search me-1"></i>Search
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearTransactionFilters()">
+                                    <i class="bi bi-x-circle me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Statistics -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Total Transactions</h6>
+                            <h3 class="fw-bold mb-0" id="transactionsTotalCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Credits</h6>
+                            <h3 class="fw-bold mb-0 text-success" id="transactionsCreditCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Debits</h6>
+                            <h3 class="fw-bold mb-0 text-danger" id="transactionsDebitCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Net Amount</h6>
+                            <h3 class="fw-bold mb-0" id="transactionsNetAmount">R 0.00</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="transactionsContentCard" class="glass-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Transaction Details</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-modern mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Reference</th>
+                                    <th>Account</th>
+                                    <th>Source</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsDetailBody">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">Loading transactions...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                        <div class="text-muted">
+                            Showing <span id="paginationInfo">0-0 of 0</span> transactions
+                        </div>
+                        <nav>
+                            <ul class="pagination mb-0" id="transactionsPagination">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <!-- Dependents Section -->
+            <div id="dependents" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">My Dependents</h2>
+                    <button class="btn btn-success-gradient" onclick="refreshDependents()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                    </button>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Total Dependents</h6>
+                            <h3 class="fw-bold mb-0" id="dependentsTotalCount">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="glass-card p-3 text-center">
+                            <h6 class="text-muted mb-1">Active Dependents</h6>
+                            <h3 class="fw-bold mb-0 text-success" id="dependentsActiveCount">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="table-responsive">
+                        <table class="table table-modern mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Accounts</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dependentsDetailBody">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">Loading dependents...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold">Account Settings</h2>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold mb-3">Security Settings</h5>
+                            <div class="d-grid gap-3">
+                                <button class="btn btn-warning-gradient" onclick="showPasswordReset()">
+                                    <i class="bi bi-key me-2"></i>Change Password
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold mb-3">Account Information</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Current Role</label>
+                                <p class="form-control-plaintext border-bottom" id="settingsRole">Loading...</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Account Status</label>
+                                <p class="form-control-plaintext border-bottom" id="settingsStatus">Loading...</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Member Since</label>
+                                <p class="form-control-plaintext border-bottom" id="settingsCreated">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" class="form-control" id="editMiddleName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Surname</label>
+                            <input type="text" class="form-control" id="editSurname" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="editPhone" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Relation</label>
+                            <input type="text" class="form-control" id="editRelation" />
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary mb-3 mt-4">Postal Address</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" id="editPostalAddress1" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" id="editPostalAddress2" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" id="editPostalCity" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Province</label>
+                            <input type="text" class="form-control" id="editPostalProvince" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Postal Code</label>
+                            <input type="text" class="form-control" id="editPostalCode" />
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary mb-3 mt-4">Home Address</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" class="form-control" id="editHomeAddress1" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" class="form-control" id="editHomeAddress2" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" id="editHomeCity" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Province</label>
+                            <input type="text" class="form-control" id="editHomeProvince" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input type="text" class="form-control" id="editHomeCode" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary-gradient" onclick="saveProfile()">
+                    <span class="loading-spinner d-none me-2"></span>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm">
+                    <div class="mb-3">
+                        <label class="form-label">Current Email</label>
+                        <input type="email" class="form-control" id="resetEmail" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="resetNewPassword" required minlength="6" placeholder="Enter new password (min 6 characters)" />
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            You will be logged out after password reset and need to log in again.
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning-gradient" onclick="resetPassword()">
+                    <span class="loading-spinner d-none me-2"></span>
+                    Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Transaction Modal -->
+<div class="modal fade" id="createTransactionModal" tabindex="-1" aria-labelledby="createTransactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="createTransactionModalLabel">Create Manual Transaction</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createTransactionForm">
+                    <div class="mb-3">
+                        <label class="form-label">Account</label>
+                        <select class="form-select" id="transactionAccountId" required>
+                            <option value="">Select Account</option>
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Amount (ZAR)</label>
+                            <input type="number" step="0.01" class="form-control" id="transactionAmount" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="transactionType" required>
+                                <option value="">Select Type</option>
+                                <option value="Credit">Credit</option>
+                                <option value="Debit">Debit</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" id="transactionDescription" required placeholder="Transaction description" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference (Optional)</label>
+                        <input type="text" class="form-control" id="transactionReference" placeholder="Transaction reference" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category (Optional)</label>
+                        <input type="text" class="form-control" id="transactionCategory" placeholder="Transaction category" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason (Optional)</label>
+                        <textarea class="form-control" id="transactionReason" rows="2" placeholder="Reason for this transaction"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success-gradient" onclick="createTransaction()">
+                    <span class="loading-spinner d-none me-2"></span>
+                    Create Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Details Modal -->
+<div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="transactionDetailsModalLabel">Transaction Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="transactionDetailsContent">
+                <!-- Transaction details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning-gradient" onclick="reverseTransaction()" id="reverseTransactionBtn" style="display: none;">
+                    <span class="loading-spinner d-none me-2"></span>
+                    Reverse Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+@section Scripts {
+<script src="~/js/loader.js"></script>
+<script src="~/js/portal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+}
+
+let userAccounts = [];
+let userTransactions = [];
+let userDependents = [];
+let currentPage = 1;
+let totalPages = 1;
+let itemsPerPage = 20;
+let transactionFilters = {
+    type: '',
+    startDate: '',
+    endDate: '',
+    minAmount: '',
+    maxAmount: '',
+    search: '',
+    sortBy: 'createdAt',
+    sortOrder: 'DESC'
+};
+
+// Utility Functions
+function showAlert(message, type = 'info', autoDismiss = true) {
+    // Create alert container if it doesn't exist
+    let alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        alertContainer = document.createElement('div');
+        alertContainer.id = 'alertContainer';
+        alertContainer.style.position = 'fixed';
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        document.body.appendChild(alertContainer);
+    }
+    
+    // Create alert element
+    const alertEl = document.createElement('div');
+    alertEl.className = `alert alert-${type} alert-dismissible fade show`;
+    alertEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add to container
+    alertContainer.appendChild(alertEl);
+    
+    // Auto-dismiss after 5 seconds if enabled
+    if (autoDismiss) {
+        setTimeout(() => {
+            if (alertEl && alertEl.parentNode) {
+                try {
+                    const bsAlert = new bootstrap.Alert(alertEl);
+                    bsAlert.close();
+                } catch (error) {
+                    // Fallback if bootstrap is not available
+                    alertEl.parentNode.removeChild(alertEl);
+                }
+            }
+        }, 5000);
+    }
+}
+}
+
+function formatCurrency(amount, currency = 'ZAR') {
+    return new Intl.NumberFormat('en-ZA', {
+        style: 'currency',
+        currency: currency
+    }).format(amount);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-ZA');
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-ZA') + ' ' + date.toLocaleTimeString('en-ZA');
+}
+
+function showLoading(button) {
+    const spinner = button.querySelector('.loading-spinner');
+    if (spinner) {
+        spinner.classList.remove('d-none');
+    }
+    button.disabled = true;
+}
+
+function hideLoading(button) {
+    const spinner = button.querySelector('.loading-spinner');
+    if (spinner) {
+        spinner.classList.add('d-none');
+    }
+    button.disabled = false;
+}
+
+function showSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show the requested section
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+        
+        // Update sidebar navigation highlight
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        const sidebarNavLink = document.querySelector(`.sidebar-nav .nav-link[onclick="showSection('${sectionId}')"]`);
+        if (sidebarNavLink) {
+            sidebarNavLink.classList.add('active');
+        }
+        
+        // Update section title in header
+        const sectionTitles = {
+            'dashboard': 'Dashboard',
+            'profile': 'My Profile',
+            'accounts': 'My Accounts',
+            'transactions': 'Transactions',
+            'products': 'Products & Services',
+            'dependents': 'My Dependents',
+            'kyc': 'KYC Verification',
+            'settings': 'Settings'
+        };
+        
+        const titleElement = document.getElementById('currentSectionTitle');
+        if (titleElement && sectionTitles[sectionId]) {
+            titleElement.textContent = sectionTitles[sectionId];
+        }
+        
+        // Load section-specific data
+        switch(sectionId) {
+            case 'dashboard':
+                loadDashboardData();
+                break;
+            case 'profile':
+                loadUserProfile();
+                break;
+            case 'accounts':
+                loadUserAccounts();
+                break;
+            case 'transactions':
+                loadUserTransactions();
+                break;
+            case 'products':
+                loadProducts();
+                break;
+            case 'dependents':
+                loadDependents();
+                break;
+            case 'kyc':
+                loadKYCStatus();
+                break;
+            case 'settings':
+                loadUserSettings();
+                break;
+        }
+        
+        // Specific section loading logic
+        switch(sectionId) {
+            case 'profile':
+                refreshProfile();
+                break;
+            case 'accounts':
+                refreshAccounts();
+                break;
+            case 'transactions':
+                refreshTransactions();
+                break;
+            case 'dependents':
+                refreshDependents();
+                break;
+            case 'settings':
+                refreshSettings();
+                break;
+        }
+    }
+}
+
+// Helper functions for header actions
+function refreshCurrentSection() {
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection) {
+        const sectionId = activeSection.id;
+        showSection(sectionId); // This will reload the section data
+        showAlert('Section refreshed successfully', 'success');
+    }
+}
+
+function exportData() {
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection) {
+        const sectionId = activeSection.id;
+        
+        switch(sectionId) {
+            case 'accounts':
+                exportAccountsData();
+                break;
+            case 'transactions':
+                exportTransactionsData();
+                break;
+            case 'dependents':
+                exportDependentsData();
+                break;
+            default:
+                showAlert('Export not available for this section', 'info');
+        }
+    }
+}
+
+function exportAccountsData() {
+    if (userAccounts && userAccounts.length > 0) {
+        const csvContent = convertToCSV(userAccounts, 'accounts');
+        downloadCSV(csvContent, 'accounts-export.csv');
+        showAlert('Accounts data exported successfully', 'success');
+    } else {
+        showAlert('No account data to export', 'warning');
+    }
+}
+
+function exportTransactionsData() {
+    if (userTransactions && userTransactions.length > 0) {
+        const csvContent = convertToCSV(userTransactions, 'transactions');
+        downloadCSV(csvContent, 'transactions-export.csv');
+        showAlert('Transactions data exported successfully', 'success');
+    } else {
+        showAlert('No transaction data to export', 'warning');
+    }
+}
+
+function convertToCSV(data, type) {
+    if (!data || data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(row => 
+        Object.values(row).map(value => 
+            typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+        ).join(',')
+    );
+    
+    return [headers, ...rows].join('\n');
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Update user info in sidebar
+function updateSidebarUserInfo() {
+    if (currentUser) {
+        const sidebarAvatar = document.getElementById('sidebarUserAvatar');
+        const sidebarName = document.getElementById('sidebarUserName');
+        const sidebarRole = document.getElementById('sidebarUserRole');
+        
+        if (sidebarAvatar) {
+            sidebarAvatar.textContent = currentUser.firstName ? currentUser.firstName.charAt(0).toUpperCase() : 'U';
+        }
+        
+        if (sidebarName) {
+            sidebarName.textContent = currentUser.firstName && currentUser.lastName 
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : currentUser.email || 'User';
+        }
+        
+        if (sidebarRole) {
+            sidebarRole.textContent = currentUser.role || 'User';
+        }
+    }
+}
+
+// Update user info in dashboard and other sections
+function updateDashboardUserInfo() {
+    if (currentUser) {
+        // Update profile section if elements exist
+        const profileAvatar = document.getElementById('profileAvatar');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        
+        if (profileAvatar) {
+            profileAvatar.textContent = currentUser.firstName ? currentUser.firstName.charAt(0).toUpperCase() : 'U';
+        }
+        
+        if (profileName) {
+            profileName.textContent = currentUser.firstName && currentUser.lastName 
+                ? `${currentUser.firstName} ${currentUser.lastName}`
+                : 'User Name';
+        }
+        
+        if (profileEmail) {
+            profileEmail.textContent = currentUser.email || 'user@example.com';
+        }
+        
+        // Update form fields if they exist
+        const firstNameField = document.getElementById('firstName');
+        const lastNameField = document.getElementById('lastName');
+        const emailField = document.getElementById('email');
+        const phoneField = document.getElementById('phone');
+        const addressField = document.getElementById('address');
+        
+        if (firstNameField) firstNameField.value = currentUser.firstName || '';
+        if (lastNameField) lastNameField.value = currentUser.lastName || '';
+        if (emailField) emailField.value = currentUser.email || '';
+        if (phoneField) phoneField.value = currentUser.phone || '';
+        if (addressField) addressField.value = currentUser.address || '';
+    }
+}
+
+// API Interaction Functions
+async function fetchWithAuth(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
+    
+    try {
+        console.log(`Fetching ${url}...`);
+        
+        // Check if we have a token before making the request
+        if (!token) {
+            console.error('No authentication token available');
+            showAlert('No authentication token. Please log in again.', 'danger');
+            setTimeout(() => window.location.href = '/Login', 1500);
+            throw new Error('No authentication token');
+        }
+        
+        const response = await fetch(url, mergedOptions);
+        console.log(`Response status: ${response.status}`);
+        
+        if (response.status === 401) {
+            console.error('Unauthorized: Invalid or expired token');
+            showAlert('Your session has expired. Please log in again.', 'danger');
+            localStorage.removeItem('portal-admin-token');
+            localStorage.removeItem('admin-token');
+            setTimeout(() => window.location.href = '/Login', 1500);
+            throw new Error('Unauthorized');
+        }
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API Error response: ${errorText}`);
+            
+            let errorMessage;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorJson.error || 'Unknown error';
+            } catch (e) {
+                errorMessage = errorText || `HTTP error ${response.status}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log('API response data:', data);
+        return data;
+    } catch (error) {
+        console.error('API Error:', error.message);
+        throw error;
+    }
+}
+
+// Initialize the portal
+document.addEventListener('DOMContentLoaded', function() {
+    // Display current date
+    const now = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-ZA', options);
+    
+    // Check authentication
+    if (!token || token === '') {
+        console.log('No authentication token found.');
+        showAlert('No authentication token found. Please log in again.', 'danger');
+        setTimeout(() => window.location.href = '/Login', 1500);
+        return;
+    }
+    
+    if (!portalUserEmail) {
+        console.error('No portal user credentials found.');
+        showAlert('No portal user credentials found. Please log in through the portal.', 'danger');
+        setTimeout(() => {
+            localStorage.removeItem('portal-admin-token');
+            localStorage.removeItem('admin-token');
+            window.location.href = '/';
+        }, 1500);
+        return;
+    }
+    
+    // Initialize the portal
+    loadUserProfile();
+});
+
+// Core Data Loading Functions
+async function loadUserProfile() {
+    try {
+        showNanaLoader('Loading your profile...', 'full');
+        
+        console.log('Loading user profile from portal API...');
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/portal/me`);
+        console.log('Profile data received:', data);
+        
+        if (data && data.user) {
+            currentUser = data.user;
+            userAccounts = data.user.accounts || [];
+            userTransactions = data.recentTransactions || [];
+            userDependents = data.user.Dependents || [];
+            
+            console.log(`User loaded: ${currentUser.firstName} ${currentUser.surname} (${currentUser.role})`);
+            console.log(`Found ${userAccounts.length} accounts, ${userTransactions.length} transactions, ${userDependents.length} dependents`);
+            
+            // Update UI based on user role
+            updateProfileUI(currentUser);
+            updateRoleBasedContent(currentUser.role);
+            updateDashboardStats();
+            updateSidebarUserInfo();
+            updateDashboardUserInfo();
+            
+            hideNanaLoader();
+            showAlert(`Welcome ${currentUser.firstName}! Portal loaded successfully.`, 'success');
+            
+        } else {
+            throw new Error('Invalid response format from portal API');
+        }
+        
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+        hideNanaLoader();
+        
+        // Show user-friendly error message based on error type
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            showAlert('Your session has expired. Please log in again.', 'danger');
+            setTimeout(() => window.location.href = '/Login', 2000);
+        } else if (error.message.includes('503') || error.message.includes('ServiceUnavailable')) {
+            showAlert('The backend service is temporarily unavailable. Please try again in a moment.', 'warning');
+        } else {
+            showAlert(`Failed to load your profile: ${error.message}`, 'danger');
+        }
+    }
+}
+
+function updateRoleBasedContent(role) {
+    console.log(`Updating content for role: ${role}`);
+    
+    // Hide all role-specific sections first
+    document.querySelectorAll('.role-content').forEach(el => el.style.display = 'none');
+    
+    // Update navigation based on role
+    const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+    
+    switch(role?.toLowerCase()) {
+        case 'funder':
+            updateFunderContent();
+            break;
+        case 'caregiver':
+            updateCaregiverContent();
+            break;
+        case 'dependent':
+            updateDependentContent();
+            break;
+        default:
+            console.warn(`Unknown role: ${role}, defaulting to funder content`);
+            updateFunderContent();
+    }
+}
+
+function updateFunderContent() {
+    console.log('Setting up funder content');
+    
+    // Show funder-specific sections
+    document.querySelector('#accounts')?.classList.remove('d-none');
+    document.querySelector('#transactions')?.classList.remove('d-none');
+    document.querySelector('#dependents')?.classList.remove('d-none');
+    
+    // Update dashboard title
+    const dashboardTitle = document.querySelector('#dashboard h1');
+    if (dashboardTitle) dashboardTitle.textContent = 'Funder Dashboard';
+    
+}
+
+function updateCaregiverContent() {
+    console.log('Setting up caregiver content');
+    
+    // Show caregiver-specific sections
+    document.querySelector('#accounts')?.classList.remove('d-none');
+    document.querySelector('#transactions')?.classList.remove('d-none');
+    
+    // Hide dependents section for caregivers
+    document.querySelector('#dependents')?.classList.add('d-none');
+    
+    // Update dashboard title
+    const dashboardTitle = document.querySelector('#dashboard h1');
+    if (dashboardTitle) dashboardTitle.textContent = 'Caregiver Dashboard';
+}
+
+function updateDependentContent() {
+    console.log('Setting up dependent content');
+    
+    // Show limited sections for dependents
+    document.querySelector('#accounts')?.classList.remove('d-none');
+    document.querySelector('#transactions')?.classList.remove('d-none');
+    
+    // Hide dependents section
+    document.querySelector('#dependents')?.classList.add('d-none');
+    
+    // Update dashboard title
+    const dashboardTitle = document.querySelector('#dashboard h1');
+    if (dashboardTitle) dashboardTitle.textContent = 'Dependent Dashboard';
+}
+        
+        // Update dashboard user info
+        updateDashboardUserInfo();
+        
+    } catch (error) {
+        showAlert(`Failed to load user profile: ${error.message}`, 'danger');
+    }
+}
+
+async function loadUserAccounts() {
+    try {
+        if (!currentUser || !currentUser.id) {
+            throw new Error('User information is not available');
+        }
+        
+        // Try portal endpoint first
+        try {
+            userAccounts = await fetchWithAuth(`${API_BASE_URL}/api/portal/me/accounts`);
+        } catch (err) {
+            console.log('Portal accounts endpoint failed:', err.message);
+            
+            throw new Error('Failed to load account data');
+        }
+        
+        updateAccountsUI(userAccounts);
+        
+    } catch (error) {
+        console.error('Error loading accounts:', error);
+        showAlert(`Failed to load accounts: ${error.message}`, 'danger');
+    }
+}
+
+async function loadUserTransactions(page = 1, filters = {}) {
+    try {
+        // Build query parameters
+        const queryParams = new URLSearchParams();
+        queryParams.append('page', page);
+        queryParams.append('limit', filters.limit || itemsPerPage);
+        
+        if (filters.type) queryParams.append('type', filters.type);
+        if (filters.startDate) queryParams.append('startDate', filters.startDate);
+        if (filters.endDate) queryParams.append('endDate', filters.endDate);
+        if (filters.minAmount) queryParams.append('minAmount', filters.minAmount);
+        if (filters.maxAmount) queryParams.append('maxAmount', filters.maxAmount);
+        if (filters.search) queryParams.append('search', filters.search);
+        if (filters.sortBy) queryParams.append('sortBy', filters.sortBy);
+        if (filters.sortOrder) queryParams.append('sortOrder', filters.sortOrder);
+        
+        // Try portal endpoint first
+        try {
+            const data = await fetchWithAuth(`${API_BASE_URL}/api/portal/me/transactions?${queryParams.toString()}`);
+            
+            if (data && data.transactions) {
+                userTransactions = data.transactions;
+                if (data.pagination) {
+                    currentPage = data.pagination.page;
+                    totalPages = data.pagination.pages;
+                    itemsPerPage = data.pagination.limit;
+                }
+            } else {
+                userTransactions = data;
+            }
+            
+        } catch (err) {
+            console.log('Portal transactions endpoint failed:', err.message);
+            throw new Error('Failed to load transaction data');
+        }
+        
+        updateTransactionsUI(userTransactions);
+        
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+        showAlert(`Failed to load transactions: ${error.message}`, 'danger');
+    }
+}
+
+async function loadUserDependents() {
+    if (!currentUser) return;
+    
+    if (currentUser.Dependents) {
+        userDependents = currentUser.Dependents;
+        updateDependentsUI(userDependents);
+        return;
+    }
+    
+    // No dependents available if not in user data
+    userDependents = [];
+    updateDependentsUI(userDependents);
+}
+}
+
+// UI Update Functions
+function updateProfileUI(userData) {
+    if (!userData) return;
+    
+    const user = userData.profile || userData;
+    
+    // Update sidebar
+    const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+    const sidebarNameEl = document.getElementById('sidebarUserName');
+    const sidebarEmailEl = document.getElementById('sidebarUserEmail');
+    
+    if (sidebarNameEl) sidebarNameEl.textContent = fullName || 'User';
+    if (sidebarEmailEl) sidebarEmailEl.textContent = user.email || '';
+    
+    // Update profile section
+    const profileFullNameEl = document.getElementById('profileFullName');
+    const profileEmailEl = document.getElementById('profileEmail');
+    const profileStatusEl = document.getElementById('profileStatus');
+    
+    if (profileFullNameEl) profileFullNameEl.textContent = fullName || 'User';
+    if (profileEmailEl) profileEmailEl.textContent = user.email || '';
+    
+    if (profileStatusEl) {
+        profileStatusEl.textContent = user.status || 'active';
+        profileStatusEl.className = 'badge badge-status mt-2';
+        
+        if (user.status === 'active') {
+            profileStatusEl.classList.add('bg-success');
+        } else if (user.status === 'blocked') {
+            profileStatusEl.classList.add('bg-danger');
+        } else if (user.status === 'suspended') {
+            profileStatusEl.classList.add('bg-warning', 'text-dark');
+        } else {
+            profileStatusEl.classList.add('bg-secondary');
+        }
+    }
+    
+    // Update profile details
+    document.getElementById('profileFirstName').textContent = user.firstName || '-';
+    document.getElementById('profileMiddleName').textContent = user.middleName || '-';
+    document.getElementById('profileSurname').textContent = user.surname || '-';
+    document.getElementById('profileIdNumber').textContent = user.idNumber || user.Idnumber || '-';
+    document.getElementById('profilePhone').textContent = user.phoneNumber || '-';
+    document.getElementById('profileRelation').textContent = user.relation || '-';
+    
+    // Handle addresses - check if addresses array exists
+    let postalParts = [];
+    let homeParts = [];
+    
+    if (userData.addresses && Array.isArray(userData.addresses)) {
+        const postalAddress = userData.addresses.find(addr => addr.type === 'postal');
+        const homeAddress = userData.addresses.find(addr => addr.type === 'home');
+        
+        if (postalAddress) {
+            postalParts = [
+                postalAddress.line1,
+                postalAddress.line2,
+                postalAddress.city,
+                postalAddress.province,
+                postalAddress.postalCode
+            ].filter(part => part && part.trim());
+        }
+        
+        if (homeAddress) {
+            homeParts = [
+                homeAddress.line1,
+                homeAddress.line2,
+                homeAddress.city,
+                homeAddress.province,
+                homeAddress.postalCode
+            ].filter(part => part && part.trim());
+        }
+    } else {
+        // Fallback to direct properties
+        postalParts = [
+            user.postalAddressLine1,
+            user.postalAddressLine2,
+            user.postalCity,
+            user.postalProvince,
+            user.postalCode
+        ].filter(part => part && part.trim());
+        
+        homeParts = [
+            user.homeAddressLine1,
+            user.homeAddressLine2,
+            user.homeCity,
+            user.homeProvince,
+            user.homeCode
+        ].filter(part => part && part.trim());
+    }
+    
+    document.getElementById('profilePostalAddress').textContent = postalParts.length > 0 ? postalParts.join(', ') : '-';
+    document.getElementById('profileHomeAddress').textContent = homeParts.length > 0 ? homeParts.join(', ') : '-';
+    
+    // Settings section
+    document.getElementById('settingsRole').textContent = user.role || '-';
+    document.getElementById('settingsStatus').textContent = user.status || 'active';
+    document.getElementById('settingsCreated').textContent = user.createdAt ? formatDate(user.createdAt) : '-';
+    
+    // Reset password modal
+    document.getElementById('resetEmail').value = user.email || '';
+}
+
+function updateDashboardStats() {
+    if (!userAccounts || !userTransactions) return;
+    
+    // Calculate total balance
+    const totalBalance = userAccounts.reduce((sum, account) => sum + (parseFloat(account.balance) || 0), 0);
+    document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
+    
+    // Count active accounts
+    const activeAccounts = userAccounts.filter(acc => acc.status && acc.status.toLowerCase() === 'active');
+    document.getElementById('activeAccountsCount').textContent = activeAccounts.length;
+    
+    // Count monthly transactions
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthlyTxns = userTransactions.filter(txn => {
+        const txnDate = new Date(txn.createdAt);
+        return txnDate.getMonth() === currentMonth && txnDate.getFullYear() === currentYear;
+    });
+    document.getElementById('monthlyTransactions').textContent = monthlyTxns.length;
+    
+    // Update dependents count
+    document.getElementById('dependentsCount').textContent = userDependents.length || '0';
+    
+    // Recent transactions
+    updateRecentTransactionsUI();
+}
+
+function updateRecentTransactionsUI() {
+    const recentTxnsEl = document.getElementById('recentTransactionsBody');
+    if (!recentTxnsEl) return;
+    
+    if (!userTransactions || userTransactions.length === 0) {
+        recentTxnsEl.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No recent transactions found.</td></tr>`;
+        return;
+    }
+    
+    // Get 5 most recent transactions
+    const recentTxns = [...userTransactions].sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+    ).slice(0, 5);
+    
+    recentTxnsEl.innerHTML = recentTxns.map(txn => {
+        const amount = parseFloat(txn.amount) || 0;
+        const amountClass = txn.type === 'Credit' ? 'text-success' : 'text-danger';
+        const amountSign = txn.type === 'Credit' ? '+' : '-';
+        const formattedAmount = `${amountSign}${formatCurrency(Math.abs(amount))}`;
+        const accountNumber = txn.account ? txn.account.accountNumber : '-';
+        const accountType = txn.account ? txn.account.accountType : '-';
+        
+        return `
+            <tr>
+                <td>${formatDate(txn.createdAt)}</td>
+                <td>
+                    <div class="text-truncate" style="max-width: 200px;" title="${txn.description || '-'}">
+                        ${txn.description || '-'}
+                    </div>
+                </td>
+                <td class="${amountClass} fw-bold">${formattedAmount}</td>
+                <td>${txn.type || '-'}</td>
+                <td>${accountNumber} <small class="text-muted">(${accountType})</small></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Form handling functions
+function fillEditProfileForm(userData) {
+    if (!userData) return;
+    
+    const user = userData.profile || userData;
+    
+    // Basic profile information
+    document.getElementById('editFirstName').value = user.firstName || '';
+    document.getElementById('editMiddleName').value = user.middleName || '';
+    document.getElementById('editSurname').value = user.surname || '';
+    document.getElementById('editPhone').value = user.phoneNumber || '';
+    document.getElementById('editRelation').value = user.relation || '';
+    
+    // Handle addresses array if present
+    if (userData.addresses && Array.isArray(userData.addresses)) {
+        const postalAddress = userData.addresses.find(addr => addr.type === 'postal');
+        const homeAddress = userData.addresses.find(addr => addr.type === 'home');
+        
+        if (postalAddress) {
+            document.getElementById('editPostalAddress1').value = postalAddress.line1 || '';
+            document.getElementById('editPostalAddress2').value = postalAddress.line2 || '';
+            document.getElementById('editPostalCity').value = postalAddress.city || '';
+            document.getElementById('editPostalProvince').value = postalAddress.province || '';
+            document.getElementById('editPostalCode').value = postalAddress.postalCode || '';
+        } else {
+            // Fallback to direct properties if no addresses array
+            document.getElementById('editPostalAddress1').value = user.postalAddressLine1 || '';
+            document.getElementById('editPostalAddress2').value = user.postalAddressLine2 || '';
+            document.getElementById('editPostalCity').value = user.postalCity || '';
+            document.getElementById('editPostalProvince').value = user.postalProvince || '';
+            document.getElementById('editPostalCode').value = user.postalCode || '';
+        }
+        
+        if (homeAddress) {
+            document.getElementById('editHomeAddress1').value = homeAddress.line1 || '';
+            document.getElementById('editHomeAddress2').value = homeAddress.line2 || '';
+            document.getElementById('editHomeCity').value = homeAddress.city || '';
+            document.getElementById('editHomeProvince').value = homeAddress.province || '';
+            document.getElementById('editHomeCode').value = homeAddress.postalCode || '';
+        } else {
+            // Fallback to direct properties if no addresses array
+            document.getElementById('editHomeAddress1').value = user.homeAddressLine1 || '';
+            document.getElementById('editHomeAddress2').value = user.homeAddressLine2 || '';
+            document.getElementById('editHomeCity').value = user.homeCity || '';
+            document.getElementById('editHomeProvince').value = user.homeProvince || '';
+            document.getElementById('editHomeCode').value = user.homeCode || '';
+        }
+    } else {
+        // Fallback to direct properties if no addresses array
+        document.getElementById('editPostalAddress1').value = user.postalAddressLine1 || '';
+        document.getElementById('editPostalAddress2').value = user.postalAddressLine2 || '';
+        document.getElementById('editPostalCity').value = user.postalCity || '';
+        document.getElementById('editPostalProvince').value = user.postalProvince || '';
+        document.getElementById('editPostalCode').value = user.postalCode || '';
+        
+        document.getElementById('editHomeAddress1').value = user.homeAddressLine1 || '';
+        document.getElementById('editHomeAddress2').value = user.homeAddressLine2 || '';
+        document.getElementById('editHomeCity').value = user.homeCity || '';
+        document.getElementById('editHomeProvince').value = user.homeProvince || '';
+        document.getElementById('editHomeCode').value = user.homeCode || '';
+    }
+}
+
+function updateAccountsUI(accounts) {
+    if (!accounts) accounts = [];
+    
+    // Update accounts statistics
+    const totalCount = accounts.length;
+    const activeCount = accounts.filter(acc => acc.status && acc.status.toLowerCase() === 'active').length;
+    const totalBalance = accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+    const subAccounts = accounts.filter(acc => acc.parentAccountId).length;
+    
+    document.getElementById('accountsTotalCount').textContent = totalCount;
+    document.getElementById('accountsActiveCount').textContent = activeCount;
+    document.getElementById('accountsTotalBalance').textContent = formatCurrency(totalBalance);
+    document.getElementById('accountsSubCount').textContent = subAccounts;
+    
+    // Update accounts table
+    const accountsBody = document.getElementById('accountsDetailBody');
+    if (!accountsBody) return;
+    
+    if (accounts.length === 0) {
+        accountsBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No accounts found.</td></tr>`;
+        return;
+    }
+    
+    // Sort accounts - main accounts first, then sub-accounts
+    const sortedAccounts = [...accounts].sort((a, b) => {
+        // Sort by parent account (parent accounts first)
+        if (a.parentAccountId && !b.parentAccountId) return 1;
+        if (!a.parentAccountId && b.parentAccountId) return -1;
+        
+        // If both are same type, sort by balance
+        return (parseFloat(b.balance) || 0) - (parseFloat(a.balance) || 0);
+    });
+    
+    accountsBody.innerHTML = sortedAccounts.map(account => {
+        const balance = parseFloat(account.balance) || 0;
+        const balanceClass = balance >= 0 ? 'text-success' : 'text-danger';
+        const formattedBalance = formatCurrency(balance, account.currency || 'ZAR');
+        
+        // Determine status badge
+        let statusBadge;
+        switch(account.status && account.status.toLowerCase()) {
+            case 'active':
+                statusBadge = '<span class="badge bg-success">Active</span>';
+                break;
+            case 'inactive':
+                statusBadge = '<span class="badge bg-secondary">Inactive</span>';
+                break;
+            case 'frozen':
+                statusBadge = '<span class="badge bg-info">Frozen</span>';
+                break;
+            default:
+                statusBadge = `<span class="badge bg-secondary">${account.status || 'Unknown'}</span>`;
+        }
+        
+        // Determine account icon
+        let accountIcon;
+        switch(account.accountType && account.accountType.toLowerCase()) {
+            case 'main':
+                accountIcon = '<i class="bi bi-wallet2 text-primary me-2"></i>';
+                break;
+            case 'savings':
+                accountIcon = '<i class="bi bi-piggy-bank text-success me-2"></i>';
+                break;
+            case 'education':
+                accountIcon = '<i class="bi bi-book text-info me-2"></i>';
+                break;
+            case 'healthcare':
+                accountIcon = '<i class="bi bi-heart-pulse text-danger me-2"></i>';
+                break;
+            default:
+                accountIcon = '<i class="bi bi-credit-card text-secondary me-2"></i>';
+        }
+        
+        // Parent account info
+        let parentAccountInfo = '-';
+        if (account.parentAccountId) {
+            const parentAccount = accounts.find(acc => acc.id === account.parentAccountId);
+            if (parentAccount) {
+                parentAccountInfo = `${parentAccount.accountNumber} (${parentAccount.accountType})`;
+            }
+        }
+        
+        return `<tr>
+            <td>
+                <div class="fw-semibold">${accountIcon}${account.accountNumber || '-'}</div>
+                <div class="small text-muted">${account.createdAt ? formatDate(account.createdAt) : '-'}</div>
+            </td>
+            <td>${account.accountType || '-'}</td>
+            <td class="${balanceClass} fw-bold">${formattedBalance}</td>
+            <td>${statusBadge}</td>
+            <td>${parentAccountInfo}</td>
+            <td>${account.lastTransactionDate ? formatDate(account.lastTransactionDate) : '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewAccountDetails(${account.id})">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updateTransactionsUI(transactions) {
+    if (!transactions) transactions = [];
+    
+    // Update transactions statistics
+    const totalCount = transactions.length;
+    const creditCount = transactions.filter(txn => txn.type === 'Credit').length;
+    const debitCount = transactions.filter(txn => txn.type === 'Debit').length;
+    
+    const creditTotal = transactions
+        .filter(txn => txn.type === 'Credit')
+        .reduce((sum, txn) => sum + (parseFloat(txn.amount) || 0), 0);
+    
+    const debitTotal = transactions
+        .filter(txn => txn.type === 'Debit')
+        .reduce((sum, txn) => sum + (parseFloat(txn.amount) || 0), 0);
+    
+    const netAmount = creditTotal - debitTotal;
+    
+    document.getElementById('transactionsTotalCount').textContent = totalCount;
+    document.getElementById('transactionsCreditCount').textContent = creditCount;
+    document.getElementById('transactionsDebitCount').textContent = debitCount;
+    document.getElementById('transactionsNetAmount').textContent = formatCurrency(netAmount);
+    
+    // Update transactions table
+    const transactionsBody = document.getElementById('transactionsDetailBody');
+    if (!transactionsBody) return;
+    
+    if (transactions.length === 0) {
+        transactionsBody.innerHTML = `<tr><td colspan="8" class="text-center py-4">
+            <div class="text-muted mb-2">No transactions found</div>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadUserTransactions()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
+        </td></tr>`;
+        return;
+    }
+    
+    transactionsBody.innerHTML = transactions.map(txn => {
+        const amount = parseFloat(txn.amount) || 0;
+        const amountClass = txn.type === 'Credit' ? 'text-success' : 'text-danger';
+        const amountPrefix = txn.type === 'Credit' ? '+' : '-';
+        const formattedAmount = `${amountPrefix}${formatCurrency(Math.abs(amount))}`;
+        
+        const source = txn.metadata && txn.metadata.source ? txn.metadata.source : '-';
+        const accountNumber = txn.account ? txn.account.accountNumber : '-';
+        
+        let actionButtons = `
+            <button class="btn btn-sm btn-outline-primary" onclick="viewTransactionDetails(${txn.id})">
+                <i class="bi bi-eye"></i>
+            </button>
+        `;
+        
+        // Add reverse button for admins
+        if (currentUser && currentUser.role === 'admin') {
+            actionButtons += `
+                <button class="btn btn-sm btn-outline-warning ms-1" onclick="confirmReverseTransaction(${txn.id})">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            `;
+        }
+        
+        return `<tr>
+            <td>${formatDate(txn.createdAt)}</td>
+            <td>
+                <div class="text-truncate" style="max-width: 150px;" title="${txn.description || '-'}">
+                    ${txn.description || '-'}
+                </div>
+            </td>
+            <td class="${amountClass} fw-bold">${formattedAmount}</td>
+            <td>${txn.type || '-'}</td>
+            <td>${txn.reference || '-'}</td>
+            <td>${accountNumber}</td>
+            <td>${source}</td>
+            <td>${actionButtons}</td>
+        </tr>`;
+    }).join('');
+    
+    // Update pagination
+    updateTransactionPagination();
+}
+
+function updateDependentsUI(dependents) {
+    if (!dependents) dependents = [];
+    
+    // Update dependents statistics
+    const totalCount = dependents.length;
+    const activeCount = dependents.filter(dep => dep.status && dep.status.toLowerCase() === 'active').length;
+    
+    document.getElementById('dependentsTotalCount').textContent = totalCount;
+    document.getElementById('dependentsActiveCount').textContent = activeCount;
+    
+    // Update dependents table
+    const dependentsBody = document.getElementById('dependentsDetailBody');
+    if (!dependentsBody) return;
+    
+    if (dependents.length === 0) {
+        dependentsBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No dependents found.</td></tr>`;
+        return;
+    }
+    
+    dependentsBody.innerHTML = dependents.map(dependent => {
+        const fullName = `${dependent.firstName || ''} ${dependent.surname || ''}`.trim();
+        
+        // Determine status badge
+        let statusBadge;
+        switch(dependent.status && dependent.status.toLowerCase()) {
+            case 'active':
+                statusBadge = '<span class="badge bg-success">Active</span>';
+                break;
+            case 'blocked':
+                statusBadge = '<span class="badge bg-danger">Blocked</span>';
+                break;
+            case 'suspended':
+                statusBadge = '<span class="badge bg-warning text-dark">Suspended</span>';
+                break;
+            default:
+                statusBadge = `<span class="badge bg-secondary">${dependent.status || 'Unknown'}</span>`;
+        }
+        
+        // Count accounts
+        const accountCount = dependent.accounts ? dependent.accounts.length : 0;
+        
+        return `<tr>
+            <td>
+                <div class="fw-semibold">${fullName || 'Unknown'}</div>
+                <div class="small text-muted">${dependent.idNumber || dependent.Idnumber || '-'}</div>
+            </td>
+            <td>${dependent.email || '-'}</td>
+            <td>${dependent.role || '-'}</td>
+            <td>${statusBadge}</td>
+            <td>${accountCount}</td>
+            <td>${dependent.createdAt ? formatDate(dependent.createdAt) : '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewDependentDetails(${dependent.id})">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updateTransactionPagination() {
+    const paginationEl = document.getElementById('transactionsPagination');
+    const paginationInfoEl = document.getElementById('paginationInfo');
+    
+    if (!paginationEl || !paginationInfoEl) return;
+    
+    // Calculate pagination range
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, userTransactions.length);
+    const total = userTransactions.length;
+    
+    paginationInfoEl.textContent = `${start}-${end} of ${total}`;
+    
+    // Generate pagination buttons
+    let paginationHTML = '';
+    
+    // Previous button
+    paginationHTML += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <button class="page-link" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </li>
+    `;
+    
+    // First page
+    if (currentPage > 3) {
+        paginationHTML += `
+            <li class="page-item">
+                <button class="page-link" onclick="goToPage(1)">1</button>
+            </li>
+            ${currentPage > 4 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+        `;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <button class="page-link" onclick="goToPage(${i})">${i}</button>
+            </li>
+        `;
+    }
+    
+    // Last page
+    if (currentPage < totalPages - 2) {
+        paginationHTML += `
+            ${currentPage < totalPages - 3 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+            <li class="page-item">
+                <button class="page-link" onclick="goToPage(${totalPages})">${totalPages}</button>
+            </li>
+        `;
+    }
+    
+    // Next button
+    paginationHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <button class="page-link" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </li>
+    `;
+    
+    paginationEl.innerHTML = paginationHTML;
+}
+
+// Navigation and form actions
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    
+    currentPage = page;
+    loadUserTransactions(currentPage, transactionFilters);
+}
+
+// UI Interaction Functions
+function editProfile() {
+    if (!currentUser) {
+        showAlert('No user data available to edit', 'danger');
+        return;
+    }
+    
+    // Fill the form with current user data
+    fillEditProfileForm(currentUser);
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+}
+
+function showPasswordReset() {
+    if (!currentUser || !currentUser.email) {
+        showAlert('No user data available to reset password', 'danger');
+        return;
+    }
+    
+    document.getElementById('resetEmail').value = currentUser.email;
+    
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+function showCreateTransaction() {
+    // Load accounts into select dropdown
+    const accountSelect = document.getElementById('transactionAccountId');
+    accountSelect.innerHTML = '<option value="">Select Account</option>';
+    
+    if (userAccounts && userAccounts.length > 0) {
+        userAccounts.forEach(acc => {
+            accountSelect.innerHTML += `<option value="${acc.id}">${acc.accountNumber} (${acc.accountType})</option>`;
+        });
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('createTransactionModal'));
+    modal.show();
+}
+
+function toggleTransactionFilters() {
+    const filters = document.getElementById('transactionFilters');
+    if (filters) {
+        if (filters.style.display === 'none') {
+            filters.style.display = 'block';
+        } else {
+            filters.style.display = 'none';
+        }
+    }
+}
+
+function applyTransactionFilters() {
+    // Collect filter values
+    transactionFilters = {
+        type: document.getElementById('filterType').value,
+        startDate: document.getElementById('filterStartDate').value,
+        endDate: document.getElementById('filterEndDate').value,
+        minAmount: document.getElementById('filterMinAmount').value,
+        maxAmount: document.getElementById('filterMaxAmount').value,
+        search: document.getElementById('filterSearch').value,
+        limit: document.getElementById('filterLimit').value || 20,
+        sortBy: 'createdAt',
+        sortOrder: 'DESC'
+    };
+    
+    // Reset to first page when applying filters
+    currentPage = 1;
+    
+    // Load transactions with filters
+    loadUserTransactions(currentPage, transactionFilters);
+}
+
+function clearTransactionFilters() {
+    // Reset filter form
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterStartDate').value = '';
+    document.getElementById('filterEndDate').value = '';
+    document.getElementById('filterMinAmount').value = '';
+    document.getElementById('filterMaxAmount').value = '';
+    document.getElementById('filterSearch').value = '';
+    document.getElementById('filterLimit').value = '20';
+    
+    // Reset filter object
+    transactionFilters = {
+        limit: 20,
+        sortBy: 'createdAt',
+        sortOrder: 'DESC'
+    };
+    
+    // Reset to first page
+    currentPage = 1;
+    
+    // Reload transactions
+    loadUserTransactions(currentPage, transactionFilters);
+}
+
+// API Action Functions
+async function saveProfile() {
+    try {
+        if (!currentUser) {
+            throw new Error('No user data available');
+        }
+        
+        // Get button and show loading state
+        const saveButton = document.querySelector('#editProfileModal .btn-primary-gradient');
+        showLoading(saveButton);
+        
+        // Build update data in the new API format
+        const updateData = {
+            firstName: document.getElementById('editFirstName').value,
+            middleName: document.getElementById('editMiddleName').value,
+            surname: document.getElementById('editSurname').value,
+            phoneNumber: document.getElementById('editPhone').value,
+            relation: document.getElementById('editRelation').value,
+            addresses: [
+                {
+                    type: 'postal',
+                    line1: document.getElementById('editPostalAddress1').value,
+                    line2: document.getElementById('editPostalAddress2').value,
+                    city: document.getElementById('editPostalCity').value,
+                    province: document.getElementById('editPostalProvince').value,
+                    postalCode: document.getElementById('editPostalCode').value
+                },
+                {
+                    type: 'home',
+                    line1: document.getElementById('editHomeAddress1').value,
+                    line2: document.getElementById('editHomeAddress2').value,
+                    city: document.getElementById('editHomeCity').value,
+                    province: document.getElementById('editHomeProvince').value,
+                    postalCode: document.getElementById('editHomeCode').value
+                }
+            ]
+        };
+        
+        // Remove empty fields to avoid sending null/undefined values
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] === '' || updateData[key] === null || updateData[key] === undefined) {
+                delete updateData[key];
+            }
+        });
+        
+        // Clean up addresses - remove empty address objects
+        updateData.addresses = updateData.addresses.filter(addr => {
+            const hasContent = addr.line1 || addr.line2 || addr.city || addr.province || addr.postalCode;
+            return hasContent;
+        });
+        
+        // Submit update
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/portal/me`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+        
+        // Hide loading state
+        hideLoading(saveButton);
+        
+        // Handle response
+        if (data && (data.user || data.profile)) {
+            // Update current user data - handle both response formats
+            currentUser = data.user || data.profile || data;
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+            if (modal) modal.hide();
+            
+            // Update UI with the full response data to include addresses
+            updateProfileUI(data);
+            
+            showAlert('Profile updated successfully!', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to update profile');
+        }
+        
+    } catch (error) {
+        const saveButton = document.querySelector('#editProfileModal .btn-primary-gradient');
+        hideLoading(saveButton);
+        
+        console.error('Error saving profile:', error);
+        showAlert(`Failed to update profile: ${error.message}`, 'danger');
+    }
+}
+
+async function resetPassword() {
+    try {
+        // Get new password
+        const newPassword = document.getElementById('resetNewPassword').value;
+        
+        if (!newPassword) {
+            throw new Error('Please enter a new password');
+        }
+        
+        if (newPassword.length < 6) {
+            throw new Error('Password must be at least 6 characters long');
+        }
+        
+        // Get button and show loading state
+        const resetButton = document.querySelector('#resetPasswordModal .btn-warning-gradient');
+        showLoading(resetButton);
+        
+        // Submit password reset
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/portal/reset-password`, {
+            method: 'POST',
+            body: JSON.stringify({ newPassword })
+        });
+        
+        // Hide loading state
+        hideLoading(resetButton);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+        if (modal) modal.hide();
+        
+        showAlert('Password reset successful! You will be logged out in a moment...', 'success');
+        
+        // Clear tokens and redirect to login after a delay
+        setTimeout(() => {
+            localStorage.removeItem('portal-admin-token');
+            localStorage.removeItem('admin-token');
+            localStorage.removeItem('portal-user-email');
+            localStorage.removeItem('portal-user-password');
+            window.location.href = '/';
+        }, 2000);
+        
+    } catch (error) {
+        const resetButton = document.querySelector('#resetPasswordModal .btn-warning-gradient');
+        hideLoading(resetButton);
+        
+        console.error('Error resetting password:', error);
+        showAlert(`Failed to reset password: ${error.message}`, 'danger');
+    }
+}
+
+async function resetUserPassword() {
+    try {
+        // Get email and new password
+        const email = document.getElementById('resetUserEmail').value;
+        const newPassword = document.getElementById('resetUserNewPassword').value;
+        
+        if (!email) {
+            throw new Error('Please enter the user email');
+        }
+        
+        if (!newPassword) {
+            throw new Error('Please enter a new password');
+        }
+        
+        if (newPassword.length < 6) {
+            throw new Error('Password must be at least 6 characters long');
+        }
+        
+        // Get button and show loading state
+        const resetButton = document.querySelector('#resetUserPasswordModal .btn-info');
+        showLoading(resetButton);
+        
+        // Submit password reset
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/portal/reset-user-password`, {
+            method: 'POST',
+            body: JSON.stringify({ email, newPassword })
+        });
+        
+        // Hide loading state
+        hideLoading(resetButton);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('resetUserPasswordModal'));
+        if (modal) modal.hide();
+        
+        showAlert('User password reset successfully!', 'success');
+        
+    } catch (error) {
+        const resetButton = document.querySelector('#resetUserPasswordModal .btn-info');
+        hideLoading(resetButton);
+        
+        console.error('Error resetting user password:', error);
+        showAlert(`Failed to reset user password: ${error.message}`, 'danger');
+    }
+}
+
+async function createTransaction() {
+    try {
+        // Get form values
+        const accountId = document.getElementById('transactionAccountId').value;
+        const amount = document.getElementById('transactionAmount').value;
+        const type = document.getElementById('transactionType').value;
+        const description = document.getElementById('transactionDescription').value;
+        const reference = document.getElementById('transactionReference').value;
+        const category = document.getElementById('transactionCategory').value;
+        const reason = document.getElementById('transactionReason').value;
+        
+        // Validate required fields
+        if (!accountId || !amount || !type || !description) {
+            throw new Error('Please fill all required fields');
+        }
+        
+        // Get button and show loading state
+        const createButton = document.querySelector('#createTransactionModal .btn-success-gradient');
+        showLoading(createButton);
+        
+        // Build transaction data
+        const transactionData = {
+            accountId: parseInt(accountId),
+            amount: parseFloat(amount),
+            type,
+            description,
+            reference: reference || `manual-${Date.now()}`,
+            metadata: {
+                source: 'admin_manual',
+                category: category || 'manual',
+                reason: reason || 'Manual transaction',
+                createdAt: new Date().toISOString()
+            }
+        };
+        
+        // Submit transaction
+        const data = await fetchWithAuth(`${API_BASE_URL}/api/admin/transactions`, {
+            method: 'POST',
+            body: JSON.stringify(transactionData)
+        });
+        
+        // Hide loading state
+        hideLoading(createButton);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createTransactionModal'));
+        if (modal) modal.hide();
+        
+        showAlert('Transaction created successfully!', 'success');
+        
+        // Refresh transactions
+        loadUserTransactions();
+        loadUserAccounts(); // Refresh accounts to show updated balances
+        
+    } catch (error) {
+        const createButton = document.querySelector('#createTransactionModal .btn-success-gradient');
+        hideLoading(createButton);
+        
+        console.error('Error creating transaction:', error);
+        showAlert(`Failed to create transaction: ${error.message}`, 'danger');
+    }
+}
+
+async function viewTransactionDetails(transactionId) {
+    try {
+        // Show loading in modal
+        const modal = new bootstrap.Modal(document.getElementById('transactionDetailsModal'));
+        modal.show();
+        
+        document.getElementById('transactionDetailsContent').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading transaction details...</p>
+            </div>
+        `;
+        
+        // Hide reverse button while loading
+        document.getElementById('reverseTransactionBtn').style.display = 'none';
+        
+        // Fetch transaction details
+        const transaction = await fetchWithAuth(`${API_BASE_URL}/api/admin/transactions/${transactionId}`);
+        
+        if (!transaction || !transaction.data) {
+            throw new Error('Transaction details not found');
+        }
+        
+        const txn = transaction.data;
+        
+        // Format transaction details
+        const amount = parseFloat(txn.amount) || 0;
+        const amountClass = txn.type === 'Credit' ? 'text-success' : 'text-danger';
+        const formattedAmount = formatCurrency(Math.abs(amount));
+        
+        // Check if transaction has been reversed already
+        const isReversed = txn.metadata && txn.metadata.isReversed;
+        const isReversal = txn.metadata && txn.metadata.isReversal;
+        
+        let statusBadge = '';
+        if (isReversed) {
+            statusBadge = '<span class="badge bg-warning text-dark ms-2">Reversed</span>';
+        } else if (isReversal) {
+            statusBadge = '<span class="badge bg-info ms-2">Reversal</span>';
+        }
+        
+        // Build metadata display
+        let metadataHTML = '';
+        if (txn.metadata) {
+            const metadata = txn.metadata;
+            metadataHTML = '<table class="table table-sm mt-3">';
+            
+            // Common metadata fields
+            if (metadata.source) metadataHTML += `<tr><td class="fw-bold">Source</td><td>${metadata.source}</td></tr>`;
+            if (metadata.category) metadataHTML += `<tr><td class="fw-bold">Category</td><td>${metadata.category}</td></tr>`;
+            if (metadata.reason) metadataHTML += `<tr><td class="fw-bold">Reason</td><td>${metadata.reason}</td></tr>`;
+            
+            // Admin fields
+            if (metadata.adminId) metadataHTML += `<tr><td class="fw-bold">Admin ID</td><td>${metadata.adminId}</td></tr>`;
+            if (metadata.adminEmail) metadataHTML += `<tr><td class="fw-bold">Admin Email</td><td>${metadata.adminEmail}</td></tr>`;
+            
+            // Reversal fields
+            if (isReversed) {
+                metadataHTML += `<tr><td class="fw-bold">Reversed By</td><td>${metadata.reversedBy || 'Unknown'}</td></tr>`;
+                metadataHTML += `<tr><td class="fw-bold">Reversed At</td><td>${formatDateTime(metadata.reversedAt)}</td></tr>`;
+                metadataHTML += `<tr><td class="fw-bold">Reversal Reason</td><td>${metadata.reversalReason || 'Not specified'}</td></tr>`;
+                metadataHTML += `<tr><td class="fw-bold">Reversal Transaction</td><td>${metadata.reversalTransactionId || 'Not available'}</td></tr>`;
+            }
+            
+            // Reversal transaction fields
+            if (isReversal) {
+                metadataHTML += `<tr><td class="fw-bold">Original Transaction</td><td>${metadata.originalTransactionId || 'Not available'}</td></tr>`;
+                metadataHTML += `<tr><td class="fw-bold">Original Reference</td><td>${metadata.originalReference || 'Not available'}</td></tr>`;
+            }
+            
+            metadataHTML += '</table>';
+        }
+        
+        // Build transaction details HTML
+        const detailsHTML = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h5>${txn.description || 'Transaction'} ${statusBadge}</h5>
+                    <p class="text-muted">Reference: ${txn.reference || 'None'}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <h4 class="${amountClass} fw-bold">${txn.type === 'Credit' ? '+' : '-'}${formattedAmount}</h4>
+                    <p class="text-muted">${formatDateTime(txn.createdAt)}</p>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h6 class="fw-bold">Transaction Details</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="fw-bold">Transaction ID</td>
+                            <td>${txn.id}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Type</td>
+                            <td>${txn.type || '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Amount</td>
+                            <td class="${amountClass}">${formattedAmount}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Created</td>
+                            <td>${formatDateTime(txn.createdAt)}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Last Updated</td>
+                            <td>${txn.updatedAt ? formatDateTime(txn.updatedAt) : 'Never'}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-bold">Account Information</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="fw-bold">Account ID</td>
+                            <td>${txn.accountId}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Account Number</td>
+                            <td>${txn.account ? txn.account.accountNumber : '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Account Type</td>
+                            <td>${txn.account ? txn.account.accountType : '-'}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">User</td>
+                            <td>
+                                ${txn.account && txn.account.user ? 
+                                    `${txn.account.user.firstName || ''} ${txn.account.user.lastName || txn.account.user.surname || ''}`.trim() || 'Unknown' 
+                                    : 'Unknown'}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            ${metadataHTML ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="fw-bold">Metadata</h6>
+                        ${metadataHTML}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        // Update modal content
+        document.getElementById('transactionDetailsContent').innerHTML = detailsHTML;
+        
+        // Show reverse button only if transaction can be reversed
+        const reverseBtn = document.getElementById('reverseTransactionBtn');
+        if (currentUser && currentUser.role === 'admin' && !isReversed && !isReversal) {
+            reverseBtn.style.display = 'block';
+            reverseBtn.onclick = function() {
+                confirmReverseTransaction(txn.id);
+            };
+        } else {
+            reverseBtn.style.display = 'none';
+        }
+        
+    } catch (error) {
+        console.error('Error loading transaction details:', error);
+        document.getElementById('transactionDetailsContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Error loading transaction details: ${error.message}
+            </div>
+        `;
+    }
+}
+
+// Refresh functions
+function refreshProfile() {
+    if (currentUser) {
+        updateProfileUI(currentUser);
+    } else {
+        loadUserProfile();
+    }
+}
+
+function refreshAccounts() {
+    loadUserAccounts();
+}
+
+function refreshTransactions() {
+    loadUserTransactions(currentPage, transactionFilters);
+}
+
+function refreshDependents() {
+    loadUserDependents();
+}
+
+function refreshSettings() {
+    if (currentUser) {
+        document.getElementById('settingsRole').textContent = currentUser.role || '-';
+        document.getElementById('settingsStatus').textContent = currentUser.status || 'active';
+        document.getElementById('settingsCreated').textContent = currentUser.createdAt ? formatDate(currentUser.createdAt) : '-';
+    }
+}
+
+// Export functions
+
+// Export functions
+function exportTransactions() {
+    if (!userTransactions || userTransactions.length === 0) {
+        showAlert('No transactions available to export', 'warning');
+        return;
+    }
+    
+    try {
+        // Convert transactions to CSV
+        const headers = [
+            'ID', 'Date', 'Amount', 'Type', 'Description', 'Reference', 
+            'Account Number', 'Account Type', 'Source'
+        ];
+        
+        const csvContent = [
+            headers.join(','),
+            ...userTransactions.map(txn => {
+                const date = new Date(txn.createdAt).toLocaleDateString('en-ZA');
+                const amount = parseFloat(txn.amount) || 0;
+                const formattedAmount = amount.toFixed(2);
+                const description = (txn.description || '').replace(/,/g, ' ');
+                const reference = (txn.reference || '').replace(/,/g, ' ');
+                const accountNumber = txn.account ? txn.account.accountNumber : '';
+                const accountType = txn.account ? txn.account.accountType : '';
+                const source = txn.metadata && txn.metadata.source ? txn.metadata.source : '';
+                
+                return [
+                    txn.id,
+                    date,
+                    formattedAmount,
+                    txn.type || '',
+                    `"${description}"`,
+                    `"${reference}"`,
+                    accountNumber,
+                    accountType,
+                    source
+                ].join(',');
+            })
+        ].join('\n');
+        
+        // Create download link
+        const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `transactions_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('Transactions exported successfully!', 'success');
+    } catch (error) {
+        console.error('Error exporting transactions:', error);
+        showAlert(`Failed to export transactions: ${error.message}`, 'danger');
+    }
+}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
