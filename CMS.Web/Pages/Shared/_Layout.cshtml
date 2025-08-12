@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - CMS</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/portal.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CMS.Web.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -32,7 +33,7 @@
         </button>
 
         <!-- Fixed Sidebar for authenticated users -->
-        <nav class="sidebar position-fixed top-0 start-0" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: #f84c7d; color: #fff;">
+        <nav class="sidebar position-fixed top-0 start-0" id="mainSidebar" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: #f84c7d; color: #fff;">
             <div class="d-flex flex-column h-100 px-3 pt-4 pb-3">
                 <!-- Logo and Brand -->
                 <div class="text-center mb-4 pb-2">
@@ -59,7 +60,7 @@
                     <a asp-page="/Users/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
                         <i class="bi bi-people me-3" style="font-size:1.3rem;"></i> Users
                     </a>
-                    <a asp-page="/Portal/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded user-portal-link" style="color: #333; font-weight:600; font-size:1.08rem;">
+                    <a href="#" class="nav-link d-flex align-items-center px-3 py-3 rounded portal-link" onclick="showLoginModal(); return false;" style="color: #333; font-weight:600; font-size:1.08rem;">
                         <i class="bi bi-door-open me-3" style="font-size:1.3rem;"></i> Portal
                     </a>
                     <a asp-page="/Products/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
@@ -69,43 +70,91 @@
                         <i class="bi bi-shield-check me-3" style="font-size:1.3rem;"></i> KYC Verification
                     </a>
                 </nav>
-    <!-- Portal Login Modal (restored, outside sidebar/nav for proper stacking) -->
-    <div class="modal fade" id="portalLoginModal" tabindex="-1" aria-labelledby="portalLoginModalLabel" aria-hidden="true">
+            </div>
+        </nav>
+
+        <!-- Portal Sidebar (Hidden by default, shown when portal is logged in) -->
+        <nav class="sidebar position-fixed top-0 start-0" id="portalSidebar" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: linear-gradient(135deg, #f84c7d 0%, #ff447b 100%); color: #fff; display: none;">
+            <div class="d-flex flex-column h-100 px-3 pt-4 pb-3">
+                <!-- Portal Brand -->
+                <div class="text-center mb-4 pb-2">
+                    <h4 class="fw-bold" style="color: #fff; font-size:1.4rem; letter-spacing:1px;">
+                        <i class="bi bi-grid-3x3-gap-fill me-2"></i>
+                        Nana Caring
+                    </h4>
+                    <small style="color: rgba(255,255,255,0.8);">Portal Dashboard</small>
+                </div>
+                
+                <!-- Portal Navigation -->
+                <nav class="nav flex-column gap-2 mt-2 mb-3">
+                    <button class="nav-link active d-flex align-items-center px-3 py-3 rounded border-0 w-100 portal-nav-btn" onclick="showPortalSection('dashboard')" style="background: rgba(255,255,255,0.2); color: #fff; font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-speedometer2 me-3" style="font-size:1.3rem;"></i> Dashboard
+                    </button>
+                    <button class="nav-link d-flex align-items-center px-3 py-3 rounded border-0 w-100 portal-nav-btn" onclick="showPortalSection('profile')" style="background: transparent; color: rgba(255,255,255,0.9); font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-person-circle me-3" style="font-size:1.3rem;"></i> My Profile
+                    </button>
+                    <button class="nav-link d-flex align-items-center px-3 py-3 rounded border-0 w-100 portal-nav-btn" onclick="showPortalSection('accounts')" style="background: transparent; color: rgba(255,255,255,0.9); font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-credit-card-2-front me-3" style="font-size:1.3rem;"></i> My Accounts
+                    </button>
+                    <button class="nav-link d-flex align-items-center px-3 py-3 rounded border-0 w-100 portal-nav-btn" onclick="showPortalSection('transactions')" style="background: transparent; color: rgba(255,255,255,0.9); font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-arrow-left-right me-3" style="font-size:1.3rem;"></i> My Transactions
+                    </button>
+                    <button class="nav-link d-flex align-items-center px-3 py-3 rounded border-0 w-100 portal-nav-btn" onclick="showPortalSection('beneficiaries')" style="background: transparent; color: rgba(255,255,255,0.9); font-weight:600; font-size:1.08rem;">
+                        <i class="bi bi-people-fill me-3" style="font-size:1.3rem;"></i> Beneficiaries
+                    </button>
+                </nav>
+                
+                <!-- Portal User Profile -->
+                <div class="mt-auto">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.15); color: #fff;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle me-3" style="font-size: 2.2rem;"></i>
+                            <div>
+                                <div class="fw-bold" style="font-size:1.05rem;" id="portalUserName">Portal User</div>
+                                <small style="color: rgba(255,255,255,0.8); font-size:0.95rem;">Portal Access</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Logout from Portal -->
+                    <button class="btn btn-outline-light btn-sm w-100 mt-2" onclick="logoutFromPortal()">
+                        <i class="bi bi-box-arrow-right me-2"></i>Exit Portal
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" data-bs-backdrop="false">
         <div class="modal-content">
           <div class="modal-header d-flex flex-column align-items-start" style="background: linear-gradient(135deg, #f84c7d 0%, #ff447b 100%); color: #fff; border-top-left-radius: 16px; border-top-right-radius: 16px;">
-            <h5 class="modal-title fw-bold mb-1" id="portalLoginModalLabel"><i class="bi bi-door-open me-2"></i> Portal Login</h5>
+            <h5 class="modal-title fw-bold mb-1" id="loginModalLabel"><i class="bi bi-door-open me-2"></i> Admin Login</h5>
             <small class="mb-2" style="color: #fff; font-size: 1rem; font-weight: 500;">
-              Please authenticate to access confidential user data and sensitive information. This portal is restricted to authorized personnel only. Your credentials will be securely verified.
+              Please authenticate to access confidential user data and sensitive information. This area is restricted to authorized personnel only. Your credentials will be securely verified.
             </small>
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Close" style="filter: invert(1);"></button>
           </div>
           <div class="modal-body p-4" style="background: #fff; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-shadow: 0 4px 24px rgba(248,76,125,0.10);">
-            <form id="portalLoginForm" autocomplete="off">
+            <form id="loginForm" autocomplete="off">
               <div class="mb-4">
-                <label for="portalUsername" class="form-label fw-semibold" style="color:#008000;">Username</label>
-                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="portalUsername" name="username" placeholder="Enter your username" />
+                <label for="username" class="form-label fw-semibold" style="color:#008000;">Username</label>
+                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="username" name="username" placeholder="Enter your username" />
               </div>
               <div class="mb-4">
-                <label for="portalPassword" class="form-label fw-semibold" style="color:#008000;">Password</label>
-                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="portalPassword" name="password" placeholder="Enter password" />
+                <label for="password" class="form-label fw-semibold" style="color:#008000;">Password</label>
+                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="password" name="password" placeholder="Enter password" />
               </div>
               <div class="mb-3 text-center">
                 <span class="text-muted" style="font-size:0.95rem;">
-                  By logging in, you agree to maintain the confidentiality of all user data accessed through this portal.
+                  By logging in, you agree to maintain the confidentiality of all user data accessed through this system.
                 </span>
               </div>
-              <button type="submit" class="btn w-100 py-2 fw-bold" style="background:#f84c7d; color:#fff; font-size:1.1rem; border-radius:8px; box-shadow: 0 2px 8px rgba(248,76,125,0.10);">Login &amp; Access Portal</button>
+              <button type="submit" class="btn w-100 py-2 fw-bold" style="background:#f84c7d; color:#fff; font-size:1.1rem; border-radius:8px; box-shadow: 0 2px 8px rgba(248,76,125,0.10);">Login &amp; Access System</button>
             </form>
           </div>
         </div>
       </div>
     </div>
-                
-                <!-- Bottom System Info -->
-                <!-- Footer moved below main content -->
-            </div>
-        </nav>
         
         @if (!hideHeader)
         {
@@ -167,8 +216,368 @@
             <!-- Dynamic Page content - This is where navigation content will be rendered -->
             <main class="content-container" style="flex: 1 0 auto;">
                 <div class="container-fluid px-4 py-4">
-                    @RenderBody()
-                    <!-- Portal content removed. Only login form modal remains. -->
+                    <!-- Default CMS Content -->
+                    <div id="cmsContent">
+                        @RenderBody()
+                    </div>
+                    
+                    <!-- Portal Content (Hidden by default) -->
+                    <div id="portalContent" style="display: none;">
+                        <!-- Portal Dashboard Section -->
+                        <div id="portal-dashboard" class="portal-section" style="display: block;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h1 class="h3 mb-0 text-gray-800">Portal Dashboard</h1>
+                                            <p class="mb-0">Welcome to your personal portal dashboard.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="card shadow h-100">
+                                        <div class="card-body text-center">
+                                            <div class="text-primary">
+                                                <i class="bi bi-wallet2 fa-2x"></i>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Account Balance</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="accountBalance">R0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="card shadow h-100">
+                                        <div class="card-body text-center">
+                                            <div class="text-success">
+                                                <i class="bi bi-arrow-left-right fa-2x"></i>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Transactions</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalTransactions">0</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="card shadow h-100">
+                                        <div class="card-body text-center">
+                                            <div class="text-info">
+                                                <i class="bi bi-people fa-2x"></i>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Beneficiaries</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalBeneficiaries">0</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <div class="card shadow h-100">
+                                        <div class="card-body text-center">
+                                            <div class="text-warning">
+                                                <i class="bi bi-credit-card fa-2x"></i>
+                                            </div>
+                                            <div class="mt-2">
+                                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Active Accounts</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeAccounts">0</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="recentActivity">
+                                                <div class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading recent activity...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portal Profile Section -->
+                        <div id="portal-profile" class="portal-section" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h1 class="h3 mb-0 text-gray-800">My Profile</h1>
+                                    <p class="mb-0 section-description">Manage your personal information, contact details, and addresses.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <!-- Personal Information Card -->
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 font-weight-bold text-primary">Personal Information</h6>
+                                            <button type="button" class="btn btn-primary btn-sm" id="editBtn" onclick="toggleEditMode()">
+                                                <i class="bi bi-pencil me-1"></i>Edit Profile
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="profileForm">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-semibold">First Name</label>
+                                                        <input type="text" class="form-control" id="firstName" name="firstName" readonly>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-semibold">Middle Name</label>
+                                                        <input type="text" class="form-control" id="middleName" name="middleName" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-semibold">Last Name</label>
+                                                        <input type="text" class="form-control" id="surname" name="surname" readonly>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label fw-semibold">Email Address</label>
+                                                        <input type="email" class="form-control" id="email" name="email" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-4">
+                                                    <label class="form-label fw-semibold">Phone Number</label>
+                                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" readonly>
+                                                </div>
+                                                
+                                                <div class="mt-4" id="actionButtons" style="display: none;">
+                                                    <button type="button" class="btn btn-success me-2" onclick="saveProfile()">
+                                                        <i class="bi bi-check-lg me-1"></i>Save Changes
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                                        <i class="bi bi-x-lg me-1"></i>Cancel
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Address Information Card -->
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Address Information</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <h6 class="text-muted mb-3"><i class="bi bi-mailbox me-2"></i>Postal Address</h6>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Address Line 1</label>
+                                                        <input type="text" class="form-control" id="postalAddressLine1" name="postalAddressLine1" readonly>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Address Line 2</label>
+                                                        <input type="text" class="form-control" id="postalAddressLine2" name="postalAddressLine2" readonly>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label fw-semibold">City</label>
+                                                            <input type="text" class="form-control" id="postalCity" name="postalCity" readonly>
+                                                        </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label fw-semibold">Province</label>
+                                                            <input type="text" class="form-control" id="postalProvince" name="postalProvince" readonly>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Postal Code</label>
+                                                        <input type="text" class="form-control" id="postalCode" name="postalCode" readonly>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-lg-6">
+                                                    <h6 class="text-muted mb-3"><i class="bi bi-house me-2"></i>Home Address</h6>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Address Line 1</label>
+                                                        <input type="text" class="form-control" id="homeAddressLine1" name="homeAddressLine1" readonly>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Address Line 2</label>
+                                                        <input type="text" class="form-control" id="homeAddressLine2" name="homeAddressLine2" readonly>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label fw-semibold">City</label>
+                                                            <input type="text" class="form-control" id="homeCity" name="homeCity" readonly>
+                                                        </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="form-label fw-semibold">Province</label>
+                                                            <input type="text" class="form-control" id="homeProvince" name="homeProvince" readonly>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Postal Code</label>
+                                                        <input type="text" class="form-control" id="homeCode" name="homeCode" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-4">
+                                    <!-- Account Information Card -->
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <div class="portal-profile-avatar mx-auto mb-3" id="profileAvatar">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <h5 id="displayName" class="mb-1">Loading...</h5>
+                                            <p class="text-muted mb-2" id="userRole">Loading...</p>
+                                            <p class="text-muted"><small>Member since: <span id="memberSince">Loading...</span></small></p>
+                                            
+                                            <hr class="my-3">
+                                            
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <div class="fw-bold text-primary" id="userAccountsCount">-</div>
+                                                    <small class="text-muted">Accounts</small>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="fw-bold text-success" id="userDependentsCount">-</div>
+                                                    <small class="text-muted">Dependents</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Account Status Card -->
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3">
+                                            <h6 class="m-0 font-weight-bold text-primary">Account Status</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-semibold">Status:</span>
+                                                    <span class="badge bg-success" id="accountStatus">Active</span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-semibold">Role:</span>
+                                                    <span class="badge bg-primary" id="accountRole">User</span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="fw-semibold">Last Update:</span>
+                                                    <small class="text-muted" id="lastUpdated">Loading...</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portal Accounts Section -->
+                        <div id="portal-accounts" class="portal-section" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h1 class="h3 mb-0 text-gray-800">My Accounts</h1>
+                                    <p class="mb-0">View and manage your account information.</p>
+                                </div>
+                            </div>
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Account Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="accountsContainer">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading account information...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portal Transactions Section -->
+                        <div id="portal-transactions" class="portal-section" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h1 class="h3 mb-0 text-gray-800">My Transactions</h1>
+                                    <p class="mb-0">View your recent transaction history.</p>
+                                </div>
+                            </div>
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="transactionsContainer">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading transaction history...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Portal Beneficiaries Section -->
+                        <div id="portal-beneficiaries" class="portal-section" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h1 class="h3 mb-0 text-gray-800">Beneficiaries</h1>
+                                            <p class="mb-0">Manage your beneficiaries and transfer settings.</p>
+                                        </div>
+                                        <button class="btn btn-primary" onclick="showAddBeneficiaryModal()">
+                                            <i class="bi bi-plus-lg me-2"></i>Add New Beneficiary
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">My Beneficiaries</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="beneficiariesContainer">
+                                        <div class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading beneficiaries...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
@@ -217,74 +626,36 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Portal JavaScript Components -->
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+    <script src="~/js/portal-navigation.js" asp-append-version="true"></script>
+    <script src="~/js/portal-dashboard.js" asp-append-version="true"></script>
+    <script src="~/js/portal-profile.js" asp-append-version="true"></script>
+    <script src="~/js/portal-accounts.js" asp-append-version="true"></script>
+    <script src="~/js/portal-transactions.js" asp-append-version="true"></script>
+    <script src="~/js/portal-beneficiaries.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)
 
     <script>
-        function showPortalLoginModal() {
-            const modal = new bootstrap.Modal(document.getElementById('portalLoginModal'));
-            modal.show();
-        }
+        // Initialize portal functionality when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Portal link click handler to show login modal
-            const portalLinks = document.querySelectorAll('.user-portal-link, .go-to-portal-btn');
-            portalLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showPortalLoginModal();
-                });
-            });
-            // Handle login form submit: POST to /api/portal/admin-login
-            const loginForm = document.getElementById('portalLoginForm');
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const username = document.getElementById('portalUsername').value;
-                    const password = document.getElementById('portalPassword').value;
-                    const apiBaseUrl = 'https://nanacaring-backend.onrender.com';
-                    // Send only username and password fields
-                    fetch(apiBaseUrl + '/api/portal/admin-login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username: username, password: password })
-                    })
-                    .then(async res => {
-                        let data, rawText;
-                        try {
-                            rawText = await res.text();
-                            data = JSON.parse(rawText);
-                        } catch {
-                            data = {};
-                        }
-                        if (res.ok && data && data.token) {
-                            // Store portal-admin token and user credentials in localStorage
-                            localStorage.setItem('portal-admin-token', data.token);
-                            localStorage.setItem('portal-user-email', username);
-                            localStorage.setItem('portal-user-password', password);
-                            // Close modal
-                            bootstrap.Modal.getInstance(document.getElementById('portalLoginModal')).hide();
-                            // Redirect to Portal page
-                            window.location.href = '/Portal/Index';
-                        } else {
-                            let errorMsg = 'Login failed.';
-                            errorMsg += '\nStatus: ' + res.status + ' ' + res.statusText;
-                            errorMsg += '\nResponse: ' + rawText;
-                            alert(errorMsg);
-                        }
-                    })
-                    .catch(err => {
-                        alert('Login failed. Please try again. Error: ' + err);
-                    });
-                });
+            // Initialize portal authentication
+            if (typeof initializePortalAuth === 'function') {
+                initializePortalAuth();
+            }
+            
+            // Check portal login status and show appropriate sidebar
+            if (typeof checkPortalLoginStatus === 'function') {
+                checkPortalLoginStatus();
             }
         });
     </script>
 
     <style>
-        /* Ensure portal login modal appears above all content and is interactive */
-        .modal.fade#portalLoginModal {
+        /* Ensure login modal appears above all content and is interactive */
+        .modal.fade#loginModal {
             z-index: 3000 !important;
         }
         .modal-backdrop.show {
@@ -508,7 +879,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Highlight active sidebar link
             const currentPath = window.location.pathname.toLowerCase();
-            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            const navLinks = document.querySelectorAll('.sidebar .nav-link:not(.portal-link)');
             navLinks.forEach(link => {
                 link.classList.remove('active');
                 const href = link.getAttribute('href')?.toLowerCase();
@@ -518,7 +889,7 @@
                     link.classList.add('active');
                 }
             });
-            // Add click handlers for smooth navigation
+            // Add click handlers for smooth navigation (excluding portal link)
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     navLinks.forEach(l => l.classList.remove('active'));
@@ -558,7 +929,6 @@
                     '/accounts/index': 'Accounts',
                     '/products/index': 'Products',
                     '/kyc/index': 'KYC Verification',
-                    '/portal/index': 'Portal',
                     '/privacy': 'Privacy',
                     '/logout': 'Sign Out',
                     '/profile': 'Profile',
