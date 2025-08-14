@@ -96,6 +96,16 @@ namespace CMS.Web.Models
         [StringLength(20)]
         public string Status { get; set; } = "active"; // 'active', 'blocked', 'suspended', 'pending'
 
+        // Suspension properties
+        public DateTime? SuspendedAt { get; set; }
+
+        public DateTime? SuspendedUntil { get; set; }
+
+        [StringLength(500)]
+        public string? SuspensionReason { get; set; }
+
+        public int? SuspendedBy { get; set; } // References another User's ID
+
         // Computed properties for display
         public string FullName => $"{FirstName} {MiddleName} {Surname}".Trim().Replace("  ", " ");
 

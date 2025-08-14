@@ -66,6 +66,71 @@ namespace CMS.Web.Controllers
         }
 
         /// <summary>
+        /// Get a specific user by ID (excludes password)
+        /// </summary>
+        [HttpGet("users/{id}")]
+        public async Task<IActionResult> GetUserById(int id)
+        {
+            try
+            {
+                var user = await _context.Users
+                    .Include(u => u.Accounts)
+                    .Where(u => u.Id == id)
+                    .Select(u => new 
+                    {
+                        u.Id,
+                        u.FirstName,
+                        u.MiddleName,
+                        u.Surname,
+                        u.Email,
+                        u.Role,
+                        u.Status,
+                        u.IsBlocked,
+                        u.BlockedAt,
+                        u.BlockedBy,
+                        u.BlockReason,
+                        u.SuspendedAt,
+                        u.SuspendedUntil,
+                        u.SuspensionReason,
+                        u.SuspendedBy,
+                        u.CreatedAt,
+                        u.UpdatedAt,
+                        u.PhoneNumber,
+                        u.IdNumber,
+                        u.Relation,
+                        u.PostalAddressLine1,
+                        u.PostalAddressLine2,
+                        u.PostalCity,
+                        u.PostalProvince,
+                        u.PostalCode,
+                        u.HomeAddressLine1,
+                        u.HomeAddressLine2,
+                        u.HomeCity,
+                        u.HomeProvince,
+                        u.HomeCode,
+                        Accounts = u.Accounts.Select(a => new {
+                            a.Id,
+                            a.AccountNumber,
+                            a.Balance
+                        }).ToList()
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user by ID {UserId}", id);
+                return StatusCode(500, new { message = "Server error", error = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Get all accounts in the system
         /// </summary>
         [HttpGet("accounts")]
@@ -186,7 +251,12 @@ namespace CMS.Web.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    return NotFound(new { message = "User not found" });
+                    return NotFound(new { success = false, message = "User not found" });
+                }
+
+                if (user.Status == "blocked")
+                {
+                    return BadRequest(new { success = false, message = "User is already blocked" });
                 }
 
                 var adminUserId = GetCurrentUserId();
@@ -194,7 +264,7 @@ namespace CMS.Web.Controllers
                 user.IsBlocked = true;
                 user.BlockedAt = DateTime.UtcNow;
                 user.BlockedBy = adminUserId;
-                user.BlockReason = request.Reason;
+                user.BlockReason = request.Reason ?? "No reason provided";
                 user.Status = "blocked";
                 user.UpdatedAt = DateTime.UtcNow;
 
@@ -204,16 +274,15 @@ namespace CMS.Web.Controllers
 
                 return Ok(new 
                 {
+                    success = true,
                     message = "User blocked successfully",
-                    user = new 
+                    data = new 
                     {
-                        user.Id,
-                        user.Email,
-                        user.IsBlocked,
-                        user.BlockedAt,
-                        user.BlockedBy,
-                        user.BlockReason,
-                        user.Status
+                        userId = user.Id,
+                        email = user.Email,
+                        status = user.Status,
+                        blockedAt = user.BlockedAt,
+                        reason = user.BlockReason
                     }
                 });
             }
@@ -272,26 +341,37 @@ namespace CMS.Web.Controllers
         }
 
         /// <summary>
-        /// Suspend a user temporarily
+        /// Suspend a user for a specific period
         /// </summary>
         [HttpPut("users/{userId}/suspend")]
-        public async Task<IActionResult> SuspendUser(int userId, [FromBody] BlockUserRequest request)
+        public async Task<IActionResult> SuspendUser(int userId, [FromBody] SuspendUserRequest request)
         {
             try
             {
+                if (request.SuspensionDays <= 0)
+                {
+                    return BadRequest(new { success = false, message = "Suspension days must be a positive number" });
+                }
+
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    return NotFound(new { message = "User not found" });
+                    return NotFound(new { success = false, message = "User not found" });
+                }
+
+                if (user.Status == "suspended")
+                {
+                    return BadRequest(new { success = false, message = "User is already suspended" });
                 }
 
                 var adminUserId = GetCurrentUserId();
+                var suspendedUntil = DateTime.UtcNow.AddDays(request.SuspensionDays);
                 
-                user.IsBlocked = true;
-                user.BlockedAt = DateTime.UtcNow;
-                user.BlockedBy = adminUserId;
-                user.BlockReason = request.Reason;
                 user.Status = "suspended";
+                user.SuspendedAt = DateTime.UtcNow;
+                user.SuspendedUntil = suspendedUntil;
+                user.SuspendedBy = adminUserId;
+                user.SuspensionReason = request.Reason ?? "No reason provided";
                 user.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -300,23 +380,71 @@ namespace CMS.Web.Controllers
 
                 return Ok(new 
                 {
+                    success = true,
                     message = "User suspended successfully",
-                    user = new 
+                    data = new 
                     {
-                        user.Id,
-                        user.Email,
-                        user.IsBlocked,
-                        user.BlockedAt,
-                        user.BlockedBy,
-                        user.BlockReason,
-                        user.Status
+                        userId = user.Id,
+                        email = user.Email,
+                        status = user.Status,
+                        suspendedAt = user.SuspendedAt,
+                        suspendedUntil = user.SuspendedUntil,
+                        suspensionDays = request.SuspensionDays,
+                        reason = user.SuspensionReason
                     }
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error suspending user {userId}");
-                return StatusCode(500, new { message = "Server error", error = ex.Message });
+                return StatusCode(500, new { success = false, message = "Failed to suspend user", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Unsuspend a user (lift suspension early)
+        /// </summary>
+        [HttpPut("users/{userId}/unsuspend")]
+        public async Task<IActionResult> UnsuspendUser(int userId)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { success = false, message = "User not found" });
+                }
+
+                if (user.Status != "suspended")
+                {
+                    return BadRequest(new { success = false, message = "User is not suspended" });
+                }
+
+                user.Status = "active";
+                user.SuspendedAt = null;
+                user.SuspendedUntil = null;
+                user.SuspendedBy = null;
+                user.SuspensionReason = null;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new 
+                { 
+                    success = true, 
+                    message = "User suspension lifted successfully",
+                    data = new
+                    {
+                        userId = user.Id,
+                        email = user.Email,
+                        status = user.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error lifting user suspension {userId}");
+                return StatusCode(500, new { success = false, message = "Failed to lift user suspension", error = ex.Message });
             }
         }
 
@@ -324,14 +452,55 @@ namespace CMS.Web.Controllers
         /// Delete a user permanently
         /// </summary>
         [HttpDelete("users/{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id, [FromBody] DeleteUserRequest? request = null)
         {
             try
             {
-                var user = await _context.Users.FindAsync(id);
+                // If no request body, create default request
+                if (request == null)
+                {
+                    request = new DeleteUserRequest { ConfirmDelete = true, DeleteData = false };
+                }
+
+                if (!request.ConfirmDelete)
+                {
+                    return BadRequest(new { success = false, message = "Delete confirmation required. Set confirmDelete: true to proceed." });
+                }
+
+                var user = await _context.Users
+                    .Include(u => u.Accounts)
+                    .FirstOrDefaultAsync(u => u.Id == id);
+
                 if (user == null)
                 {
-                    return NotFound(new { message = "User not found" });
+                    return NotFound(new { success = false, message = "User not found" });
+                }
+
+                // Store user data for response before deletion
+                var userData = new
+                {
+                    id = user.Id,
+                    firstName = user.FirstName,
+                    surname = user.Surname,
+                    email = user.Email,
+                    role = user.Role
+                };
+
+                // Delete related data if requested
+                if (request.DeleteData)
+                {
+                    // Delete transactions related to user's accounts
+                    var accountIds = user.Accounts.Select(a => a.Id).ToList();
+                    if (accountIds.Any())
+                    {
+                        var transactions = await _context.Transactions
+                            .Where(t => accountIds.Contains(t.AccountId))
+                            .ToListAsync();
+                        _context.Transactions.RemoveRange(transactions);
+                    }
+
+                    // Delete user's accounts
+                    _context.Accounts.RemoveRange(user.Accounts);
                 }
 
                 _context.Users.Remove(user);
@@ -339,12 +508,22 @@ namespace CMS.Web.Controllers
 
                 _logger.LogInformation($"User {id} deleted by admin {GetCurrentUserId()}");
 
-                return Ok(new { message = "User deleted" });
+                return Ok(new 
+                { 
+                    success = true, 
+                    message = "User deleted successfully",
+                    data = new
+                    {
+                        deletedUser = userData,
+                        dataDeleted = request.DeleteData,
+                        deletedAt = DateTime.UtcNow
+                    }
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error deleting user {id}");
-                return StatusCode(500, new { message = "Server error", error = ex.Message });
+                return StatusCode(500, new { success = false, message = "Failed to delete user", error = ex.Message });
             }
         }
 
@@ -415,10 +594,28 @@ namespace CMS.Web.Controllers
     }
 
     /// <summary>
-    /// Request model for blocking/suspending users
+    /// Request model for blocking users
     /// </summary>
     public class BlockUserRequest
     {
         public string Reason { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Request model for suspending users
+    /// </summary>
+    public class SuspendUserRequest
+    {
+        public string Reason { get; set; } = string.Empty;
+        public int SuspensionDays { get; set; }
+    }
+
+    /// <summary>
+    /// Request model for deleting users
+    /// </summary>
+    public class DeleteUserRequest
+    {
+        public bool ConfirmDelete { get; set; }
+        public bool DeleteData { get; set; } = true;
     }
 }

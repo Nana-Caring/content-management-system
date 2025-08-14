@@ -8,11 +8,17 @@ namespace CMS.Web.Services
     {
         // Users
         Task<List<User>> GetUsersAsync();
+        Task<PaginatedUsersResponse> GetUsersAsync(int page = 1, int pageSize = 15, string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null);
         Task<User?> GetUserByIdAsync(int id);
         Task<bool> DeleteUserAsync(int id);
         Task<ApiResponse<User>> BlockUserAsync(int userId, string reason);
         Task<ApiResponse<User>> UnblockUserAsync(int userId);
         Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason);
+        Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason, int suspensionDays);
+        Task<ApiResponse<User>> UnsuspendUserAsync(int userId);
+        Task<ApiResponse<object>> DeleteUserPermanentlyAsync(int userId, bool confirmDelete, bool deleteData = true);
+        Task<UserStatsResponse> GetUserStatsAsync();
+        Task<ApiResponse<object>> CheckExpiredSuspensionsAsync();
 
         // Accounts
         Task<List<Account>> GetAccountsAsync();
@@ -224,20 +230,97 @@ namespace CMS.Web.Services
         public async Task<List<User>> GetUsersAsync()
         {
             _logger.LogInformation("GetUsersAsync called - starting user retrieval");
-            var users = await GetAsync<List<User>>("/admin/users");
-            _logger.LogInformation($"GetUsersAsync completed - returned {(users?.Count ?? 0)} users");
+            var response = await GetAsync<UserListResponse>("/admin/users");
+            _logger.LogInformation($"GetUsersAsync completed - returned {(response?.Data?.Users?.Count ?? 0)} users");
             
-            if (users != null && users.Any())
+            if (response?.Data?.Users != null && response.Data.Users.Any())
             {
-                _logger.LogInformation($"Sample user data: ID={users[0].Id}, Name={users[0].FullName}, Email={users[0].Email}, Role={users[0].Role}");
+                _logger.LogInformation($"Sample user data: ID={response.Data.Users[0].Id}, Name={response.Data.Users[0].FullName}, Email={response.Data.Users[0].Email}, Role={response.Data.Users[0].Role}");
             }
             
-            return users ?? new List<User>();
+            return response?.Data?.Users ?? new List<User>();
+        }
+
+        public async Task<PaginatedUsersResponse> GetUsersAsync(int page = 1, int pageSize = 15, string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null)
+        {
+            try
+            {
+                _logger.LogInformation($"GetUsersAsync (paginated) called - Page: {page}, PageSize: {pageSize}, Search: {search}");
+                
+                // Build query parameters
+                var queryParams = new List<string>();
+                queryParams.Add($"page={page}");
+                queryParams.Add($"limit={pageSize}");
+                
+                if (!string.IsNullOrEmpty(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search)}");
+                
+                if (!string.IsNullOrEmpty(roleFilter))
+                    queryParams.Add($"role={Uri.EscapeDataString(roleFilter)}");
+                
+                if (!string.IsNullOrEmpty(relationFilter))
+                    queryParams.Add($"relation={Uri.EscapeDataString(relationFilter)}");
+                
+                if (createdFrom.HasValue)
+                    queryParams.Add($"createdFrom={createdFrom.Value:yyyy-MM-dd}");
+                
+                if (createdTo.HasValue)
+                    queryParams.Add($"createdTo={createdTo.Value:yyyy-MM-dd}");
+                
+                if (!string.IsNullOrEmpty(sortBy))
+                    queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+                else
+                    queryParams.Add("sortBy=id"); // Default to id instead of CreatedAt
+                
+                if (!string.IsNullOrEmpty(sortDirection))
+                    queryParams.Add($"sortDirection={Uri.EscapeDataString(sortDirection)}");
+                
+                var queryString = string.Join("&", queryParams);
+                var endpoint = $"/admin/users?{queryString}";
+                
+                var response = await GetAsync<UserListResponse>(endpoint);
+                
+                if (response?.Success == true && response.Data != null)
+                {
+                    _logger.LogInformation($"GetUsersAsync (paginated) completed - returned {response.Data.Users?.Count ?? 0} users, Total: {response.Data.Pagination?.Total ?? 0}");
+                    
+                    return new PaginatedUsersResponse
+                    {
+                        Success = true,
+                        Users = response.Data.Users ?? new List<User>(),
+                        Pagination = response.Data.Pagination ?? new PaginationInfo(),
+                        Message = "Users retrieved successfully"
+                    };
+                }
+                else
+                {
+                    _logger.LogWarning("GetUsersAsync (paginated) - API response was not successful or data was null");
+                    return new PaginatedUsersResponse
+                    {
+                        Success = false,
+                        Users = new List<User>(),
+                        Pagination = new PaginationInfo(),
+                        Message = "Failed to retrieve users"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetUsersAsync (paginated)");
+                return new PaginatedUsersResponse
+                {
+                    Success = false,
+                    Users = new List<User>(),
+                    Pagination = new PaginationInfo(),
+                    Message = $"Error retrieving users: {ex.Message}"
+                };
+            }
         }
 
         public async Task<User?> GetUserByIdAsync(int id)
         {
-            return await GetAsync<User>($"/admin/users/{id}");
+            var response = await GetAsync<UserDetailResponse>($"/admin/users/{id}");
+            return response?.Data?.User;
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -328,11 +411,17 @@ namespace CMS.Web.Services
             }
         }
 
+        // Overload for backward compatibility - defaults to 7 days suspension
         public async Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason)
+        {
+            return await SuspendUserAsync(userId, reason, 7); // Default to 7 days
+        }
+
+        public async Task<ApiResponse<User>> SuspendUserAsync(int userId, string reason, int suspensionDays)
         {
             try
             {
-                var requestData = new { reason = reason };
+                var requestData = new { reason = reason, suspensionDays = suspensionDays };
                 var response = await PutAsync($"/admin/users/{userId}/suspend", requestData);
                 
                 if (response.IsSuccessStatusCode)
@@ -367,6 +456,212 @@ namespace CMS.Web.Services
             {
                 _logger.LogError(ex, $"Error suspending user {userId}");
                 return new ApiResponse<User> { Success = false, Message = "An error occurred while suspending the user" };
+            }
+        }
+
+        public async Task<ApiResponse<User>> UnsuspendUserAsync(int userId)
+        {
+            try
+            {
+                var response = await PutAsync($"/admin/users/{userId}/unsuspend", new { });
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<BlockUserResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return new ApiResponse<User> 
+                        { 
+                            Success = true, 
+                            Message = result?.Message ?? "User unsuspended successfully",
+                            Data = result?.User 
+                        };
+                    }
+                    return new ApiResponse<User> { Success = true, Message = "User unsuspended successfully" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<User> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to unsuspend user: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error unsuspending user {userId}");
+                return new ApiResponse<User> { Success = false, Message = "An error occurred while unsuspending the user" };
+            }
+        }
+
+        public async Task<ApiResponse<object>> DeleteUserPermanentlyAsync(int userId, bool confirmDelete, bool deleteData = true)
+        {
+            try
+            {
+                var requestData = new { confirmDelete = confirmDelete, deleteData = deleteData };
+                var response = await DeleteWithBodyAsync($"/admin/users/{userId}", requestData);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<ApiResponse<object>>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return result ?? new ApiResponse<object> { Success = true, Message = "User deleted successfully" };
+                    }
+                    return new ApiResponse<object> { Success = true, Message = "User deleted successfully" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<object> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to delete user: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting user {userId}");
+                return new ApiResponse<object> { Success = false, Message = "An error occurred while deleting the user" };
+            }
+        }
+
+        public async Task<UserStatsResponse> GetUserStatsAsync()
+        {
+            try
+            {
+                await SetAuthenticationHeaders();
+                
+                _logger.LogInformation($"Making GET request to: {API_BASE_URL}/admin/users/stats");
+                
+                var response = await _httpClient.GetAsync($"{API_BASE_URL}/admin/users/stats");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    _logger.LogInformation($"User stats API Response: {content}");
+                    
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<UserStatsResponse>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return result ?? new UserStatsResponse { Success = false };
+                    }
+                }
+                
+                _logger.LogWarning($"Failed to fetch user stats: {response.StatusCode}");
+                return new UserStatsResponse { Success = false };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user stats");
+                return new UserStatsResponse { Success = false };
+            }
+        }
+
+        public async Task<ApiResponse<object>> CheckExpiredSuspensionsAsync()
+        {
+            try
+            {
+                var response = await PostAsync("/admin/users/check-expired-suspensions", new { });
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var result = JsonSerializer.Deserialize<ApiResponse<object>>(content, new JsonSerializerOptions 
+                        { 
+                            PropertyNameCaseInsensitive = true 
+                        });
+                        return result ?? new ApiResponse<object> { Success = true, Message = "Expired suspensions checked" };
+                    }
+                    return new ApiResponse<object> { Success = true, Message = "Expired suspensions checked" };
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return new ApiResponse<object> 
+                    { 
+                        Success = false, 
+                        Message = !string.IsNullOrEmpty(errorContent) ? errorContent : $"Failed to check expired suspensions: {response.StatusCode}" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking expired suspensions");
+                return new ApiResponse<object> { Success = false, Message = "An error occurred while checking expired suspensions" };
+            }
+        }
+
+        private async Task<HttpResponseMessage> DeleteWithBodyAsync(string endpoint, object data)
+        {
+            try
+            {
+                await SetAuthenticationHeaders();
+                
+                var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                var request = new HttpRequestMessage(HttpMethod.Delete, $"{API_BASE_URL}{endpoint}")
+                {
+                    Content = content
+                };
+                
+                _logger.LogInformation($"Making DELETE request with body to: {API_BASE_URL}{endpoint}");
+                
+                var response = await _httpClient.SendAsync(request);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation($"API Response Status: {response.StatusCode}");
+                _logger.LogInformation($"API Response Content: {responseContent}");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error making DELETE request to {endpoint}");
+                throw;
+            }
+        }
+
+        private async Task<HttpResponseMessage> PostAsync(string endpoint, object data)
+        {
+            try
+            {
+                await SetAuthenticationHeaders();
+                
+                var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                
+                _logger.LogInformation($"Making POST request to: {API_BASE_URL}{endpoint}");
+                
+                var response = await _httpClient.PostAsync($"{API_BASE_URL}{endpoint}", content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation($"API Response Status: {response.StatusCode}");
+                _logger.LogInformation($"API Response Content: {responseContent}");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error making POST request to {endpoint}");
+                throw;
             }
         }
 
@@ -564,5 +859,59 @@ namespace CMS.Web.Services
         public int NewUsersToday { get; set; }
         public int ActiveUsers { get; set; }
         public int TotalProducts { get; set; } // Added for dashboard
+    }
+
+    // External API Response Models
+    public class UserListResponse
+    {
+        public bool Success { get; set; }
+        public UserListData? Data { get; set; }
+    }
+
+    public class UserListData
+    {
+        public List<User> Users { get; set; } = new List<User>();
+        public PaginationInfo? Pagination { get; set; }
+    }
+
+    public class PaginationInfo
+    {
+        public int Page { get; set; }
+        public int Limit { get; set; }
+        public int Total { get; set; }
+        public int Pages { get; set; }
+    }
+
+    public class UserStatsResponse
+    {
+        public bool Success { get; set; }
+        public UserStatsData? Data { get; set; }
+    }
+
+    public class UserStatsData
+    {
+        public int Total { get; set; }
+        public int Active { get; set; }
+        public int Blocked { get; set; }
+        public int Suspended { get; set; }
+    }
+
+    public class UserDetailResponse
+    {
+        public bool Success { get; set; }
+        public UserDetailData? Data { get; set; }
+    }
+
+    public class UserDetailData
+    {
+        public User? User { get; set; }
+    }
+
+    public class PaginatedUsersResponse
+    {
+        public bool Success { get; set; }
+        public List<User> Users { get; set; } = new List<User>();
+        public PaginationInfo Pagination { get; set; } = new PaginationInfo();
+        public string Message { get; set; } = string.Empty;
     }
 }

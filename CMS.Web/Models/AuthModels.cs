@@ -49,4 +49,53 @@ namespace CMS.Web.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
+
+    // API Response Models for User Management
+    public class ApiResponse<T>
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public T? Data { get; set; }
+    }
+
+    public class BlockUserResponse
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public User? User { get; set; }
+    }
+
+    public class UserStatsResponse
+    {
+        public bool Success { get; set; }
+        public UserStatsData? Data { get; set; }
+    }
+
+    public class UserStatsData
+    {
+        public UserTotals Totals { get; set; } = new();
+        public UserByRole ByRole { get; set; } = new();
+        public UserRecent Recent { get; set; } = new();
+    }
+
+    public class UserTotals
+    {
+        public int TotalUsers { get; set; }
+        public int ActiveUsers { get; set; }
+        public int BlockedUsers { get; set; }
+        public int SuspendedUsers { get; set; }
+        public int PendingUsers { get; set; }
+    }
+
+    public class UserByRole
+    {
+        public int Funders { get; set; }
+        public int Caregivers { get; set; }
+        public int Dependents { get; set; }
+    }
+
+    public class UserRecent
+    {
+        public int Last30Days { get; set; }
+    }
 }

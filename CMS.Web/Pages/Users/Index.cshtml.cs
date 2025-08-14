@@ -23,12 +23,12 @@ namespace CMS.Web.Pages.Users
         public DateTime? CreatedToDate { get; set; }
         
         // Sort properties
-        public string SortBy { get; set; } = "CreatedAt";
+        public string SortBy { get; set; } = "id";
         public string SortDirection { get; set; } = "desc";
         
         // Pagination properties
         public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
+        public int PageSize { get; set; } = 15;
         public int TotalUsers { get; set; }
         public int TotalPages => (int)Math.Ceiling((double)TotalUsers / PageSize);
         public bool HasPreviousPage => CurrentPage > 1;
@@ -54,52 +54,108 @@ namespace CMS.Web.Pages.Users
             RelationFilter = relationFilter;
             CreatedFromDate = createdFrom;
             CreatedToDate = createdTo;
-            SortBy = sortBy ?? "CreatedAt";
+            SortBy = sortBy ?? "id";
             SortDirection = sortDirection ?? "desc";
             CurrentPage = page ?? 1;
             
             try
             {
-                var allUsers = await _apiService.GetUsersAsync();
+                // Use paginated API method
+                var paginatedResponse = await _apiService.GetUsersAsync(
+                    page: CurrentPage,
+                    pageSize: PageSize,
+                    search: SearchTerm,
+                    roleFilter: RoleFilter,
+                    relationFilter: RelationFilter,
+                    createdFrom: CreatedFromDate,
+                    createdTo: CreatedToDate,
+                    sortBy: SortBy,
+                    sortDirection: SortDirection
+                );
                 
-                if (allUsers == null || !allUsers.Any())
+                if (paginatedResponse?.Success == true && paginatedResponse.Users?.Any() == true)
                 {
-                    // Instead of showing error, provide helpful message and sample data
-                    ErrorMessage = "Backend service is temporarily unavailable (this is common with Render.com cold starts). " +
-                                 "The system is trying to wake up the service. Please wait a moment and refresh the page. " +
-                                 "If the issue persists, the external API service may be experiencing downtime.";
+                    Users = paginatedResponse.Users;
+                    TotalUsers = paginatedResponse.Pagination?.Total ?? paginatedResponse.Users.Count;
                     
-                    // Provide sample users to show the interface works
-                    Users = GetSampleUsers();
-                    AvailableRoles = new List<string> { "Admin", "User", "Dependent" };
-                    AvailableRelations = new List<string> { "Spouse", "Child", "Parent", "Guardian" };
-                    TotalUsers = Users.Count;
-                    return;
+                    // Populate filter options - we'll need to get all users for this or use cached values
+                    // For now, let's use the paginated users to build partial filter options
+                    AvailableRoles = Users
+                        .Where(u => !string.IsNullOrEmpty(u.Role))
+                        .Select(u => u.Role)
+                        .Distinct()
+                        .OrderBy(r => r)
+                        .ToList();
+                        
+                    AvailableRelations = Users
+                        .Where(u => !string.IsNullOrEmpty(u.Relation))
+                        .Select(u => u.Relation!)
+                        .Distinct()
+                        .OrderBy(r => r)
+                        .ToList();
+                    
+                    // Add common values that might not be in current page
+                    if (!AvailableRoles.Contains("Admin")) AvailableRoles.Add("Admin");
+                    if (!AvailableRoles.Contains("User")) AvailableRoles.Add("User");
+                    if (!AvailableRoles.Contains("Dependent")) AvailableRoles.Add("Dependent");
+                    if (!AvailableRoles.Contains("Funder")) AvailableRoles.Add("Funder");
+                    
+                    if (!AvailableRelations.Contains("Spouse")) AvailableRelations.Add("Spouse");
+                    if (!AvailableRelations.Contains("Child")) AvailableRelations.Add("Child");
+                    if (!AvailableRelations.Contains("Parent")) AvailableRelations.Add("Parent");
+                    if (!AvailableRelations.Contains("Guardian")) AvailableRelations.Add("Guardian");
+                    
+                    AvailableRoles = AvailableRoles.OrderBy(r => r).ToList();
+                    AvailableRelations = AvailableRelations.OrderBy(r => r).ToList();
                 }
-                
-                // Populate filter options with null checks
-                AvailableRoles = allUsers
-                    .Where(u => !string.IsNullOrEmpty(u.Role))
-                    .Select(u => u.Role)
-                    .Distinct()
-                    .OrderBy(r => r)
-                    .ToList();
+                else
+                {
+                    // Fallback to non-paginated method and implement client-side pagination
+                    var allUsers = await _apiService.GetUsersAsync();
                     
-                AvailableRelations = allUsers
-                    .Where(u => !string.IsNullOrEmpty(u.Relation))
-                    .Select(u => u.Relation!)
-                    .Distinct()
-                    .OrderBy(r => r)
-                    .ToList();
-                
-                // Apply filters
-                var filteredUsers = ApplyFilters(allUsers);
-                
-                // Store total count (no pagination, show all filtered users)
-                TotalUsers = filteredUsers.Count;
-                
-                // Apply sorting but NO pagination - show all users
-                Users = ApplySorting(filteredUsers);
+                    if (allUsers == null || !allUsers.Any())
+                    {
+                        // Backend service is temporarily unavailable
+                        ErrorMessage = "Backend service is temporarily unavailable (this is common with Render.com cold starts). " +
+                                     "The system is trying to wake up the service. Please wait a moment and refresh the page. " +
+                                     "If the issue persists, the external API service may be experiencing downtime.";
+                        
+                        // Return empty lists
+                        Users = new List<User>();
+                        AvailableRoles = new List<string> { "Admin", "User", "Dependent" };
+                        AvailableRelations = new List<string> { "Spouse", "Child", "Parent", "Guardian" };
+                        TotalUsers = 0;
+                        return;
+                    }
+                    
+                    // Populate filter options with null checks
+                    AvailableRoles = allUsers
+                        .Where(u => !string.IsNullOrEmpty(u.Role))
+                        .Select(u => u.Role)
+                        .Distinct()
+                        .OrderBy(r => r)
+                        .ToList();
+                        
+                    AvailableRelations = allUsers
+                        .Where(u => !string.IsNullOrEmpty(u.Relation))
+                        .Select(u => u.Relation!)
+                        .Distinct()
+                        .OrderBy(r => r)
+                        .ToList();
+                    
+                    // Apply filters
+                    var filteredUsers = ApplyFilters(allUsers);
+                    
+                    // Apply sorting
+                    filteredUsers = ApplySorting(filteredUsers);
+                    
+                    // Store total count and apply pagination manually
+                    TotalUsers = filteredUsers.Count;
+                    
+                    // Apply pagination manually for fallback
+                    var startIndex = (CurrentPage - 1) * PageSize;
+                    Users = filteredUsers.Skip(startIndex).Take(PageSize).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -367,94 +423,6 @@ namespace CMS.Web.Pages.Users
                 Response.StatusCode = 500;
                 return new JsonResult(new { message = $"An error occurred while suspending the user: {ex.Message}" });
             }
-        }
-        
-        private List<User> GetSampleUsers()
-        {
-            return new List<User>
-            {
-                new User
-                {
-                    Id = 1,
-                    FirstName = "Admin",
-                    MiddleName = "",
-                    Surname = "User",
-                    Email = "admin@nana.com",
-                    Role = "Admin",
-                    IdNumber = "ID001234567",
-                    PhoneNumber = "+1234567890",
-                    Relation = "",
-                    CreatedAt = DateTime.Now.AddDays(-30),
-                    UpdatedAt = DateTime.Now.AddDays(-1),
-                    IsBlocked = false,
-                    Status = "Active"
-                },
-                new User
-                {
-                    Id = 2,
-                    FirstName = "John",
-                    MiddleName = "Michael",
-                    Surname = "Doe",
-                    Email = "john.doe@example.com",
-                    Role = "User",
-                    IdNumber = "ID123456789",
-                    PhoneNumber = "+1987654321",
-                    Relation = "Primary",
-                    CreatedAt = DateTime.Now.AddDays(-25),
-                    UpdatedAt = DateTime.Now.AddDays(-2),
-                    IsBlocked = false,
-                    Status = "Active"
-                },
-                new User
-                {
-                    Id = 3,
-                    FirstName = "Jane",
-                    MiddleName = "Elizabeth",
-                    Surname = "Smith",
-                    Email = "jane.smith@example.com",
-                    Role = "User",
-                    IdNumber = "ID987654321",
-                    PhoneNumber = "+1122334455",
-                    Relation = "Spouse",
-                    CreatedAt = DateTime.Now.AddDays(-20),
-                    UpdatedAt = DateTime.Now.AddDays(-3),
-                    IsBlocked = false,
-                    Status = "Active"
-                },
-                new User
-                {
-                    Id = 4,
-                    FirstName = "David",
-                    MiddleName = "",
-                    Surname = "Johnson",
-                    Email = "david.johnson@example.com",
-                    Role = "Dependent",
-                    IdNumber = "ID555666777",
-                    PhoneNumber = "+1555666777",
-                    Relation = "Child",
-                    CreatedAt = DateTime.Now.AddDays(-15),
-                    UpdatedAt = DateTime.Now.AddDays(-4),
-                    IsBlocked = false,
-                    Status = "Active"
-                },
-                new User
-                {
-                    Id = 5,
-                    FirstName = "Sarah",
-                    MiddleName = "Grace",
-                    Surname = "Brown",
-                    Email = "sarah.brown@example.com",
-                    Role = "User",
-                    IdNumber = "ID444555666",
-                    PhoneNumber = "+1444555666",
-                    Relation = "Primary",
-                    CreatedAt = DateTime.Now.AddDays(-10),
-                    UpdatedAt = DateTime.Now.AddDays(-5),
-                    IsBlocked = true,
-                    BlockReason = "Account under review",
-                    Status = "Blocked"
-                }
-            };
         }
     }
 

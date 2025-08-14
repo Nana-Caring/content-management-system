@@ -42,13 +42,12 @@
     }
     
     .professional-table tbody tr {
-        transition: all 0.2s ease;
+        transition: none;
     }
     
-    .professional-table tbody tr:hover {
-        background-color: rgba(102, 126, 234, 0.05);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* Color utilities */
+    .text-orange {
+        color: #fd7e14 !important;
     }
     
     .user-card {
@@ -263,13 +262,7 @@
         scroll-behavior: smooth;
     }
     
-    /* Row hover effect with scroll */
-    .scrollable-table-container .professional-table tbody tr:hover {
-        background-color: rgba(102, 126, 234, 0.08);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
-    }
+    /* Remove row hover effect with scroll */
     
     /* Table info overlay */
     .table-info-overlay {
@@ -366,44 +359,7 @@
         visibility: visible !important;
     }
     
-    /* Add hover effects for better UX */
-    tbody tr:hover .btn-group .btn {
-        opacity: 1;
-        transform: scale(1.05);
-    }
-    
-    /* Sample data visual indicator */
-    .sample-data-indicator {
-        position: relative;
-    }
-    
-    .sample-data-indicator::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: repeating-linear-gradient(
-            45deg,
-            rgba(255, 193, 7, 0.05),
-            rgba(255, 193, 7, 0.05) 10px,
-            transparent 10px,
-            transparent 20px
-        );
-        pointer-events: none;
-        z-index: 1;
-    }
-    
-    .sample-data-badge {
-        position: absolute;
-        top: 5px;
-        left: 5px;
-        background: rgba(255, 193, 7, 0.9);
-        color: #000;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.7rem;
+    /* Remove button hover effects on row hover */
         font-weight: 600;
         z-index: 2;
     }
@@ -450,12 +406,6 @@
                         <i class="fas fa-heartbeat me-1"></i>Check Service Status
                     </button>
                 </div>
-                <hr class="my-3">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    <strong>Note:</strong> Sample data is shown below to demonstrate the interface. 
-                    Real user data will appear once the backend service is available.
-                </small>
             </div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -584,31 +534,16 @@
         <!-- Table Info Overlay -->
         <div class="table-info-overlay">
             <i class="fas fa-users me-1"></i>
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            <span>@Model.TotalUsers users total</span>
+            @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
             {
-                <span class="text-warning">
-                    <i class="fas fa-exclamation-triangle me-1"></i>Sample Data (@Model.TotalUsers users)
-                </span>
-            }
-            else
-            {
-                <span>@Model.TotalUsers users total</span>
-                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
-                {
-                    <span class="text-primary">| Filtered</span>
-                }
+                <span class="text-primary">| Filtered</span>
             }
         </div>
         
         <!-- Scrollable Table Container -->
-        <div class="scrollable-table-container @(!string.IsNullOrEmpty(Model.ErrorMessage) ? "sample-data-indicator" : "")" id="users-table-container">
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="sample-data-badge">
-                    <i class="fas fa-flask me-1"></i>Sample Data
-                </div>
-            }
-            <table class="professional-table table table-hover align-middle mb-0">
+        <div class="scrollable-table-container" id="users-table-container">
+            <table class="professional-table table align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th class="border-0">
@@ -660,7 +595,7 @@
                             </a>
                         </th>
                         <th class="border-0 text-center">Status</th>
-                        <!-- Actions column header removed -->
+                        <th class="border-0 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -702,11 +637,17 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(user.IdNumber))
                                 {
-                                    <code class="bg-light px-2 py-1 rounded" style="font-size: 0.85rem; font-family: 'Courier New', Consolas, monospace;">@user.IdNumber</code>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.8rem; font-family: 'Courier New', Consolas, monospace; letter-spacing: 0.5px;">
+                                            <i class="fas fa-id-card me-1" style="font-size: 0.7rem;"></i>@user.IdNumber
+                                        </span>
+                                    </div>
                                 }
                                 else
                                 {
-                                    <span class="text-muted" style="font-size: 0.85rem;">—</span>
+                                    <span class="text-muted" style="font-size: 0.85rem;">
+                                        <i class="fas fa-minus" style="font-size: 0.7rem;"></i> Not provided
+                                    </span>
                                 }
                             </td>
                             <td>
@@ -776,6 +717,30 @@
                                     </span>
                                 }
                             </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="User Actions">
+                                        <i class="fas fa-cog"></i> Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @if (user.Status?.ToLower() == "active")
+                                        {
+                                            <li><a class="dropdown-item" href="#" onclick="showBlockModal(@user.Id, '@user.FullName')"><i class="fas fa-ban me-2 text-warning"></i>Block User</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="showSuspendModal(@user.Id, '@user.FullName')"><i class="fas fa-clock me-2 text-orange"></i>Suspend User</a></li>
+                                        }
+                                        else if (user.IsBlocked)
+                                        {
+                                            <li><a class="dropdown-item" href="#" onclick="unblockUser(@user.Id, '@user.FullName')"><i class="fas fa-check me-2 text-success"></i>Unblock User</a></li>
+                                        }
+                                        else if (user.Status?.ToLower() == "suspended")
+                                        {
+                                            <li><a class="dropdown-item" href="#" onclick="unsuspendUser(@user.Id, '@user.FullName')"><i class="fas fa-unlock me-2 text-info"></i>Unsuspend User</a></li>
+                                        }
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="showDeleteModal(@user.Id, '@user.FullName')"><i class="fas fa-trash me-2"></i>Delete User</a></li>
+                                    </ul>
+                                </div>
+                            </td>
                             <!-- Actions column removed; actions will appear in popup/modal -->
                         </tr>
                     }
@@ -783,7 +748,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="9" class="border-0">
+                        <td colspan="10" class="border-0">
                             <div class="empty-state">
                                 <i class="fas fa-users fa-4x"></i>
                                 @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
@@ -808,6 +773,119 @@
         </div>
     </div>
 </div>
+
+<!-- Pagination Controls -->
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div>
+            <small class="text-muted">
+                Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalUsers)) of @Model.TotalUsers users
+                (Page @Model.CurrentPage of @Model.TotalPages)
+            </small>
+        </div>
+        <nav aria-label="Users pagination">
+            <ul class="pagination pagination-sm mb-0">
+                <!-- Previous button -->
+                @if (Model.HasPreviousPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage - 1)" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </span>
+                    </li>
+                }
+
+                <!-- Page numbers -->
+                @{
+                    var startPage = Math.Max(1, Model.CurrentPage - 2);
+                    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                    
+                    // Adjust if we're near the beginning or end
+                    if (endPage - startPage < 4)
+                    {
+                        if (startPage == 1)
+                        {
+                            endPage = Math.Min(Model.TotalPages, startPage + 4);
+                        }
+                        else if (endPage == Model.TotalPages)
+                        {
+                            startPage = Math.Max(1, endPage - 4);
+                        }
+                    }
+                }
+
+                @if (startPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Model.GetPageUrl(1)">1</a>
+                    </li>
+                    @if (startPage > 2)
+                    {
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    }
+                }
+
+                @for (var pageNum = startPage; pageNum <= endPage; pageNum++)
+                {
+                    @if (pageNum == Model.CurrentPage)
+                    {
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">@pageNum</span>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Model.GetPageUrl(pageNum)">@pageNum</a>
+                        </li>
+                    }
+                }
+
+                @if (endPage < Model.TotalPages)
+                {
+                    @if (endPage < Model.TotalPages - 1)
+                    {
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    }
+                    <li class="page-item">
+                        <a class="page-link" href="@Model.GetPageUrl(Model.TotalPages)">@Model.TotalPages</a>
+                    </li>
+                }
+
+                <!-- Next button -->
+                @if (Model.HasNextPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage + 1)" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </span>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+}
 
 <!-- Scroll to Top Button -->
 <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()" title="Scroll to top">
@@ -963,6 +1041,63 @@
     </div>
 </div>
 
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-light bg-opacity-20 rounded-circle p-2 me-3">
+                        <i class="fas fa-trash fa-lg"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0">Delete User Permanently</h5>
+                        <small class="opacity-75">This action cannot be undone</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-danger border-0">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                        <div>
+                            <strong>Warning:</strong> You are about to permanently delete user <strong><span id="deleteUserName"></span></strong>.
+                            This action cannot be undone and will remove all associated data.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="deleteUserData" checked>
+                        <label class="form-check-label" for="deleteUserData">
+                            Also delete associated data (accounts, transactions)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            I understand this action is permanent and cannot be undone
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary modern-btn" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger modern-btn" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-2"></i>Delete Permanently
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentUserId = null;
 let currentUserName = null;
@@ -973,6 +1108,98 @@ function getAntiForgeryToken() {
     const metaToken = document.querySelector('meta[name="__RequestVerificationToken"]')?.getAttribute('content');
     const formToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
     return metaToken || formToken || '';
+}
+
+// Show block modal function
+function showBlockModal(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('blockUserName').textContent = userName;
+    document.getElementById('blockReason').value = '';
+    
+    const blockModal = new bootstrap.Modal(document.getElementById('blockModal'));
+    blockModal.show();
+}
+
+// Show suspend modal function
+function showSuspendModal(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('suspendUserName').textContent = userName;
+    document.getElementById('suspendReason').value = '';
+    
+    const suspendModal = new bootstrap.Modal(document.getElementById('suspendModal'));
+    suspendModal.show();
+}
+
+// Show delete modal function
+function showDeleteModal(userId, userName) {
+    currentUserId = userId;
+    currentUserName = userName;
+    document.getElementById('deleteUserName').textContent = userName;
+    document.getElementById('deleteUserData').checked = true;
+    document.getElementById('confirmDelete').checked = false;
+    
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+// Unblock user function
+async function unblockUser(userId, userName) {
+    if (!confirm(`Are you sure you want to unblock ${userName}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}/unblock`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('success', `${userName} has been unblocked successfully!`);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', result.message || 'Failed to unblock user');
+        }
+    } catch (error) {
+        showAlert('danger', 'An error occurred while unblocking the user');
+        console.error('Unblock user error:', error);
+    }
+}
+
+// Unsuspend user function
+async function unsuspendUser(userId, userName) {
+    if (!confirm(`Are you sure you want to lift the suspension for ${userName}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}/unsuspend`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showAlert('success', `Suspension for ${userName} has been lifted successfully!`);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', result.message || 'Failed to unsuspend user');
+        }
+    } catch (error) {
+        showAlert('danger', 'An error occurred while unsuspending the user');
+        console.error('Unsuspend user error:', error);
+    }
 }
 
 // Block user function
@@ -986,7 +1213,7 @@ function blockUser(userId, userName) {
     blockModal.show();
 }
 
-// Unblock user function
+// Unblock user function (modal version)
 function unblockUser(userId, userName) {
     currentUserId = userId;
     currentUserName = userName;
@@ -1445,4 +1672,64 @@ document.addEventListener('DOMContentLoaded', function() {
         startAutoRetry();
     }
 });
+
+// Confirm delete action
+async function confirmDelete() {
+    const deleteData = document.getElementById('deleteUserData').checked;
+    const confirmDelete = document.getElementById('confirmDelete').checked;
+    
+    if (!confirmDelete) {
+        alert('Please confirm that you understand this action is permanent.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/${currentUserId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            },
+            body: JSON.stringify({ 
+                confirmDelete: true,
+                deleteData: deleteData
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+            
+            showAlert('success', `${currentUserName} has been deleted successfully!`);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('danger', result.message || 'Failed to delete user');
+        }
+    } catch (error) {
+        showAlert('danger', 'An error occurred while deleting the user');
+        console.error('Delete user error:', error);
+    }
+}
+
+// Utility function to show alerts
+function showAlert(type, message) {
+    const alertContainer = document.createElement('div');
+    alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 10000; min-width: 300px;';
+    alertContainer.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertContainer);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertContainer.parentNode) {
+            alertContainer.remove();
+        }
+    }, 5000);
+}
 </script>
