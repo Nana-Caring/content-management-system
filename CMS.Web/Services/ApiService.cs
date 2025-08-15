@@ -278,6 +278,8 @@ namespace CMS.Web.Services
                 var queryString = string.Join("&", queryParams);
                 var endpoint = $"/admin/users?{queryString}";
                 
+                _logger.LogInformation($"Making paginated request to: {endpoint}");
+                
                 var response = await GetAsync<UserListResponse>(endpoint);
                 
                 if (response?.Success == true && response.Data != null)

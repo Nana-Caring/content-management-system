@@ -565,9 +565,9 @@
                             </a>
                         </th>
                         <th class="border-0">
-                            <a href="@Model.GetSortUrl("IdNumber")" class="sort-link">
-                                <span>ID Number</span>
-                                <i class="@Model.GetSortIcon("IdNumber") sort-icon"></i>
+                            <a href="@Model.GetSortUrl("Email")" class="sort-link">
+                                <span>Email</span>
+                                <i class="@Model.GetSortIcon("Email") sort-icon"></i>
                             </a>
                         </th>
                         <th class="border-0">
@@ -635,18 +635,19 @@
                                 </span>
                             </td>
                             <td>
-                                @if (!string.IsNullOrEmpty(user.IdNumber))
+                                @if (!string.IsNullOrEmpty(user.Email))
                                 {
                                     <div class="d-flex align-items-center">
-                                        <span class="badge bg-info text-white px-2 py-1" style="font-size: 0.8rem; font-family: 'Courier New', Consolas, monospace; letter-spacing: 0.5px;">
-                                            <i class="fas fa-id-card me-1" style="font-size: 0.7rem;"></i>@user.IdNumber
+                                        <span class="text-dark fw-medium" style="font-size: 0.85rem;">
+                                            <i class="fas fa-envelope me-2 text-muted" style="font-size: 0.75rem;"></i>
+                                            <a href="mailto:@user.Email" class="text-decoration-none text-dark">@user.Email</a>
                                         </span>
                                     </div>
                                 }
                                 else
                                 {
                                     <span class="text-muted" style="font-size: 0.85rem;">
-                                        <i class="fas fa-minus" style="font-size: 0.7rem;"></i> Not provided
+                                        <i class="fas fa-minus" style="font-size: 0.7rem;"></i> No email
                                     </span>
                                 }
                             </td>
@@ -1151,7 +1152,7 @@ async function unblockUser(userId, userName) {
     }
     
     try {
-        const response = await fetch(`/api/users/${userId}/unblock`, {
+        const response = await fetch(`/admin/users/${userId}/unblock`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1180,7 +1181,7 @@ async function unsuspendUser(userId, userName) {
     }
     
     try {
-        const response = await fetch(`/api/users/${userId}/unsuspend`, {
+        const response = await fetch(`/admin/users/${userId}/unsuspend`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1317,13 +1318,13 @@ async function blockUserWithLoader(userId, reason) {
     const loaderController = ProfessionalLoader.showWithDelay('Blocking user...', 100, 'users');
     
     try {
-        const response = await fetch(`/Users?handler=BlockUser&userId=${userId}`, {
-            method: 'POST',
+        const response = await fetch(`/admin/users/${userId}/block`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
-            body: JSON.stringify({ reason: reason })
+            body: JSON.stringify({ Reason: reason })
         });
         
         if (response.ok) {
@@ -1380,8 +1381,8 @@ async function unblockUserWithLoader(userId) {
     const loaderController = ProfessionalLoader.showWithDelay('Unblocking user...', 100, 'users');
     
     try {
-        const response = await fetch(`/Users?handler=UnblockUser&userId=${userId}`, {
-            method: 'POST',
+        const response = await fetch(`/admin/users/${userId}/unblock`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
@@ -1441,13 +1442,13 @@ async function suspendUserWithLoader(userId, reason) {
     const loaderController = ProfessionalLoader.showWithDelay('Suspending user...', 100, 'users');
     
     try {
-        const response = await fetch(`/Users?handler=SuspendUser&userId=${userId}`, {
-            method: 'POST',
+        const response = await fetch(`/admin/users/${userId}/suspend`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
-            body: JSON.stringify({ reason: reason })
+            body: JSON.stringify({ Reason: reason, SuspensionDays: 30 })
         });
         
         if (response.ok) {
@@ -1684,17 +1685,22 @@ async function confirmDelete() {
     }
 
     try {
-        const response = await fetch(`/api/users/${currentUserId}`, {
+        const response = await fetch(`/admin/users/${currentUserId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
             body: JSON.stringify({ 
-                confirmDelete: true,
-                deleteData: deleteData
+                ConfirmDelete: true,
+                DeleteData: deleteData
             })
         });
+
+        // Check if response is successful before parsing JSON
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const result = await response.json();
 

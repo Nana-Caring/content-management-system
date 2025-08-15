@@ -22,6 +22,7 @@ namespace CMS.Web.Models
         [Required]
         [StringLength(100)]
         [EmailAddress]
+        [JsonPropertyName("email")]
         public string Email { get; set; } = string.Empty;
 
         public string Role { get; set; } = string.Empty;
