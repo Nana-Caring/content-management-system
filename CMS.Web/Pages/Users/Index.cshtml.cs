@@ -14,6 +14,7 @@ namespace CMS.Web.Pages.Users
         private readonly IApiService _apiService;
         public List<User> Users { get; set; } = new List<User>();
         public string? ErrorMessage { get; set; }
+        public int TotalCount { get; set; } // Total users from backend
         
         // Filter properties
         public string? SearchTerm { get; set; }
@@ -26,14 +27,6 @@ namespace CMS.Web.Pages.Users
         public string SortBy { get; set; } = "id";
         public string SortDirection { get; set; } = "desc";
         
-        // Pagination properties
-        public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 15;
-        public int TotalUsers { get; set; }
-        public int TotalPages => (int)Math.Ceiling((double)TotalUsers / PageSize);
-        public bool HasPreviousPage => CurrentPage > 1;
-        public bool HasNextPage => CurrentPage < TotalPages;
-        
         // Available filter options
         public List<string> AvailableRoles { get; set; } = new List<string>();
         public List<string> AvailableRelations { get; set; } = new List<string>();
@@ -44,7 +37,7 @@ namespace CMS.Web.Pages.Users
         }
 
         public async Task OnGetAsync(string? search, string? roleFilter, string? relationFilter, 
-            DateTime? createdFrom, DateTime? createdTo, string? sortBy, string? sortDirection, int? page)
+            DateTime? createdFrom, DateTime? createdTo, string? sortBy, string? sortDirection)
         {
             ViewData["Title"] = "Users Management";
             
@@ -56,14 +49,11 @@ namespace CMS.Web.Pages.Users
             CreatedToDate = createdTo;
             SortBy = sortBy ?? "id";
             SortDirection = sortDirection ?? "desc";
-            CurrentPage = page ?? 1;
             
             try
             {
-                // Use paginated API method
-                var paginatedResponse = await _apiService.GetUsersAsync(
-                    page: CurrentPage,
-                    pageSize: PageSize,
+                // Use filtered API method that returns both users and total count
+                var (users, total) = await _apiService.GetUsersWithCountAsync(
                     search: SearchTerm,
                     roleFilter: RoleFilter,
                     relationFilter: RelationFilter,
@@ -73,13 +63,12 @@ namespace CMS.Web.Pages.Users
                     sortDirection: SortDirection
                 );
                 
-                if (paginatedResponse?.Success == true && paginatedResponse.Users?.Any() == true)
+                if (users?.Any() == true)
                 {
-                    Users = paginatedResponse.Users;
-                    TotalUsers = paginatedResponse.Pagination?.Total ?? paginatedResponse.Users.Count;
+                    Users = users;
+                    TotalCount = total;
                     
-                    // Populate filter options - we'll need to get all users for this or use cached values
-                    // For now, let's use the paginated users to build partial filter options
+                    // Populate filter options
                     AvailableRoles = Users
                         .Where(u => !string.IsNullOrEmpty(u.Role))
                         .Select(u => u.Role)
@@ -94,7 +83,7 @@ namespace CMS.Web.Pages.Users
                         .OrderBy(r => r)
                         .ToList();
                     
-                    // Add common values that might not be in current page
+                    // Add common values that might not be in current results
                     if (!AvailableRoles.Contains("Admin")) AvailableRoles.Add("Admin");
                     if (!AvailableRoles.Contains("User")) AvailableRoles.Add("User");
                     if (!AvailableRoles.Contains("Dependent")) AvailableRoles.Add("Dependent");
@@ -110,7 +99,7 @@ namespace CMS.Web.Pages.Users
                 }
                 else
                 {
-                    // Fallback to non-paginated method and implement client-side pagination
+                    // Fallback: try to get all users without filters
                     var allUsers = await _apiService.GetUsersAsync();
                     
                     if (allUsers == null || !allUsers.Any())
@@ -122,9 +111,9 @@ namespace CMS.Web.Pages.Users
                         
                         // Return empty lists
                         Users = new List<User>();
+                        TotalCount = 0;
                         AvailableRoles = new List<string> { "Admin", "User", "Dependent" };
                         AvailableRelations = new List<string> { "Spouse", "Child", "Parent", "Guardian" };
-                        TotalUsers = 0;
                         return;
                     }
                     
@@ -143,18 +132,14 @@ namespace CMS.Web.Pages.Users
                         .OrderBy(r => r)
                         .ToList();
                     
-                    // Apply filters
+                    // Apply filters manually (since backend filtering might not be working)
                     var filteredUsers = ApplyFilters(allUsers);
                     
                     // Apply sorting
                     filteredUsers = ApplySorting(filteredUsers);
                     
-                    // Store total count and apply pagination manually
-                    TotalUsers = filteredUsers.Count;
-                    
-                    // Apply pagination manually for fallback
-                    var startIndex = (CurrentPage - 1) * PageSize;
-                    Users = filteredUsers.Skip(startIndex).Take(PageSize).ToList();
+                    Users = filteredUsers;
+                    TotalCount = filteredUsers.Count;
                 }
             }
             catch (Exception ex)
@@ -162,9 +147,9 @@ namespace CMS.Web.Pages.Users
                 ErrorMessage = $"Failed to load users. Error: {ex.Message}";
                 // Initialize empty collections to prevent further errors
                 Users = new List<User>();
+                TotalCount = 0;
                 AvailableRoles = new List<string>();
                 AvailableRelations = new List<string>();
-                TotalUsers = 0;
                 
                 // Log the exception for debugging
                 Console.WriteLine($"Error loading users: {ex.Message}");
@@ -264,12 +249,6 @@ namespace CMS.Web.Pages.Users
             return sorted.ToList();
         }
 
-        private List<User> ApplyPagination(List<User> users)
-        {
-            var skip = (CurrentPage - 1) * PageSize;
-            return users.Skip(skip).Take(PageSize).ToList();
-        }
-
         public string GetSortIcon(string columnName)
         {
             if (SortBy.Equals(columnName, StringComparison.OrdinalIgnoreCase))
@@ -302,32 +281,6 @@ namespace CMS.Web.Pages.Users
             
             parameters.Add($"sortBy={columnName}");
             parameters.Add($"sortDirection={newDirection}");
-            
-            return $"?{string.Join("&", parameters)}";
-        }
-
-        public string GetPageUrl(int page)
-        {
-            var parameters = new List<string>();
-            
-            if (!string.IsNullOrEmpty(SearchTerm))
-                parameters.Add($"search={Uri.EscapeDataString(SearchTerm)}");
-                
-            if (!string.IsNullOrEmpty(RoleFilter))
-                parameters.Add($"roleFilter={Uri.EscapeDataString(RoleFilter)}");
-                
-            if (!string.IsNullOrEmpty(RelationFilter))
-                parameters.Add($"relationFilter={Uri.EscapeDataString(RelationFilter)}");
-                
-            if (CreatedFromDate.HasValue)
-                parameters.Add($"createdFrom={CreatedFromDate.Value:yyyy-MM-dd}");
-                
-            if (CreatedToDate.HasValue)
-                parameters.Add($"createdTo={CreatedToDate.Value:yyyy-MM-dd}");
-            
-            parameters.Add($"sortBy={SortBy}");
-            parameters.Add($"sortDirection={SortDirection}");
-            parameters.Add($"page={page}");
             
             return $"?{string.Join("&", parameters)}";
         }

@@ -373,7 +373,7 @@
         </div>
         <div class="d-flex gap-3 align-items-center">
             <span class="stats-badge badge">
-                Total: @Model.TotalUsers Users
+                Total: @Model.TotalCount Users
                 @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
                 {
                     <span class="text-light opacity-75">| Filtered</span>
@@ -534,7 +534,7 @@
         <!-- Table Info Overlay -->
         <div class="table-info-overlay">
             <i class="fas fa-users me-1"></i>
-            <span>@Model.TotalUsers users total</span>
+            <span>@Model.TotalCount users total</span>
             @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.RelationFilter) || Model.CreatedFromDate.HasValue || Model.CreatedToDate.HasValue)
             {
                 <span class="text-primary">| Filtered</span>
@@ -775,116 +775,13 @@
     </div>
 </div>
 
-<!-- Pagination Controls -->
-@if (Model.TotalPages > 1)
+<!-- Total users information -->
+@if (Model.Users?.Any() == true)
 {
-    <div class="d-flex justify-content-between align-items-center mt-4">
-        <div>
-            <small class="text-muted">
-                Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to @(Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalUsers)) of @Model.TotalUsers users
-                (Page @Model.CurrentPage of @Model.TotalPages)
-            </small>
-        </div>
-        <nav aria-label="Users pagination">
-            <ul class="pagination pagination-sm mb-0">
-                <!-- Previous button -->
-                @if (Model.HasPreviousPage)
-                {
-                    <li class="page-item">
-                        <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage - 1)" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                }
-                else
-                {
-                    <li class="page-item disabled">
-                        <span class="page-link" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </span>
-                    </li>
-                }
-
-                <!-- Page numbers -->
-                @{
-                    var startPage = Math.Max(1, Model.CurrentPage - 2);
-                    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
-                    
-                    // Adjust if we're near the beginning or end
-                    if (endPage - startPage < 4)
-                    {
-                        if (startPage == 1)
-                        {
-                            endPage = Math.Min(Model.TotalPages, startPage + 4);
-                        }
-                        else if (endPage == Model.TotalPages)
-                        {
-                            startPage = Math.Max(1, endPage - 4);
-                        }
-                    }
-                }
-
-                @if (startPage > 1)
-                {
-                    <li class="page-item">
-                        <a class="page-link" href="@Model.GetPageUrl(1)">1</a>
-                    </li>
-                    @if (startPage > 2)
-                    {
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    }
-                }
-
-                @for (var pageNum = startPage; pageNum <= endPage; pageNum++)
-                {
-                    @if (pageNum == Model.CurrentPage)
-                    {
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">@pageNum</span>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="@Model.GetPageUrl(pageNum)">@pageNum</a>
-                        </li>
-                    }
-                }
-
-                @if (endPage < Model.TotalPages)
-                {
-                    @if (endPage < Model.TotalPages - 1)
-                    {
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    }
-                    <li class="page-item">
-                        <a class="page-link" href="@Model.GetPageUrl(Model.TotalPages)">@Model.TotalPages</a>
-                    </li>
-                }
-
-                <!-- Next button -->
-                @if (Model.HasNextPage)
-                {
-                    <li class="page-item">
-                        <a class="page-link" href="@Model.GetPageUrl(Model.CurrentPage + 1)" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                }
-                else
-                {
-                    <li class="page-item disabled">
-                        <span class="page-link" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </span>
-                    </li>
-                }
-            </ul>
-        </nav>
+    <div class="mt-4">
+        <small class="text-muted">
+            Showing @Model.Users.Count of @Model.TotalCount total users
+        </small>
     </div>
 }
 
@@ -1554,11 +1451,10 @@ function scrollToUser(userId) {
 // Page load integration
 document.addEventListener('DOMContentLoaded', function() {
     // Show loader on initial page load if we have many users
-    const userCount = @Model.TotalUsers;
-    const currentPage = @Model.CurrentPage;
+    const userCount = @Model.TotalCount;
     
     // Show loader for initial large data loads
-    if (userCount > 50 && currentPage === 1) {
+    if (userCount > 50) {
         const initialLoader = ProfessionalLoader.showWithDelay('Loading user data...', 100, 'users');
         
         // Hide loader once the page is fully loaded

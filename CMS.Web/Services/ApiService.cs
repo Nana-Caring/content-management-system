@@ -8,7 +8,8 @@ namespace CMS.Web.Services
     {
         // Users
         Task<List<User>> GetUsersAsync();
-        Task<PaginatedUsersResponse> GetUsersAsync(int page = 1, int pageSize = 15, string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null);
+        Task<List<User>> GetUsersAsync(string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null);
+        Task<(List<User> users, int total)> GetUsersWithCountAsync(string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null);
         Task<User?> GetUserByIdAsync(int id);
         Task<bool> DeleteUserAsync(int id);
         Task<ApiResponse<User>> BlockUserAsync(int userId, string reason);
@@ -231,7 +232,7 @@ namespace CMS.Web.Services
         {
             _logger.LogInformation("GetUsersAsync called - starting user retrieval");
             var response = await GetAsync<UserListResponse>("/admin/users");
-            _logger.LogInformation($"GetUsersAsync completed - returned {(response?.Data?.Users?.Count ?? 0)} users");
+            _logger.LogInformation($"GetUsersAsync completed - returned {(response?.Data?.Users?.Count ?? 0)} users, Total: {response?.Data?.Total ?? 0}");
             
             if (response?.Data?.Users != null && response.Data.Users.Any())
             {
@@ -241,16 +242,14 @@ namespace CMS.Web.Services
             return response?.Data?.Users ?? new List<User>();
         }
 
-        public async Task<PaginatedUsersResponse> GetUsersAsync(int page = 1, int pageSize = 15, string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null)
+        public async Task<List<User>> GetUsersAsync(string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null)
         {
             try
             {
-                _logger.LogInformation($"GetUsersAsync (paginated) called - Page: {page}, PageSize: {pageSize}, Search: {search}");
+                _logger.LogInformation($"GetUsersAsync (filtered) called - Search: {search}, Role: {roleFilter}, Relation: {relationFilter}");
                 
-                // Build query parameters
+                // Build query parameters for filtering (no pagination)
                 var queryParams = new List<string>();
-                queryParams.Add($"page={page}");
-                queryParams.Add($"limit={pageSize}");
                 
                 if (!string.IsNullOrEmpty(search))
                     queryParams.Add($"search={Uri.EscapeDataString(search)}");
@@ -270,52 +269,100 @@ namespace CMS.Web.Services
                 if (!string.IsNullOrEmpty(sortBy))
                     queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
                 else
-                    queryParams.Add("sortBy=id"); // Default to id instead of CreatedAt
+                    queryParams.Add("sortBy=id"); // Default to id
                 
                 if (!string.IsNullOrEmpty(sortDirection))
                     queryParams.Add($"sortDirection={Uri.EscapeDataString(sortDirection)}");
                 
-                var queryString = string.Join("&", queryParams);
-                var endpoint = $"/admin/users?{queryString}";
+                var endpoint = "/admin/users";
+                if (queryParams.Any())
+                {
+                    var queryString = string.Join("&", queryParams);
+                    endpoint = $"/admin/users?{queryString}";
+                }
                 
-                _logger.LogInformation($"Making paginated request to: {endpoint}");
+                _logger.LogInformation($"Making filtered request to: {endpoint}");
                 
                 var response = await GetAsync<UserListResponse>(endpoint);
                 
-                if (response?.Success == true && response.Data != null)
+                if (response?.Success == true && response.Data?.Users != null)
                 {
-                    _logger.LogInformation($"GetUsersAsync (paginated) completed - returned {response.Data.Users?.Count ?? 0} users, Total: {response.Data.Pagination?.Total ?? 0}");
-                    
-                    return new PaginatedUsersResponse
-                    {
-                        Success = true,
-                        Users = response.Data.Users ?? new List<User>(),
-                        Pagination = response.Data.Pagination ?? new PaginationInfo(),
-                        Message = "Users retrieved successfully"
-                    };
+                    _logger.LogInformation($"GetUsersAsync (filtered) completed - returned {response.Data.Users.Count} users");
+                    return response.Data.Users;
                 }
                 else
                 {
-                    _logger.LogWarning("GetUsersAsync (paginated) - API response was not successful or data was null");
-                    return new PaginatedUsersResponse
-                    {
-                        Success = false,
-                        Users = new List<User>(),
-                        Pagination = new PaginationInfo(),
-                        Message = "Failed to retrieve users"
-                    };
+                    _logger.LogWarning("GetUsersAsync (filtered) - API response was not successful or data was null");
+                    return new List<User>();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in GetUsersAsync (paginated)");
-                return new PaginatedUsersResponse
+                _logger.LogError(ex, "Error in GetUsersAsync (filtered)");
+                return new List<User>();
+            }
+        }
+
+        public async Task<(List<User> users, int total)> GetUsersWithCountAsync(string? search = null, string? roleFilter = null, string? relationFilter = null, DateTime? createdFrom = null, DateTime? createdTo = null, string? sortBy = null, string? sortDirection = null)
+        {
+            try
+            {
+                _logger.LogInformation($"GetUsersWithCountAsync called - Search: {search}, Role: {roleFilter}, Relation: {relationFilter}");
+                
+                // Build query parameters for filtering (no pagination)
+                var queryParams = new List<string>();
+                
+                if (!string.IsNullOrEmpty(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search)}");
+                
+                if (!string.IsNullOrEmpty(roleFilter))
+                    queryParams.Add($"role={Uri.EscapeDataString(roleFilter)}");
+                
+                if (!string.IsNullOrEmpty(relationFilter))
+                    queryParams.Add($"relation={Uri.EscapeDataString(relationFilter)}");
+                
+                if (createdFrom.HasValue)
+                    queryParams.Add($"createdFrom={createdFrom.Value:yyyy-MM-dd}");
+                
+                if (createdTo.HasValue)
+                    queryParams.Add($"createdTo={createdTo.Value:yyyy-MM-dd}");
+                
+                if (!string.IsNullOrEmpty(sortBy))
+                    queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+                else
+                    queryParams.Add("sortBy=id"); // Default to id
+                
+                if (!string.IsNullOrEmpty(sortDirection))
+                    queryParams.Add($"sortDirection={Uri.EscapeDataString(sortDirection)}");
+                
+                var endpoint = "/admin/users";
+                if (queryParams.Any())
                 {
-                    Success = false,
-                    Users = new List<User>(),
-                    Pagination = new PaginationInfo(),
-                    Message = $"Error retrieving users: {ex.Message}"
-                };
+                    var queryString = string.Join("&", queryParams);
+                    endpoint = $"/admin/users?{queryString}";
+                }
+                
+                _logger.LogInformation($"Making filtered request with count to: {endpoint}");
+                
+                var response = await GetAsync<UserListResponse>(endpoint);
+                
+                if (response?.Success == true && response.Data?.Users != null)
+                {
+                    var users = response.Data.Users;
+                    var total = response.Data.Total;
+                    _logger.LogInformation($"GetUsersWithCountAsync completed - returned {users.Count} users, Total: {total}");
+                    return (users, total);
+                }
+                else
+                {
+                    _logger.LogWarning("GetUsersWithCountAsync - API response was not successful or data was null");
+                    return (new List<User>(), 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetUsersWithCountAsync");
+                return (new List<User>(), 0);
             }
         }
 
@@ -873,7 +920,8 @@ namespace CMS.Web.Services
     public class UserListData
     {
         public List<User> Users { get; set; } = new List<User>();
-        public PaginationInfo? Pagination { get; set; }
+        public int Total { get; set; }
+        public PaginationInfo? Pagination { get; set; } // Keep for backward compatibility
     }
 
     public class PaginationInfo
