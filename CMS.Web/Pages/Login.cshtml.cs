@@ -82,9 +82,14 @@ namespace CMS.Web.Pages
                         IsAuthenticated = true,
                         UserId = result.Data.Id,
                         Username = result.Data.Username,
+                        FirstName = result.User?.FirstName,
+                        MiddleName = result.User?.MiddleName,
+                        Surname = result.User?.Surname,
                         Email = result.Data.Email,
                         Role = result.Data.Role,
-                        Token = result.Token
+                        Token = result.Token,
+                        Status = "active",
+                        LastActivity = DateTime.UtcNow
                     };
 
                     await _appStateManager.SetUserInfoAsync(userInfo);

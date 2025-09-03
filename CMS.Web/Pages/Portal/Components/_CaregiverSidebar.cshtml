@@ -1,0 +1,46 @@
+@{
+    var currentPath = Context.Request.Path;
+}
+
+<div class="portal-sidebar">
+    <div class="sidebar-header">
+        <img src="/images/logo.png" alt="NANA Caring Logo" class="sidebar-logo">
+        <h3>Caregiver Portal</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="/portal" class="nav-item @(currentPath == "/portal" ? "active" : "")">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/portal/patients" class="nav-item @(currentPath.StartsWithSegments("/portal/patients") ? "active" : "")">
+            <i class="fas fa-users"></i>
+            <span>My Patients</span>
+        </a>
+        <a href="/portal/care-records" class="nav-item @(currentPath.StartsWithSegments("/portal/care-records") ? "active" : "")">
+            <i class="fas fa-notes-medical"></i>
+            <span>Care Records</span>
+        </a>
+        <a href="/portal/schedule" class="nav-item @(currentPath.StartsWithSegments("/portal/schedule") ? "active" : "")">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Schedule</span>
+        </a>
+        <a href="/portal/messages" class="nav-item @(currentPath.StartsWithSegments("/portal/messages") ? "active" : "")">
+            <i class="fas fa-comments"></i>
+            <span>Messages</span>
+        </a>
+        <a href="/portal/profile" class="nav-item @(currentPath.StartsWithSegments("/portal/profile") ? "active" : "")">
+            <i class="fas fa-user"></i>
+            <span>My Profile</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();" class="nav-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</div>
+
+<form id="logoutForm" action="/logout" method="post" style="display: none;"></form>

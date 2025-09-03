@@ -51,10 +51,10 @@
         
         <!-- User Profile -->
         <div class="sidebar-user">
-            <div class="user-avatar" id="sidebarUserAvatar">U</div>
+            <div class="user-avatar" id="sidebarUserAvatar">@(Model.CurrentUser?.FirstName?.FirstOrDefault().ToString() ?? "U")</div>
             <div class="user-info">
-                <p class="user-name" id="sidebarUserName">Loading...</p>
-                <p class="user-role" id="sidebarUserRole">User</p>
+                <p class="user-name" id="sidebarUserName">@($"{Model.CurrentUser?.FirstName} {Model.CurrentUser?.Surname}")</p>
+                <p class="user-role" id="sidebarUserRole">@(Model.CurrentUser?.Role ?? "User")</p>
             </div>
             <div class="dropdown">
                 <button class="btn btn-link text-decoration-none p-0" type="button" data-bs-toggle="dropdown">
@@ -724,222 +724,395 @@
         </div>
     </div>
 </div>
-<!-- Edit Profile Modal -->
-<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editProfileForm">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="editFirstName" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Middle Name</label>
-                            <input type="text" class="form-control" id="editMiddleName" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Surname</label>
-                            <input type="text" class="form-control" id="editSurname" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phone Number</label>
-                            <input type="text" class="form-control" id="editPhone" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Relation</label>
-                            <input type="text" class="form-control" id="editRelation" />
-                        </div>
-                    </div>
+<!-- Alert Container -->
+<div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
 
-                    <h6 class="text-primary mb-3 mt-4">Postal Address</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Address Line 1</label>
-                            <input type="text" class="form-control" id="editPostalAddress1" />
+<!-- Main Content -->
+<div class="container-fluid p-0">
+    <!-- Edit Profile Modal -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProfileForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="editFirstName" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="editMiddleName" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Surname</label>
+                                <input type="text" class="form-control" id="editSurname" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="editPhone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Relation</label>
+                                <input type="text" class="form-control" id="editRelation" />
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Address Line 2</label>
-                            <input type="text" class="form-control" id="editPostalAddress2" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">City</label>
-                            <input type="text" class="form-control" id="editPostalCity" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Province</label>
-                            <input type="text" class="form-control" id="editPostalProvince" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Postal Code</label>
-                            <input type="text" class="form-control" id="editPostalCode" />
-                        </div>
-                    </div>
 
-                    <h6 class="text-primary mb-3 mt-4">Home Address</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Address Line 1</label>
-                            <input type="text" class="form-control" id="editHomeAddress1" />
+                        <h6 class="text-primary mb-3 mt-4">Postal Address</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Address Line 1</label>
+                                <input type="text" class="form-control" id="editPostalAddress1" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Address Line 2</label>
+                                <input type="text" class="form-control" id="editPostalAddress2" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" id="editPostalCity" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Province</label>
+                                <input type="text" class="form-control" id="editPostalProvince" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" id="editPostalCode" />
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Address Line 2</label>
-                            <input type="text" class="form-control" id="editHomeAddress2" />
+
+                        <h6 class="text-primary mb-3 mt-4">Home Address</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Address Line 1</label>
+                                <input type="text" class="form-control" id="editHomeAddress1" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Address Line 2</label>
+                                <input type="text" class="form-control" id="editHomeAddress2" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" id="editHomeCity" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Province</label>
+                                <input type="text" class="form-control" id="editHomeProvince" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Code</label>
+                                <input type="text" class="form-control" id="editHomeCode" />
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">City</label>
-                            <input type="text" class="form-control" id="editHomeCity" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Province</label>
-                            <input type="text" class="form-control" id="editHomeProvince" />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Code</label>
-                            <input type="text" class="form-control" id="editHomeCode" />
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary-gradient" onclick="saveProfile()">
-                    <span class="loading-spinner d-none me-2"></span>
-                    Save Changes
-                </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary-gradient" onclick="saveProfile()">
+                        <span class="loading-spinner d-none me-2"></span>
+                        Save Changes
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Reset Password Modal -->
-<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="resetPasswordForm">
-                    <div class="mb-3">
-                        <label class="form-label">Current Email</label>
-                        <input type="email" class="form-control" id="resetEmail" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Password</label>
-                        <input type="password" class="form-control" id="resetNewPassword" required minlength="6" placeholder="Enter new password (min 6 characters)" />
-                    </div>
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            You will be logged out after password reset and need to log in again.
-                        </small>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning-gradient" onclick="resetPassword()">
-                    <span class="loading-spinner d-none me-2"></span>
-                    Reset Password
-                </button>
+    <!-- Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resetPasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Current Email</label>
+                            <input type="email" class="form-control" id="resetEmail" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="resetNewPassword" required minlength="6" placeholder="Enter new password (min 6 characters)" />
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                You will be logged out after password reset and need to log in again.
+                            </small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning-gradient" onclick="resetPassword()">
+                        <span class="loading-spinner d-none me-2"></span>
+                        Reset Password
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Create Transaction Modal -->
-<div class="modal fade" id="createTransactionModal" tabindex="-1" aria-labelledby="createTransactionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="createTransactionModalLabel">Create Manual Transaction</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="createTransactionForm">
-                    <div class="mb-3">
-                        <label class="form-label">Account</label>
-                        <select class="form-select" id="transactionAccountId" required>
-                            <option value="">Select Account</option>
-                        </select>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Amount (ZAR)</label>
-                            <input type="number" step="0.01" class="form-control" id="transactionAmount" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Type</label>
-                            <select class="form-select" id="transactionType" required>
-                                <option value="">Select Type</option>
-                                <option value="Credit">Credit</option>
-                                <option value="Debit">Debit</option>
+    <!-- Create Transaction Modal -->
+    <div class="modal fade" id="createTransactionModal" tabindex="-1" aria-labelledby="createTransactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="createTransactionModalLabel">Create Manual Transaction</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createTransactionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Account</label>
+                            <select class="form-select" id="transactionAccountId" required>
+                                <option value="">Select Account</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" class="form-control" id="transactionDescription" required placeholder="Transaction description" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reference (Optional)</label>
-                        <input type="text" class="form-control" id="transactionReference" placeholder="Transaction reference" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Category (Optional)</label>
-                        <input type="text" class="form-control" id="transactionCategory" placeholder="Transaction category" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reason (Optional)</label>
-                        <textarea class="form-control" id="transactionReason" rows="2" placeholder="Reason for this transaction"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success-gradient" onclick="createTransaction()">
-                    <span class="loading-spinner d-none me-2"></span>
-                    Create Transaction
-                </button>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Amount (ZAR)</label>
+                                <input type="number" step="0.01" class="form-control" id="transactionAmount" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" id="transactionType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Credit">Credit</option>
+                                    <option value="Debit">Debit</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" id="transactionDescription" required placeholder="Transaction description" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reference (Optional)</label>
+                            <input type="text" class="form-control" id="transactionReference" placeholder="Transaction reference" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category (Optional)</label>
+                            <input type="text" class="form-control" id="transactionCategory" placeholder="Transaction category" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reason (Optional)</label>
+                            <textarea class="form-control" id="transactionReason" rows="2" placeholder="Reason for this transaction"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success-gradient" onclick="createTransaction()">
+                        <span class="loading-spinner d-none me-2"></span>
+                        Create Transaction
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Transaction Details Modal -->
-<div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="transactionDetailsModalLabel">Transaction Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="transactionDetailsContent">
-                <!-- Transaction details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning-gradient" onclick="reverseTransaction()" id="reverseTransactionBtn" style="display: none;">
-                    <span class="loading-spinner d-none me-2"></span>
-                    Reverse Transaction
-                </button>
+    <!-- Transaction Details Modal -->
+    <div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="transactionDetailsModalLabel">Transaction Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="transactionDetailsContent">
+                    <!-- Transaction details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning-gradient" onclick="reverseTransaction()" id="reverseTransactionBtn" style="display: none;">
+                        <span class="loading-spinner d-none"></span>
+                        Reverse Transaction
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 
 @section Scripts {
+<script>
+// Portal functionality code
+</script>
+}
 <script src="~/js/loader.js"></script>
 <script src="~/js/portal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentUser = null;
+
+    // Store user data and token in localStorage
+    function storeUserProfile(userData) {
+        const userProfile = {
+            token: userData.token,
+            firstName: userData.data.firstName || userData.data.firstname || "",
+            middleName: userData.data.middleName || userData.data.middlename || "",
+            surname: userData.data.surname || userData.data.lastName || "",
+            email: userData.data.email,
+            role: userData.data.role
+        };
+
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        localStorage.setItem('authToken', userData.token);
+        currentUser = userProfile;
+    }
+
+    // Retrieve user data from localStorage
+    function getCurrentUser() {
+        const storedProfile = localStorage.getItem('userProfile');
+        return storedProfile ? JSON.parse(storedProfile) : null;
+    }
+
+    // Update UI with user data
+    function updateUIWithUserData() {
+        if (!checkUserProfile()) return;
+        
+        const user = getCurrentUser();
+        if (user) {
+            // Update sidebar
+            const sidebarUserName = document.getElementById('sidebarUserName');
+            const sidebarUserRole = document.getElementById('sidebarUserRole');
+            
+            if (sidebarUserName) {
+                sidebarUserName.textContent = `${user.firstName} ${user.surname}`.trim() || 'User';
+            }
+            if (sidebarUserRole) {
+                sidebarUserRole.textContent = user.role || 'User';
+            }
+
+            // Update profile section
+            const profileFullName = document.getElementById('profileFullName');
+            const profileEmail = document.getElementById('profileEmail');
+            
+            if (profileFullName) {
+                profileFullName.textContent = `${user.firstName} ${user.surname}`.trim() || 'User';
+            }
+            if (profileEmail) {
+                profileEmail.textContent = user.email || '';
+            }
+
+            // Update form inputs if they exist
+            const formInputs = {
+                firstName: user.firstName || '',
+                middleName: user.middleName || '',
+                surname: user.surname || '',
+                email: user.email || '',
+                phoneNumber: user.phoneNumber || ''
+            };
+
+            Object.entries(formInputs).forEach(([id, value]) => {
+                const input = document.getElementById(id);
+                if (input) input.value = value;
+            });
+        }
+    }
+
+    function showMissingProfileError() {
+        const alertContainer = document.getElementById('alertContainer');
+        if (!alertContainer) return;
+
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show';
+        alert.innerHTML = `
+            <strong>Error:</strong> Unable to load user profile. Please try logging in again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        alertContainer.appendChild(alert);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+        }, 5000);
+    }
+
+    function checkUserProfile() {
+        const storedProfile = localStorage.getItem('userProfile');
+        if (!storedProfile) {
+            showMissingProfileError();
+            return false;
+        }
+        return true;
+    }
+
+    // Store user data and token
+    const userProfile = {
+        token: "@(Model.CurrentUser?.Token)",
+        firstName: "@(Model.CurrentUser?.FirstName)",
+        middleName: "@(Model.CurrentUser?.MiddleName)",
+        surname: "@(Model.CurrentUser?.Surname)",
+        email: "@(Model.CurrentUser?.Email)",
+        role: "@(Model.CurrentUser?.Role)"
+    };
+
+    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    localStorage.setItem('authToken', "@(Model.CurrentUser?.Token)");
+
+    // Update UI with user data
+    updateUIWithUserData();
+
+    // Add event listener to check login status periodically
+    setInterval(checkLoginStatus, 60000); // Check every minute
+
+    function updateUIWithUserData() {
+        const storedProfile = localStorage.getItem('userProfile');
+        if (storedProfile) {
+            const user = JSON.parse(storedProfile);
+            
+            // Update sidebar username and role
+            document.getElementById('sidebarUserName').textContent = `${user.firstName} ${user.surname}`;
+            document.getElementById('sidebarUserRole').textContent = user.role;
+
+            // Update any other elements that display user info
+            const profileFullName = document.getElementById('profileFullName');
+            const profileEmail = document.getElementById('profileEmail');
+            if (profileFullName) profileFullName.textContent = `${user.firstName} ${user.surname}`;
+            if (profileEmail) profileEmail.textContent = user.email;
+        }
+    }
+
+    // Function to check login status
+    function checkLoginStatus() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            // Token is missing, user needs to login again
+            window.location.href = '/Login';
+        }
+    }
+
+    // Call on page load
+    updateUIWithUserData();
+}
+
+// Handle successful login
+async function handleLoginSuccess(loginResponse) {
+    if (loginResponse && loginResponse.success !== false) {
+        // Store user data
+        storeUserProfile(loginResponse);
+        
+        // Update UI
+        updateUIWithUserData();
+        
+        // Hide login modal
+        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        loginModal.hide();
+        
+        // Reload data
+        await loadDashboardData();
+    } else {
+        showAlert('Login failed: ' + (loginResponse.message || 'Unknown error'), 'danger');
+    }
 }
 
 let userAccounts = [];
@@ -1812,17 +1985,7 @@ function updateAccountsUI(accounts) {
         return;
     }
     
-    // Sort accounts - main accounts first, then sub-accounts
-    const sortedAccounts = [...accounts].sort((a, b) => {
-        // Sort by parent account (parent accounts first)
-        if (a.parentAccountId && !b.parentAccountId) return 1;
-        if (!a.parentAccountId && b.parentAccountId) return -1;
-        
-        // If both are same type, sort by balance
-        return (parseFloat(b.balance) || 0) - (parseFloat(a.balance) || 0);
-    });
-    
-    accountsBody.innerHTML = sortedAccounts.map(account => {
+    accountsBody.innerHTML = accounts.map(account => {
         const balance = parseFloat(account.balance) || 0;
         const balanceClass = balance >= 0 ? 'text-success' : 'text-danger';
         const formattedBalance = formatCurrency(balance, account.currency || 'ZAR');
@@ -2715,5 +2878,3 @@ function exportTransactions() {
         showAlert(`Failed to export transactions: ${error.message}`, 'danger');
     }
 }
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

@@ -11,6 +11,7 @@ namespace CMS.Web.Services
         string GenerateToken(User user);
         ClaimsPrincipal? ValidateToken(string token);
         string? GetEmailFromToken(string token);
+        IEnumerable<Claim>? GetClaimsFromToken(string token);
     }
 
     public class JwtService : IJwtService
@@ -102,6 +103,20 @@ namespace CMS.Web.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to extract email from token");
+                return null;
+            }
+        }
+
+        public IEnumerable<Claim>? GetClaimsFromToken(string token)
+        {
+            try
+            {
+                var principal = ValidateToken(token);
+                return principal?.Claims;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting claims from token");
                 return null;
             }
         }

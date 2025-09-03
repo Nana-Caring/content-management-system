@@ -1,0 +1,42 @@
+@using CMS.Web.Services
+@inject JwtService JwtService
+
+@{
+    var currentUser = ViewData["CurrentUser"] as CMS.Web.Models.User;
+    var explicitRole = ViewData["UserRole"] as string;
+    
+    System.Diagnostics.Debug.WriteLine("Sidebar Debug:");
+    System.Diagnostics.Debug.WriteLine($"CurrentUser in ViewData: {currentUser != null}");
+    System.Diagnostics.Debug.WriteLine($"Explicit UserRole in ViewData: {explicitRole}");
+    
+    var userRole = "";
+    
+    // Try to get role from explicit UserRole first, then fallback to CurrentUser
+    if (!string.IsNullOrEmpty(explicitRole))
+    {
+        userRole = explicitRole;
+        System.Diagnostics.Debug.WriteLine($"Using explicit role: {userRole}");
+    }
+    else if (currentUser != null)
+    {
+        userRole = currentUser.Role ?? "";
+        System.Diagnostics.Debug.WriteLine($"Using role from CurrentUser: {userRole}");
+    }
+    else
+    {
+        System.Diagnostics.Debug.WriteLine("No role found in ViewData");
+    }
+
+    // Convert role to lowercase for case-insensitive comparison
+    var normalizedRole = userRole.ToLower();
+    var sidebarComponent = normalizedRole switch
+    {
+        "admin" => "_AdminSidebar",
+        "funder" => "_FunderSidebar",
+        "caregiver" => "_CaregiverSidebar",
+        "dependent" => "_DependentSidebar",
+        _ => "_DependentSidebar" // Default to dependent sidebar
+    };
+}
+
+@await Html.PartialAsync($"~/Pages/Portal/Components/{sidebarComponent}.cshtml")

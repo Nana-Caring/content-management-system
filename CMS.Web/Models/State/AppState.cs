@@ -14,9 +14,14 @@ namespace CMS.Web.Models.State
         public bool IsAuthenticated { get; set; }
         public string? UserId { get; set; }
         public string? Username { get; set; }
+        public string? FirstName { get; set; }
+        public string? MiddleName { get; set; }
+        public string? Surname { get; set; }
         public string? Email { get; set; }
         public string? Role { get; set; }
         public string? Token { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Status { get; set; }
         public DateTime? LastActivity { get; set; }
         public Dictionary<string, object> Preferences { get; set; } = new();
     }

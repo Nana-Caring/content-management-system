@@ -1,0 +1,48 @@
+@using CMS.Web.Models
+@{
+    Layout = "_Layout";
+    var user = ViewData["CurrentUser"] as User;
+}
+
+<link rel="stylesheet" href="~/css/portal-sidebar.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+<div class="portal-container">
+    @{
+        // Render different sidebar based on user role
+        switch (user?.Role)
+        {
+            case "Dependent":
+                await Html.RenderPartialAsync("_DependentSidebar", user);
+                break;
+            case "Funder":
+                await Html.RenderPartialAsync("_FunderSidebar", user);
+                break;
+            case "Caregiver":
+                await Html.RenderPartialAsync("_CaregiverSidebar", user);
+                break;
+            case "Admin":
+                await Html.RenderPartialAsync("_AdminSidebar", user);
+                break;
+            default:
+                // Default to a basic sidebar or show an error
+                <div class="portal-sidebar">
+                    <div class="sidebar-header">
+                        <h3>Access Error</h3>
+                    </div>
+                    <div class="sidebar-nav">
+                        <p class="text-danger">Invalid user role</p>
+                    </div>
+                </div>
+                break;
+        }
+    }
+
+    <div class="portal-content">
+        @RenderBody()
+    </div>
+</div>
+
+<script src="~/js/portal-sidebar.js"></script>
+
+@await RenderSectionAsync("Scripts", required: false)

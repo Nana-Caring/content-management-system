@@ -10,6 +10,7 @@ namespace CMS.Web.Services
     {
         Task<AdminLoginResponse> AuthenticateAdminAsync(AdminLoginRequest request);
         Task<AdminLoginResponse> AuthenticateAdminLocalAsync(AdminLoginRequest request);
+        Task<User?> GetUserByEmailAsync(string email);
     }
 
     public class AuthService : IAuthService
@@ -199,6 +200,41 @@ namespace CMS.Web.Services
                     Message = "Authentication failed"
                 };
             }
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return null;
+
+            try
+            {
+                // Try local database first
+                var localUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+                if (localUser != null)
+                    return localUser;
+
+                // If not found locally, try external API
+                _httpClient.DefaultRequestHeaders.Clear();
+
+                var response = await _httpClient.GetAsync($"{API_BASE_URL}/api/users/by-email/{email}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var userJson = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<User>(userJson, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user by email: {Email}", email);
+            }
+
+            return null;
         }
     }
 }

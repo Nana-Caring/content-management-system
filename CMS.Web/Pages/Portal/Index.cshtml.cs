@@ -10,6 +10,9 @@ namespace CMS.Web.Pages.Portal
     public class IndexModel : BasePageModel
     {
         private readonly IApiService _apiService;
+        private readonly JwtService _jwtService;
+        private readonly IAuthService _authService;
+        
         public List<Account> Accounts { get; set; } = new List<Account>();
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
         public new User? User { get; set; }  // Using 'new' keyword to hide inherited User property
@@ -24,26 +27,41 @@ namespace CMS.Web.Pages.Portal
         public int TransactionCount => Transactions?.Count ?? 0;
         public int PendingTransactions => Transactions?.Count(t => t.Status == "Pending") ?? 0;
 
-        public IndexModel(IAppStateManager stateManager, IApiService apiService) : base(stateManager)
+        public IndexModel(
+            IAppStateManager stateManager, 
+            IApiService apiService,
+            JwtService jwtService,
+            IAuthService authService) : base(stateManager)
         {
             _apiService = apiService;
+            _jwtService = jwtService;
+            _authService = authService;
         }
 
         public async Task OnGetAsync()
         {
-            // Check if admin is logged in
-            if (HttpContext.Session.TryGetValue("AdminLoggedIn", out var _))
+            var token = HttpContext.Request.Cookies["auth_token"];
+            if (!string.IsNullOrEmpty(token))
             {
                 IsLoggedIn = true;
-                // Load dashboard data
-                var users = await _apiService.GetUsersAsync();
-                User = users.FirstOrDefault(); // For demo, show first user
-                Accounts = User?.Accounts?.ToList() ?? new List<Account>();
-                Transactions = await _apiService.GetTransactionsAsync();
+                
+                // Get current user from the auth service
+                var userEmail = _jwtService.GetEmailFromToken(token);
+                if (!string.IsNullOrEmpty(userEmail))
+                {
+                    User = await _authService.GetUserByEmailAsync(userEmail);
+                    if (User != null)
+                    {
+                        ViewData["CurrentUser"] = User;
+                        Accounts = User.Accounts?.ToList() ?? new List<Account>();
+                        Transactions = await _apiService.GetTransactionsAsync();
+                    }
+                }
             }
             else
             {
                 IsLoggedIn = false;
+                Response.Redirect("/Login");
             }
         }
 
