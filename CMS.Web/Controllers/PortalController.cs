@@ -1,24 +1,25 @@
-/*
- * This controller was created as a fallback when the external backend had schema issues.
- * Since the backend issues are now resolved, this controller is no longer needed.
- * The portal now works with the external backend at https://nanacaring-backend.onrender.com
- *
- * The controller code has been commented out to prevent compilation errors since
- * we're no longer using it, but it's kept for reference in case we need to
- * reimplement any of its functionality locally in the future.
- */
-
-/* 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CMS.Web.Data;
 using CMS.Web.Models;
 using CMS.Web.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 
 namespace CMS.Web.Controllers
 {
+    /// <summary>
+    /// This controller handles portal functionality for local development and testing.
+    /// It can also serve as a fallback if the external backend is unavailable.
+    /// </summary>
     [ApiController]
     [Route("api/portal")]
     public class PortalController : ControllerBase
@@ -47,7 +48,7 @@ namespace CMS.Web.Controllers
         /// <summary>
         /// Portal login endpoint
         /// </summary>
-        [HttpPost("login")]
+        [HttpPost("admin-login")]
         public async Task<IActionResult> PortalLogin([FromBody] AdminLoginRequest loginRequest)
         {
             try
@@ -69,29 +70,48 @@ namespace CMS.Web.Controllers
 
                 // For portal access, we'll accept the stored credentials
                 // In a real system, you'd verify the password hash
+
+                // Basic password validation for development
+                if (string.IsNullOrEmpty(loginRequest.Password))
+                {
+                    return BadRequest(new { message = "Password is required" });
+                }
+
                 // Generate JWT token for the user
                 var token = _jwtService.GenerateToken(user);
-
-                return Ok(new 
-                { 
-                    token = token,
-                    accessToken = token,
-                    user = new 
-                    {
-                        id = user.Id,
-                        email = user.Email,
-                        firstName = user.FirstName,
-                        middleName = user.MiddleName,
-                        surname = user.Surname,
-                        role = user.Role
-                    },
-                    message = "Login successful"
+                
+                // Set the token in a cookie
+                Response.Cookies.Append("auth_token", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddDays(1)
                 });
+
+                // Create AdminLoginResponse object
+                var response = new AdminLoginResponse
+                {
+                    AccessToken = token,
+                    Jwt = token,
+                    User = new AdminUser
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        MiddleName = user.MiddleName,
+                        Surname = user.Surname,
+                        Role = user.Role
+                    },
+                    Message = "Login successful"
+                };
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during portal login for email: {Email}", loginRequest.Email);
-                return StatusCode(500, new { message = "Login failed", error = ex.Message });
+                _logger.LogError(ex, "Error during portal login for email: {LoginEmail}", loginRequest.Email);
+                return StatusCode(500, new { message = "Login failed", details = "Please try again", error = ex.Message });
             }
         }
 
@@ -124,7 +144,41 @@ namespace CMS.Web.Controllers
 
                 if (localUser != null)
                 {
-                    return Ok(localUser);
+                    switch (localUser.Role)
+                    {
+                        case "Dependent":
+                            // Dependents only see their own profile
+                            return Ok(localUser);
+                        
+                        case "Funder":
+                            // Funders see their own profile and basic info about their dependents
+                            var dependentIds = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id) // Using BlockedBy temporarily as relationship
+                                .Select(u => u.Id)
+                                .ToListAsync();
+                            return Ok(new
+                            {
+                                user = localUser,
+                                dependentCount = dependentIds.Count,
+                                hasActiveAccounts = await _context.Set<Account>()
+                                    .AnyAsync(a => a.UserId.HasValue && dependentIds.Contains(a.UserId.Value))
+                            });
+                        
+                        case "Caregiver":
+                            // Caregivers see their profile and assigned patients/cases
+                            var assignedDependents = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id) // Using BlockedBy temporarily as relationship
+                                .Select(u => new { u.Id, u.FirstName, u.Surname })
+                                .ToListAsync();
+                            return Ok(new
+                            {
+                                user = localUser,
+                                assignedDependents = assignedDependents
+                            });
+                        
+                        default:
+                            return Ok(localUser);
+                    }
                 }
 
                 // If not found locally, try external API
@@ -191,7 +245,23 @@ namespace CMS.Web.Controllers
 
                 if (localUser != null)
                 {
-                    // Update local user
+                    // Role-based profile update restrictions
+                    switch (localUser.Role)
+                    {
+                        case "Dependent":
+                            // Dependents can only update their basic info and contact details
+                            break;
+                        case "Funder":
+                            // Funders can update their profile and manage dependent relationships
+                            break;
+                        case "Caregiver":
+                            // Caregivers can update their profile and manage patient assignments
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                    // Common profile updates for all roles
                     localUser.FirstName = userUpdate.FirstName ?? localUser.FirstName;
                     localUser.MiddleName = userUpdate.MiddleName ?? localUser.MiddleName;
                     localUser.Surname = userUpdate.Surname ?? localUser.Surname;
@@ -278,10 +348,40 @@ namespace CMS.Web.Controllers
 
                 if (localUser != null)
                 {
-                    // Get accounts from local database (if any exist)
-                    var localAccounts = await _context.Set<Account>()
-                        .Where(a => a.UserId == localUser.Id)
-                        .ToListAsync();
+                    var accountsQuery = _context.Set<Account>().AsQueryable();
+
+                    switch (localUser.Role)
+                    {
+                        case "Dependent":
+                            // Dependents only see their own accounts
+                            accountsQuery = accountsQuery.Where(a => a.UserId == localUser.Id);
+                            break;
+                        
+                        case "Funder":
+                            // Funders see their accounts and their dependents' accounts
+                            var dependentIds = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id) // Using BlockedBy temporarily as relationship
+                                .Select(u => u.Id)
+                                .ToListAsync();
+                            accountsQuery = accountsQuery.Where(a => 
+                                a.UserId == localUser.Id || (a.UserId.HasValue && dependentIds.Contains(a.UserId.Value)));
+                            break;
+                        
+                        case "Caregiver":
+                            // Caregivers see accounts of assigned patients
+                            var patientIds = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id) // Using BlockedBy temporarily as relationship
+                                .Select(u => u.Id)
+                                .ToListAsync();
+                            accountsQuery = accountsQuery.Where(a => a.UserId.HasValue && patientIds.Contains(a.UserId.Value));
+                            break;
+                        
+                        default:
+                            // Admin sees all accounts
+                            break;
+                    }
+
+                    var localAccounts = await accountsQuery.ToListAsync();
 
                     if (localAccounts.Any())
                     {
@@ -326,7 +426,7 @@ namespace CMS.Web.Controllers
         /// Get user transactions
         /// </summary>
         [HttpGet("me/transactions")]
-        public async Task<IActionResult> GetUserTransactions()
+        public async Task<IActionResult> GetUserTransactions([FromQuery] string? type = null, [FromQuery] int limit = 50)
         {
             try
             {
@@ -345,7 +445,85 @@ namespace CMS.Web.Controllers
                     return Unauthorized(new { message = "Invalid token" });
                 }
 
-                // Try external API
+                // Get user for role check
+                var localUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                if (localUser != null)
+                {
+                    var transactionsQuery = _context.Set<Transaction>().AsQueryable();
+
+                    switch (localUser.Role)
+                    {
+                        case "Dependent":
+                            // Dependents only see their own transactions
+                            transactionsQuery = transactionsQuery
+                                .Where(t => t.Account != null && t.Account.UserId == localUser.Id);
+                            break;
+                        
+                        case "Funder":
+                            // Funders see their transactions and their dependents'
+                            var dependentIds = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id)
+                                .Select(u => u.Id)
+                                .ToListAsync();
+                            transactionsQuery = transactionsQuery
+                                .Where(t => t.Account != null && 
+                                          (t.Account.UserId == localUser.Id || 
+                                           dependentIds.Contains(t.Account.UserId ?? 0)));
+                            break;
+                        
+                        case "Caregiver":
+                            // Caregivers see transactions of assigned patients
+                            var patientIds = await _context.Users
+                                .Where(u => u.Role == "Dependent" && u.BlockedBy == localUser.Id) // Using BlockedBy temporarily as relationship
+                                .Select(u => u.Id)
+                                .ToListAsync();
+                            transactionsQuery = transactionsQuery
+                                .Where(t => t.Account != null && patientIds.Contains(t.Account.UserId ?? 0));
+                            break;
+                        
+                        default:
+                            // Admin sees all transactions
+                            break;
+                    }
+
+                    // Apply type filter if provided
+                    if (!string.IsNullOrEmpty(type))
+                    {
+                        transactionsQuery = transactionsQuery.Where(t => t.Type == type);
+                    }
+
+                    // Get paginated results
+                    var paginatedTransactions = await transactionsQuery
+                        .OrderByDescending(t => t.Date)
+                        .Select(t => new
+                        {
+                            t.Id,
+                            t.AccountId,
+                            t.Amount,
+                            t.Date,
+                            t.Type,
+                            t.Description,
+                            t.Status,
+                            AccountNumber = t.Account != null ? t.Account.AccountNumber : null,
+                            UserId = t.Account != null ? t.Account.UserId : null
+                        })
+                        .Take(limit)
+                        .ToListAsync();
+
+                    // Get total count for pagination
+                    var totalCount = await transactionsQuery.CountAsync();
+
+                    // Return with pagination info
+                    return Ok(new
+                    {
+                        data = paginatedTransactions,
+                        total = totalCount,
+                        limit = limit,
+                        hasMore = totalCount > limit
+                    });
+                }
+
+                // Try external API if user not found locally
                 try
                 {
                     _httpClient.DefaultRequestHeaders.Clear();
@@ -354,13 +532,13 @@ namespace CMS.Web.Controllers
                     var response = await _httpClient.GetAsync($"{API_BASE_URL}/api/portal/me/transactions");
                     if (response.IsSuccessStatusCode)
                     {
-                        var transactionsJson = await response.Content.ReadAsStringAsync();
-                        var transactions = JsonSerializer.Deserialize<List<Transaction>>(transactionsJson, new JsonSerializerOptions
+                        var responseJson = await response.Content.ReadAsStringAsync();
+                        var result = JsonSerializer.Deserialize<dynamic>(responseJson, new JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
                         });
                         
-                        return Ok(transactions ?? new List<Transaction>());
+                        return Ok(result);
                     }
                 }
                 catch (Exception ex)
@@ -368,8 +546,14 @@ namespace CMS.Web.Controllers
                     _logger.LogWarning($"External API call failed: {ex.Message}");
                 }
 
-                // Return empty list if no transactions found
-                return Ok(new List<Transaction>());
+                // Return empty result if no transactions found
+                return Ok(new
+                {
+                    data = new List<object>(),
+                    total = 0,
+                    limit = limit,
+                    hasMore = false
+                });
             }
             catch (Exception ex)
             {
@@ -418,7 +602,8 @@ namespace CMS.Web.Controllers
                     _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
                     var jsonContent = JsonSerializer.Serialize(request);
-                    var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+                    var content = new StringContent(jsonContent, Encoding.UTF8);
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
                     var response = await _httpClient.PostAsync($"{API_BASE_URL}/api/portal/reset-password", content);
                     if (response.IsSuccessStatusCode)
@@ -453,4 +638,3 @@ namespace CMS.Web.Controllers
         public string NewPassword { get; set; } = string.Empty;
     }
 }
-*/
