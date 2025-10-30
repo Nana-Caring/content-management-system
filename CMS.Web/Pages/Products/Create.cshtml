@@ -1,0 +1,128 @@
+@page
+@model CMS.Web.Pages.Products.CreateModel
+@{
+    ViewData["Title"] = "Add Product";
+}
+
+<div class="page-header mb-4">
+    <h1 class="h4 mb-0">Add Product</h1>
+    <p class="mb-0 opacity-75">Create a new product</p>
+    <a asp-page="./Index" class="btn btn-link text-white mt-2">← Back to Products</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Brand" class="form-label"></label>
+                    <input asp-for="Brand" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Price" class="form-label"></label>
+                    <input asp-for="Price" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" class="form-select">
+                        <option value="">-- Select --</option>
+                        <option>Education</option>
+                        <option>Healthcare</option>
+                        <option>Groceries</option>
+                        <option>Transport</option>
+                        <option>Entertainment</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Sku" class="form-label"></label>
+                    <input asp-for="Sku" class="form-control" />
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <label asp-for="DetailedDescription" class="form-label"></label>
+                    <textarea asp-for="DetailedDescription" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Image" class="form-label"></label>
+                    <input asp-for="Image" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Images (comma or newline separated)</label>
+                    <textarea asp-for="ImagesText" class="form-control" rows="2" placeholder="https://...\nhttps://..."></textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" asp-for="InStock" />
+                        <label class="form-check-label" asp-for="InStock"></label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="StockQuantity" class="form-label"></label>
+                    <input asp-for="StockQuantity" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+                        <label class="form-check-label" asp-for="IsActive"></label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="TagsText" class="form-label">Tags (comma or newline separated)</label>
+                    <textarea asp-for="TagsText" class="form-control" rows="2" placeholder="vitamin, gummies, immune"></textarea>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="MinAge" class="form-label"></label>
+                    <input asp-for="MinAge" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="MaxAge" class="form-label"></label>
+                    <input asp-for="MaxAge" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="AgeCategory" class="form-label"></label>
+                    <select asp-for="AgeCategory" class="form-select">
+                        <option>All Ages</option>
+                        <option>Toddler</option>
+                        <option>Child</option>
+                        <option>Teen</option>
+                        <option>Adult</option>
+                        <option>Senior</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="RequiresAgeVerification" />
+                        <label class="form-check-label" asp-for="RequiresAgeVerification"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

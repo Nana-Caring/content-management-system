@@ -1,0 +1,7 @@
+# EditorConfig is awesome: https://EditorConfig.org
+root = true
+
+[*]
+# Suppress noisy Razor source generator warning about TargetPath for additional files
+# See: https://github.com/dotnet/razor/issues
+dotnet_diagnostic.RSG002.severity = none

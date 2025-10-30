@@ -31,9 +31,18 @@ namespace CMS.Web.Services
         Task<Transaction?> GetTransactionByIdAsync(int id);
         Task<bool> DeleteTransactionAsync(int id);
 
-        // Products
+        // Products (legacy minimal view)
         Task<List<Product>> GetProductsAsync();
         Task<Product?> GetProductByIdAsync(int id);
+
+        // Admin Products (full CRUD)
+        Task<(List<AdminProduct> products, PaginationInfo? pagination)> GetAdminProductsAsync(
+            string? category = null, string? brand = null, bool? inStock = null, bool? isActive = null,
+            string? search = null, int? page = null, int? limit = null, string? sortBy = null, string? sortOrder = null);
+        Task<AdminProduct?> GetAdminProductByIdOrSkuAsync(string idOrSku);
+        Task<ApiResponse<AdminProduct>> CreateAdminProductAsync(AdminProductCreateRequest request);
+        Task<ApiResponse<AdminProduct>> UpdateAdminProductAsync(int id, AdminProductUpdateRequest request);
+        Task<ApiResponse<object>> DeleteAdminProductAsync(int id);
 
         // KYC Requests
         Task<List<KycRequest>> GetKycRequestsAsync();
@@ -120,7 +129,7 @@ namespace CMS.Web.Services
                 {
                     var result = JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
                     {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                        PropertyNameCaseInsensitive = true
                     });
                     _logger.LogInformation($"Successfully deserialized response to type {typeof(T).Name}");
                     return result;
@@ -141,7 +150,7 @@ namespace CMS.Web.Services
                     {
                         var result = JsonSerializer.Deserialize<T>(retryContent, new JsonSerializerOptions
                         {
-                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                            PropertyNameCaseInsensitive = true
                         });
                         _logger.LogInformation($"Successfully deserialized retry response to type {typeof(T).Name}");
                         return result;
@@ -161,7 +170,7 @@ namespace CMS.Web.Services
                         {
                             var result = JsonSerializer.Deserialize<T>(finalContent, new JsonSerializerOptions
                             {
-                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                                PropertyNameCaseInsensitive = true
                             });
                             return result;
                         }
@@ -812,16 +821,154 @@ namespace CMS.Web.Services
             return await DeleteAsync($"/admin/transactions/{id}");
         }
 
-        // Products
+        // Products (legacy minimal view)
         public async Task<List<Product>> GetProductsAsync()
         {
-            var products = await GetAsync<List<Product>>("/admin/products");
-            return products ?? new List<Product>();
+            // Pull all admin products across pages, then map to minimal view model used by the page
+            var allAdmin = new List<AdminProduct>();
+            int page = 1;
+            const int limit = 100; // reasonable page size to reduce requests
+            int safety = 0; // avoid runaway loops
+
+            while (true)
+            {
+                var (products, pagination) = await GetAdminProductsAsync(
+                    category: null, brand: null, inStock: null, isActive: null,
+                    search: null, page: page, limit: limit, sortBy: null, sortOrder: null);
+
+                if (products != null && products.Count > 0)
+                {
+                    allAdmin.AddRange(products);
+                }
+
+                // Decide when to stop
+                int totalPages = 0;
+                if (pagination != null)
+                {
+                    totalPages = pagination.TotalPages != 0 ? pagination.TotalPages : pagination.Pages;
+                }
+
+                if (totalPages > 0)
+                {
+                    if (page >= totalPages) break;
+                    page++;
+                }
+                else
+                {
+                    // Fallback when pagination info isn't present: stop if less than limit returned
+                    if (products == null || products.Count < limit) break;
+                    page++;
+                }
+
+                if (++safety > 100) break; // hard cap to prevent infinite loops in case of API anomalies
+            }
+
+            var mapped = allAdmin.Select(p => new Product
+            {
+                Id = p.Id,
+                Name = p.Name ?? string.Empty,
+                Description = p.Description ?? string.Empty,
+                ApiLink = string.Empty,
+                CreatedAt = p.CreatedAt ?? DateTime.MinValue
+            }).ToList();
+
+            return mapped;
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
         {
-            return await GetAsync<Product>($"/admin/products/{id}");
+            var wrapper = await GetAsync<AdminProductResponse>($"/admin/products/{id}");
+            var p = wrapper?.Data;
+            if (p == null) return null;
+            return new Product
+            {
+                Id = p.Id,
+                Name = p.Name ?? string.Empty,
+                Description = p.Description ?? string.Empty,
+                ApiLink = string.Empty,
+                CreatedAt = p.CreatedAt ?? DateTime.MinValue
+            };
+        }
+
+        // Admin Products (full CRUD)
+        public async Task<(List<AdminProduct> products, PaginationInfo? pagination)> GetAdminProductsAsync(
+            string? category = null, string? brand = null, bool? inStock = null, bool? isActive = null,
+            string? search = null, int? page = null, int? limit = null, string? sortBy = null, string? sortOrder = null)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrEmpty(category)) qs.Add($"category={Uri.EscapeDataString(category)}");
+            if (!string.IsNullOrEmpty(brand)) qs.Add($"brand={Uri.EscapeDataString(brand)}");
+            if (inStock.HasValue) qs.Add($"inStock={(inStock.Value ? "true" : "false")}");
+            if (isActive.HasValue) qs.Add($"isActive={(isActive.Value ? "true" : "false")}");
+            if (!string.IsNullOrEmpty(search)) qs.Add($"search={Uri.EscapeDataString(search)}");
+            if (page.HasValue) qs.Add($"page={page.Value}");
+            if (limit.HasValue) qs.Add($"limit={limit.Value}");
+            if (!string.IsNullOrEmpty(sortBy)) qs.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
+            if (!string.IsNullOrEmpty(sortOrder)) qs.Add($"sortOrder={Uri.EscapeDataString(sortOrder)}");
+            var endpoint = "/admin/products" + (qs.Count > 0 ? "?" + string.Join("&", qs) : string.Empty);
+
+            var wrapper = await GetAsync<AdminProductListResponse>(endpoint);
+            return (wrapper?.Data ?? new List<AdminProduct>(), wrapper?.Pagination);
+        }
+
+        public async Task<AdminProduct?> GetAdminProductByIdOrSkuAsync(string idOrSku)
+        {
+            var wrapper = await GetAsync<AdminProductResponse>($"/admin/products/{idOrSku}");
+            return wrapper?.Data;
+        }
+
+        public async Task<ApiResponse<AdminProduct>> CreateAdminProductAsync(AdminProductCreateRequest request)
+        {
+            try
+            {
+                var response = await PostAsync("/admin/products", request);
+                var content = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode && !string.IsNullOrEmpty(content))
+                {
+                    var result = JsonSerializer.Deserialize<AdminProductResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new ApiResponse<AdminProduct> { Success = result?.Success ?? false, Message = result?.Message ?? string.Empty, Data = result?.Data };
+                }
+                return new ApiResponse<AdminProduct> { Success = false, Message = content };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateAdminProductAsync error");
+                return new ApiResponse<AdminProduct> { Success = false, Message = "Failed to create product" };
+            }
+        }
+
+        public async Task<ApiResponse<AdminProduct>> UpdateAdminProductAsync(int id, AdminProductUpdateRequest request)
+        {
+            try
+            {
+                var response = await PutAsync($"/admin/products/{id}", request);
+                var content = await response.Content.ReadAsStringAsync();
+                if (response.IsSuccessStatusCode && !string.IsNullOrEmpty(content))
+                {
+                    var result = JsonSerializer.Deserialize<AdminProductResponse>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    return new ApiResponse<AdminProduct> { Success = result?.Success ?? false, Message = result?.Message ?? string.Empty, Data = result?.Data };
+                }
+                return new ApiResponse<AdminProduct> { Success = false, Message = content };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UpdateAdminProductAsync error");
+                return new ApiResponse<AdminProduct> { Success = false, Message = "Failed to update product" };
+            }
+        }
+
+        public async Task<ApiResponse<object>> DeleteAdminProductAsync(int id)
+        {
+            try
+            {
+                var ok = await DeleteAsync($"/admin/products/{id}");
+                return new ApiResponse<object> { Success = ok, Message = ok ? "Product deleted successfully" : "Failed to delete product" };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DeleteAdminProductAsync error");
+                return new ApiResponse<object> { Success = false, Message = "Failed to delete product" };
+            }
         }
 
         // KYC Requests
@@ -924,13 +1071,7 @@ namespace CMS.Web.Services
         public PaginationInfo? Pagination { get; set; } // Keep for backward compatibility
     }
 
-    public class PaginationInfo
-    {
-        public int Page { get; set; }
-        public int Limit { get; set; }
-        public int Total { get; set; }
-        public int Pages { get; set; }
-    }
+    // PaginationInfo moved to CMS.Web.Models.PaginationInfo
 
     public class UserStatsResponse
     {

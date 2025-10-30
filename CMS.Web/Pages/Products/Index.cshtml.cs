@@ -5,6 +5,7 @@ using CMS.Web.Services;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace CMS.Web.Pages.Products
 {
@@ -104,6 +105,171 @@ namespace CMS.Web.Pages.Products
                 return SortDirection == "asc" ? "desc" : "asc";
             }
             return "asc";
+        }
+
+        // Handlers for modal forms
+        public async Task<IActionResult> OnPostCreateAsync(
+            [FromForm] string name,
+            [FromForm] string brand,
+            [FromForm] string price,
+            [FromForm] string category,
+            [FromForm] string? sku,
+            [FromForm] string? description,
+            [FromForm] string? detailedDescription,
+            [FromForm] string? image,
+            [FromForm] string? imagesText,
+            [FromForm] bool inStock,
+            [FromForm] int stockQuantity,
+            [FromForm] string? tagsText,
+            [FromForm] bool isActive,
+            [FromForm] int? minAge,
+            [FromForm] int? maxAge,
+            [FromForm] string? ageCategory,
+            [FromForm] bool requiresAgeVerification)
+        {
+            try
+            {
+                var request = new AdminProductCreateRequest
+                {
+                    Name = name,
+                    Brand = brand,
+                    Price = price,
+                    Category = category,
+                    Sku = sku,
+                    Description = description,
+                    DetailedDescription = detailedDescription,
+                    Image = image,
+                    Images = ParseList(imagesText),
+                    InStock = inStock,
+                    StockQuantity = stockQuantity,
+                    Tags = ParseList(tagsText),
+                    IsActive = isActive,
+                    MinAge = minAge,
+                    MaxAge = maxAge,
+                    AgeCategory = ageCategory,
+                    RequiresAgeVerification = requiresAgeVerification
+                };
+
+                var result = await _apiService.CreateAdminProductAsync(request);
+                if (result.Success)
+                {
+                    TempData["SuccessMessage"] = result.Message ?? "Product created successfully";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = result.Message ?? "Failed to create product";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while creating the product.";
+                Console.WriteLine(ex);
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostEditAsync(
+            [FromForm] int id,
+            [FromForm] string name,
+            [FromForm] string brand,
+            [FromForm] string price,
+            [FromForm] string category,
+            [FromForm] string? sku,
+            [FromForm] string? description,
+            [FromForm] string? detailedDescription,
+            [FromForm] string? image,
+            [FromForm] string? imagesText,
+            [FromForm] bool inStock,
+            [FromForm] int stockQuantity,
+            [FromForm] string? tagsText,
+            [FromForm] bool isActive,
+            [FromForm] int? minAge,
+            [FromForm] int? maxAge,
+            [FromForm] string? ageCategory,
+            [FromForm] bool requiresAgeVerification)
+        {
+            try
+            {
+                var request = new AdminProductUpdateRequest
+                {
+                    Name = name,
+                    Brand = brand,
+                    Price = price,
+                    Category = category,
+                    Sku = sku,
+                    Description = description,
+                    DetailedDescription = detailedDescription,
+                    Image = image,
+                    Images = ParseList(imagesText),
+                    InStock = inStock,
+                    StockQuantity = stockQuantity,
+                    Tags = ParseList(tagsText),
+                    IsActive = isActive,
+                    MinAge = minAge,
+                    MaxAge = maxAge,
+                    AgeCategory = ageCategory,
+                    RequiresAgeVerification = requiresAgeVerification
+                };
+
+                var result = await _apiService.UpdateAdminProductAsync(id, request);
+                if (result.Success)
+                {
+                    TempData["SuccessMessage"] = result.Message ?? "Product updated successfully";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = result.Message ?? "Failed to update product";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while updating the product.";
+                Console.WriteLine(ex);
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync([FromForm] int id)
+        {
+            try
+            {
+                var result = await _apiService.DeleteAdminProductAsync(id);
+                if (result.Success)
+                {
+                    TempData["SuccessMessage"] = result.Message ?? "Product deleted successfully";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = result.Message ?? "Failed to delete product";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An error occurred while deleting the product.";
+                Console.WriteLine(ex);
+            }
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnGetProductJsonAsync(int id)
+        {
+            var prod = await _apiService.GetAdminProductByIdOrSkuAsync(id.ToString());
+            if (prod == null) return new JsonResult(new { success = false, message = "Not found" }) { StatusCode = 404 };
+            return new JsonResult(new { success = true, data = prod });
+        }
+
+        private static List<string>? ParseList(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return null;
+            var parts = input
+                .Replace("\r", "")
+                .Split(new[] { '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+            return parts.Count > 0 ? parts : null;
         }
     }
 }

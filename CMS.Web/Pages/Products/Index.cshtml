@@ -275,9 +275,9 @@
             <span class="stats-badge badge">
                 Total: @Model.Products.Count Products
             </span>
-            <a asp-page="./Create" class="add-product-btn">
+            <button class="add-product-btn" type="button" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="fas fa-plus"></i>Add New Product
-            </a>
+            </button>
             <button class="btn btn-light modern-btn" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel">
                 <i class="fas fa-filter me-2"></i>Advanced Filters
             </button>
@@ -445,9 +445,9 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <a asp-page="./Edit" asp-route-id="@product.Id" class="btn btn-sm btn-warning modern-btn" title="Edit Product">
+                                    <button type="button" class="btn btn-sm btn-warning modern-btn js-edit-btn" data-product-id="@product.Id" title="Edit Product">
                                         <i class="fas fa-edit"></i>
-                                    </a>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-danger modern-btn" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#deleteModal" 
@@ -506,10 +506,227 @@
                 <p>Are you sure you want to delete product <strong id="productName"></strong>?</p>
                 <p class="text-muted">This action cannot be undone and may affect any integrations using this product.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a id="deleteLink" href="#" class="btn btn-danger">Delete Product</a>
+                        <div class="modal-footer">
+                                <form method="post" asp-page-handler="Delete" class="d-inline" id="deleteForm">
+                                        <input type="hidden" name="id" id="deleteId" />
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger">Delete Product</button>
+                                </form>
+                        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input name="name" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Brand</label>
+                            <input name="brand" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Price</label>
+                            <input name="price" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">-- Select --</option>
+                                <option>Education</option>
+                                <option>Healthcare</option>
+                                <option>Groceries</option>
+                                <option>Transport</option>
+                                <option>Entertainment</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">SKU</label>
+                            <input name="sku" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detailed Description</label>
+                            <textarea name="detailedDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Image URL</label>
+                            <input name="image" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Images (comma or newline)</label>
+                            <textarea name="imagesText" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="hidden" name="inStock" value="false" />
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="inStock" value="true" id="createInStock" />
+                                <label class="form-check-label" for="createInStock">In Stock</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" name="stockQuantity" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <input type="hidden" name="isActive" value="false" />
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="isActive" value="true" id="createIsActive" checked />
+                                <label class="form-check-label" for="createIsActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tags (comma or newline)</label>
+                            <textarea name="tagsText" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Min Age</label>
+                            <input type="number" name="minAge" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Age</label>
+                            <input type="number" name="maxAge" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Age Category</label>
+                            <select name="ageCategory" class="form-select">
+                                <option>All Ages</option>
+                                <option>Toddler</option>
+                                <option>Child</option>
+                                <option>Teen</option>
+                                <option>Adult</option>
+                                <option>Senior</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <input type="hidden" name="requiresAgeVerification" value="false" />
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="requiresAgeVerification" value="true" id="createRequireAge" />
+                                <label class="form-check-label" for="createRequireAge">Requires Age Verification</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Edit" id="editForm">
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editId" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input name="name" id="editName" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Brand</label>
+                            <input name="brand" id="editBrand" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Price</label>
+                            <input name="price" id="editPrice" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            <input name="category" id="editCategory" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">SKU</label>
+                            <input name="sku" id="editSku" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" id="editDescription" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detailed Description</label>
+                            <textarea name="detailedDescription" id="editDetailedDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Image URL</label>
+                            <input name="image" id="editImage" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Images (comma or newline)</label>
+                            <textarea name="imagesText" id="editImagesText" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="hidden" name="inStock" value="false" />
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="inStock" value="true" id="editInStock" />
+                                <label class="form-check-label" for="editInStock">In Stock</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Stock Quantity</label>
+                            <input type="number" name="stockQuantity" id="editStockQuantity" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <input type="hidden" name="isActive" value="false" />
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="isActive" value="true" id="editIsActive" />
+                                <label class="form-check-label" for="editIsActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tags (comma or newline)</label>
+                            <textarea name="tagsText" id="editTagsText" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Min Age</label>
+                            <input type="number" name="minAge" id="editMinAge" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Age</label>
+                            <input type="number" name="maxAge" id="editMaxAge" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Age Category</label>
+                            <input name="ageCategory" id="editAgeCategory" class="form-control" />
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <input type="hidden" name="requiresAgeVerification" value="false" />
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="requiresAgeVerification" value="true" id="editRequireAge" />
+                                <label class="form-check-label" for="editRequireAge">Requires Age Verification</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -524,9 +741,47 @@ document.addEventListener('DOMContentLoaded', function() {
             const productName = button.getAttribute('data-product-name');
             
             document.getElementById('productName').textContent = productName;
-            document.getElementById('deleteLink').href = `./Delete?id=${productId}`;
+            document.getElementById('deleteId').value = productId;
         });
     }
+    // Edit button logic: fetch details and open modal
+    document.querySelectorAll('.js-edit-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-product-id');
+            try {
+                const res = await fetch(`?handler=ProductJson&id=${id}`);
+                if (!res.ok) throw new Error('Failed to load product');
+                const json = await res.json();
+                if (!json.success) throw new Error(json.message || 'Failed to load product');
+                const p = json.data;
+                // Fill form
+                document.getElementById('editId').value = p.id;
+                document.getElementById('editName').value = p.name || '';
+                document.getElementById('editBrand').value = p.brand || '';
+                document.getElementById('editPrice').value = p.price || '';
+                document.getElementById('editCategory').value = p.category || '';
+                document.getElementById('editSku').value = p.sku || '';
+                document.getElementById('editDescription').value = p.description || '';
+                document.getElementById('editDetailedDescription').value = p.detailedDescription || '';
+                document.getElementById('editImage').value = p.image || '';
+                document.getElementById('editImagesText').value = (p.images && p.images.length) ? p.images.join('\n') : '';
+                document.getElementById('editInStock').checked = !!p.inStock;
+                document.getElementById('editStockQuantity').value = p.stockQuantity ?? 0;
+                document.getElementById('editIsActive').checked = p.isActive !== false;
+                document.getElementById('editTagsText').value = (p.tags && p.tags.length) ? p.tags.join(', ') : '';
+                document.getElementById('editMinAge').value = p.minAge ?? '';
+                document.getElementById('editMaxAge').value = p.maxAge ?? '';
+                document.getElementById('editAgeCategory').value = p.ageCategory || 'All Ages';
+                document.getElementById('editRequireAge').checked = !!p.requiresAgeVerification;
+
+                const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+                editModal.show();
+            } catch (e) {
+                console.error(e);
+                alert('Failed to load product details');
+            }
+        });
+    });
 
     // Scroll to Top functionality
     const scrollToTopBtn = document.getElementById('scrollToTop');
@@ -552,6 +807,4 @@ function scrollToTop() {
         });
     }
 }
-</script>
-
 </script>
