@@ -4,10 +4,7 @@
     ViewData["Title"] = "Register User";
 }
 
-@section Scripts {
-    <meta name="__RequestVerificationToken" content="@Html.AntiForgeryToken()" />
-    <script src="~/js/register.js" asp-append-version="true"></script>
-}
+
 
 <!-- Hidden form for anti-forgery token -->
 <form style="display: none;">
@@ -147,4 +144,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/register.js" asp-append-version="true"></script>
 }
