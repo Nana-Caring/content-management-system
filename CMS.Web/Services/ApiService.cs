@@ -50,6 +50,9 @@ namespace CMS.Web.Services
 
         // Dashboard Stats
         Task<DashboardStats> GetDashboardStatsAsync();
+        
+        // Generic HTTP methods
+        Task<T?> PostAsync<T>(string endpoint, object data);
     }
 
     public class ApiService : IApiService
@@ -1019,6 +1022,32 @@ namespace CMS.Web.Services
             
             _logger.LogInformation("GetDashboardStatsAsync - returning default empty stats");
             return new DashboardStats();
+        }
+
+        public async Task<T?> PostAsync<T>(string endpoint, object data)
+        {
+            try
+            {
+                var response = await PostAsync(endpoint, data);
+                response.EnsureSuccessStatusCode();
+                
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                if (typeof(T) == typeof(object))
+                {
+                    return (T)(object)new { success = true };
+                }
+                
+                return JsonSerializer.Deserialize<T>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error in generic POST request to {endpoint}");
+                return default(T);
+            }
         }
     }
 

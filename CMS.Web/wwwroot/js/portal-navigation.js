@@ -7,7 +7,8 @@
  * Check portal login status and toggle sidebars
  */
 function checkPortalLoginStatus() {
-    const isPortalLoggedIn = localStorage.getItem('portal-logged-in') === 'true';
+    const config = window.PORTAL_CONFIG || { storage: { loginFlag: 'portal-logged-in', userEmail: 'admin-user-email' } };
+    const isPortalLoggedIn = localStorage.getItem(config.storage.loginFlag) === 'true';
     const mainSidebar = document.getElementById('mainSidebar');
     const portalSidebar = document.getElementById('portalSidebar');
     const portalUserName = document.getElementById('portalUserName');
@@ -24,7 +25,7 @@ function checkPortalLoginStatus() {
         if (portalContent) portalContent.style.display = 'block';
         
         // Update portal user name
-        const userEmail = localStorage.getItem('admin-user-email');
+        const userEmail = localStorage.getItem(config.storage.userEmail);
         if (portalUserName && userEmail) {
             portalUserName.textContent = userEmail;
         }
@@ -47,10 +48,18 @@ function checkPortalLoginStatus() {
  */
 function logoutFromPortal() {
     // Clear portal login flag
-    localStorage.removeItem('portal-logged-in');
-    localStorage.removeItem('admin-token');
-    localStorage.removeItem('admin-user-email');
-    localStorage.removeItem('admin-user-password');
+    const config = window.PORTAL_CONFIG || { 
+        storage: { 
+            loginFlag: 'portal-logged-in', 
+            token: 'admin-token',
+            userEmail: 'admin-user-email',
+            userPassword: 'admin-user-password'
+        } 
+    };
+    localStorage.removeItem(config.storage.loginFlag);
+    localStorage.removeItem(config.storage.token);
+    localStorage.removeItem(config.storage.userEmail);
+    localStorage.removeItem(config.storage.userPassword);
     
     // Reload page to show main sidebar
     window.location.reload();

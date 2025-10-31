@@ -1,0 +1,150 @@
+@page
+@model CMS.Web.Pages.Register.IndexModel
+@{
+    ViewData["Title"] = "Register User";
+}
+
+@section Scripts {
+    <meta name="__RequestVerificationToken" content="@Html.AntiForgeryToken()" />
+    <script src="~/js/register.js" asp-append-version="true"></script>
+}
+
+<!-- Hidden form for anti-forgery token -->
+<form style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Register User</h1>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @Model.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Register Funder or Caregiver</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="registerForm">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="row">
+                            <!-- User Type Selection -->
+                            <div class="col-md-6 mb-3">
+                                <label for="userType" class="form-label">User Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="userType" name="UserType" asp-for="RegisterRequest.UserType" required>
+                                    <option value="">Select User Type</option>
+                                    <option value="funder">Funder</option>
+                                    <option value="caregiver">Caregiver</option>
+                                </select>
+                                <span asp-validation-for="RegisterRequest.UserType" class="text-danger"></span>
+                            </div>
+
+                            <!-- First Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstName" name="FirstName" asp-for="RegisterRequest.FirstName" required>
+                                <span asp-validation-for="RegisterRequest.FirstName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Last Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastName" name="LastName" asp-for="RegisterRequest.LastName" required>
+                                <span asp-validation-for="RegisterRequest.LastName" class="text-danger"></span>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="Email" asp-for="RegisterRequest.Email" required>
+                                <span asp-validation-for="RegisterRequest.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Phone -->
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="Phone" asp-for="RegisterRequest.Phone" required>
+                                <span asp-validation-for="RegisterRequest.Phone" class="text-danger"></span>
+                            </div>
+
+                            <!-- Date of Birth -->
+                            <div class="col-md-6 mb-3">
+                                <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" id="dateOfBirth" name="DateOfBirth" asp-for="RegisterRequest.DateOfBirth">
+                                <span asp-validation-for="RegisterRequest.DateOfBirth" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Address -->
+                            <div class="col-md-12 mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <textarea class="form-control" id="address" name="Address" asp-for="RegisterRequest.Address" rows="3"></textarea>
+                                <span asp-validation-for="RegisterRequest.Address" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- City -->
+                            <div class="col-md-4 mb-3">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="City" asp-for="RegisterRequest.City">
+                                <span asp-validation-for="RegisterRequest.City" class="text-danger"></span>
+                            </div>
+
+                            <!-- State -->
+                            <div class="col-md-4 mb-3">
+                                <label for="state" class="form-label">State</label>
+                                <input type="text" class="form-control" id="state" name="State" asp-for="RegisterRequest.State">
+                                <span asp-validation-for="RegisterRequest.State" class="text-danger"></span>
+                            </div>
+
+                            <!-- Zip Code -->
+                            <div class="col-md-4 mb-3">
+                                <label for="zipCode" class="form-label">Zip Code</label>
+                                <input type="text" class="form-control" id="zipCode" name="ZipCode" asp-for="RegisterRequest.ZipCode">
+                                <span asp-validation-for="RegisterRequest.ZipCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary" id="registerBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                    Register User
+                                </button>
+                                <a asp-page="/Index" class="btn btn-secondary ms-2">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

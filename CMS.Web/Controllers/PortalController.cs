@@ -26,7 +26,7 @@ namespace CMS.Web.Controllers
     {
         private readonly CmsDbContext _context;
         private readonly IAuthService _authService;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
         private readonly ILogger<PortalController> _logger;
         private readonly HttpClient _httpClient;
         private const string API_BASE_URL = "https://nanacaring-backend.onrender.com";
@@ -34,7 +34,7 @@ namespace CMS.Web.Controllers
         public PortalController(
             CmsDbContext context, 
             IAuthService authService, 
-            JwtService jwtService,
+            IJwtService jwtService,
             ILogger<PortalController> logger,
             HttpClient httpClient)
         {
@@ -53,60 +53,33 @@ namespace CMS.Web.Controllers
         {
             try
             {
-                // Find user in local database with the provided email
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Email.ToLower() == loginRequest.Email.ToLower());
-
-                if (user == null)
-                {
-                    return Unauthorized(new { message = "Invalid email or password" });
-                }
-
-                // Check if user is blocked
-                if (user.IsBlocked)
-                {
-                    return Unauthorized(new { message = "Account is blocked or suspended" });
-                }
-
-                // For portal access, we'll accept the stored credentials
-                // In a real system, you'd verify the password hash
-
-                // Basic password validation for development
-                if (string.IsNullOrEmpty(loginRequest.Password))
-                {
-                    return BadRequest(new { message = "Password is required" });
-                }
-
-                // Generate JWT token for the user
-                var token = _jwtService.GenerateToken(user);
+                _logger.LogInformation("Portal login attempt for email: {Email}", loginRequest.Email);
                 
-                // Set the token in a cookie
-                Response.Cookies.Append("auth_token", token, new CookieOptions
+                // Try external API first to avoid local DB column case issues
+                try 
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddDays(1)
-                });
-
-                // Create AdminLoginResponse object
-                var response = new AdminLoginResponse
-                {
-                    AccessToken = token,
-                    Jwt = token,
-                    User = new AdminUser
+                    _httpClient.DefaultRequestHeaders.Clear();
+                    var externalPayload = new { email = loginRequest.Email, password = loginRequest.Password };
+                    var jsonContent = System.Text.Json.JsonSerializer.Serialize(externalPayload);
+                    var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+                    
+                    var externalResponse = await _httpClient.PostAsync($"{API_BASE_URL}/api/auth/admin-login", content);
+                    if (externalResponse.IsSuccessStatusCode)
                     {
-                        Id = user.Id,
-                        Email = user.Email,
-                        FirstName = user.FirstName,
-                        MiddleName = user.MiddleName,
-                        Surname = user.Surname,
-                        Role = user.Role
-                    },
-                    Message = "Login successful"
-                };
+                        var externalData = await externalResponse.Content.ReadAsStringAsync();
+                        _logger.LogInformation("External API login successful");
+                        return Ok(System.Text.Json.JsonSerializer.Deserialize<object>(externalData));
+                    }
+                    _logger.LogWarning("External API login failed: {Status}", externalResponse.StatusCode);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("External API unavailable: {Message}", ex.Message);
+                }
 
-                return Ok(response);
+                // Fallback to local database (skip for now due to column casing issues)
+                _logger.LogInformation("Skipping local DB login due to column casing issues");
+                return Unauthorized(new { message = "Login failed. Please try again." });
             }
             catch (Exception ex)
             {

@@ -3,9 +3,10 @@
  * Handles login, logout, and authentication state management
  */
 
-// API Configuration
-const PORTAL_CONFIG = {
-    apiBaseUrl: 'https://nanacaring-backend.onrender.com',
+// API Configuration (guarded to avoid re-declaration if script is loaded twice)
+window.PORTAL_CONFIG = window.PORTAL_CONFIG || {
+    // Use same-origin API to avoid CORS and leverage local PortalController
+    apiBaseUrl: '',
     endpoints: {
         adminLogin: '/api/portal/admin-login',
         userProfile: '/api/portal/me'
@@ -51,12 +52,13 @@ async function handlePortalLogin(e) {
     }
     
     try {
-        const response = await fetch(PORTAL_CONFIG.apiBaseUrl + PORTAL_CONFIG.endpoints.adminLogin, {
+        const response = await fetch(window.PORTAL_CONFIG.apiBaseUrl + window.PORTAL_CONFIG.endpoints.adminLogin, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username: username, password: password })
+            // Server expects { Email, Password }
+            body: JSON.stringify({ email: username, password: password })
         });
         
         let data, rawText;
@@ -67,12 +69,13 @@ async function handlePortalLogin(e) {
             data = {};
         }
         
-        if (response.ok && data && data.token) {
+        if (response.ok && data && (data.token || data.accessToken || data.jwt)) {
             // Store credentials and token
-            localStorage.setItem(PORTAL_CONFIG.storage.token, data.token);
-            localStorage.setItem(PORTAL_CONFIG.storage.userEmail, username);
-            localStorage.setItem(PORTAL_CONFIG.storage.userPassword, password);
-            localStorage.setItem(PORTAL_CONFIG.storage.loginFlag, 'true');
+            const tokenValue = data.token || data.accessToken || data.jwt;
+            localStorage.setItem(window.PORTAL_CONFIG.storage.token, tokenValue);
+            localStorage.setItem(window.PORTAL_CONFIG.storage.userEmail, username);
+            localStorage.setItem(window.PORTAL_CONFIG.storage.userPassword, password);
+            localStorage.setItem(window.PORTAL_CONFIG.storage.loginFlag, 'true');
             
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
@@ -94,7 +97,7 @@ async function handlePortalLogin(e) {
  * Check portal login status and toggle sidebars
  */
 function checkPortalLoginStatus() {
-    const isPortalLoggedIn = localStorage.getItem(PORTAL_CONFIG.storage.loginFlag) === 'true';
+    const isPortalLoggedIn = localStorage.getItem(window.PORTAL_CONFIG.storage.loginFlag) === 'true';
     const mainSidebar = document.getElementById('mainSidebar');
     const portalSidebar = document.getElementById('portalSidebar');
     const portalUserName = document.getElementById('portalUserName');
@@ -111,7 +114,7 @@ function checkPortalLoginStatus() {
         if (portalContent) portalContent.style.display = 'block';
         
         // Update portal user name
-        const userEmail = localStorage.getItem(PORTAL_CONFIG.storage.userEmail);
+    const userEmail = localStorage.getItem(window.PORTAL_CONFIG.storage.userEmail);
         if (portalUserName && userEmail) {
             portalUserName.textContent = userEmail;
         }
@@ -134,10 +137,10 @@ function checkPortalLoginStatus() {
  */
 function logoutFromPortal() {
     // Clear portal login flag and stored data
-    localStorage.removeItem(PORTAL_CONFIG.storage.loginFlag);
-    localStorage.removeItem(PORTAL_CONFIG.storage.token);
-    localStorage.removeItem(PORTAL_CONFIG.storage.userEmail);
-    localStorage.removeItem(PORTAL_CONFIG.storage.userPassword);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.loginFlag);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.token);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.userEmail);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.userPassword);
     
     // Reload page to show main sidebar
     window.location.reload();
@@ -147,7 +150,7 @@ function logoutFromPortal() {
  * Get stored authentication token
  */
 function getAuthToken() {
-    return localStorage.getItem(PORTAL_CONFIG.storage.token);
+    return localStorage.getItem(window.PORTAL_CONFIG.storage.token);
 }
 
 /**
@@ -175,5 +178,5 @@ async function makeAuthenticatedRequest(endpoint, options = {}) {
         }
     };
     
-    return fetch(PORTAL_CONFIG.apiBaseUrl + endpoint, mergedOptions);
+    return fetch(window.PORTAL_CONFIG.apiBaseUrl + endpoint, mergedOptions);
 }

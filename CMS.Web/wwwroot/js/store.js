@@ -209,14 +209,20 @@ const transactionActions = {
 
 // Store Initialization
 function initializeStore() {
-    // Initialize authentication from session storage
-    store.dispatch(window.CMS.authActions.initializeAuth());
-    
-    // Load initial data if authenticated
-    const state = store.getState();
-    if (state.auth.isAuthenticated) {
-        // Don't auto-load all data, let pages load what they need
-        console.log('Store initialized with authenticated user');
+    try {
+        // Initialize authentication from session storage
+        if (window.CMS && window.CMS.authActions) {
+            store.dispatch(window.CMS.authActions.initializeAuth());
+            
+            // Load initial data if authenticated
+            const state = store.getState();
+            if (state && state.auth && state.auth.isAuthenticated) {
+                // Don't auto-load all data, let pages load what they need
+                console.log('Store initialized with authenticated user');
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing store:', error);
     }
     
     console.log('CMS Redux Store initialized');

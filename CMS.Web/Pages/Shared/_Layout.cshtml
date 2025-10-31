@@ -30,6 +30,7 @@
         var usersActive = path.StartsWith("/users");
         var productsActive = path.StartsWith("/products");
         var kycActive = path.StartsWith("/kyc");
+        var registerActive = path.StartsWith("/register");
     }
 
     @if (isLoggedIn)
@@ -80,7 +81,15 @@
                         <span>Portal</span>
                     </a>
 
-                    @if (!isHighCourt)
+                    @if (isHighCourt)
+                    {
+                        <div class="cms-section text-uppercase mt-3">Management</div>
+                        <a asp-page="/Register/Index" class="cms-nav-link@(registerActive ? " active" : string.Empty)">
+                            <i class="bi bi-person-plus"></i>
+                            <span>Register</span>
+                        </a>
+                    }
+                    else
                     {
                         <div class="cms-section text-uppercase mt-3">Management</div>
                         <a asp-page="/Products/Index" class="cms-nav-link@(productsActive ? " active" : string.Empty)">
@@ -98,7 +107,7 @@
                     <span>© @DateTime.Now.Year Nana Caring</span>
                 </div>
             </div>
-        </nav>
+    </nav>
 
         <!-- Portal Sidebar (Hidden by default, shown when portal is logged in) -->
         <nav class="sidebar position-fixed top-0 start-0" id="portalSidebar" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: linear-gradient(135deg, #f84c7d 0%, #ff447b 100%); color: #fff; display: none;">
@@ -690,6 +699,13 @@
                 checkPortalLoginStatus();
             }
         });
+        // Initialize portal auth handlers if available
+        if (typeof initializePortalAuth === 'function') {
+            initializePortalAuth();
+        }
+        if (typeof checkPortalLoginStatus === 'function') {
+            checkPortalLoginStatus();
+        }
     </script>
 
     <style>
@@ -1061,6 +1077,22 @@
                         userDropdownMenu.classList.remove('show');
                     }
                 });
+            }
+        });
+    </script>
+    <!-- Core JS dependencies -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Portal scripts -->
+    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
+    <script src="~/js/portal-navigation.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wire login form submit handler and toggle sidebars based on portal auth state
+            if (typeof initializePortalAuth === 'function') {
+                try { initializePortalAuth(); } catch { }
+            }
+            if (typeof checkPortalLoginStatus === 'function') {
+                try { checkPortalLoginStatus(); } catch { }
             }
         });
     </script>
