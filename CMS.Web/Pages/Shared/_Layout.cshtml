@@ -23,6 +23,13 @@
         // Check if we're on the user details page to hide the header
         var currentPath = ViewContext.HttpContext.Request.Path.Value;
         var hideHeader = currentPath?.StartsWith("/Users/Details") == true;
+        var isHighCourt = string.Equals(appState?.UserInfo?.Role, "highcourt", StringComparison.OrdinalIgnoreCase);
+
+        var path = currentPath?.ToLowerInvariant() ?? string.Empty;
+        var dashActive = path == "/" || path.StartsWith("/index");
+        var usersActive = path.StartsWith("/users");
+        var productsActive = path.StartsWith("/products");
+        var kycActive = path.StartsWith("/kyc");
     }
 
     @if (isLoggedIn)
@@ -33,43 +40,63 @@
         </button>
 
         <!-- Fixed Sidebar for authenticated users -->
-        <nav class="sidebar position-fixed top-0 start-0" id="mainSidebar" style="width: 280px; height: 100vh; overflow-y: auto; z-index: 1000; background: #f84c7d; color: #fff;">
-            <div class="d-flex flex-column h-100 px-3 pt-4 pb-3">
-                <!-- Logo and Brand -->
-                <div class="text-center mb-4 pb-2">
-                    <img src="~/images/logo.jpg" alt="Logo" class="rounded-circle mb-2" style="width: 90px; height: 90px; object-fit: cover; border: 3px solid #fff; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.10);" />
-                    <div class="fw-bold mt-2" style="font-size:1.15rem; color:#fff; letter-spacing:1px;">NANA CARING</div>
+        <nav class="cms-sidebar position-fixed top-0 start-0" id="mainSidebar">
+            <div class="cms-sidebar-inner d-flex flex-column h-100">
+                <!-- Brand / Logo -->
+                <div class="cms-brand text-center">
+                    <img src="~/images/logo.png" alt="Nana Caring Logo" class="cms-brand-logo rounded-circle" />
+                    <div class="cms-brand-name fw-bold">NANA CARING</div>
                 </div>
 
-                <!-- User Info -->
-                <div class="p-3 rounded mb-4" style="background: #fff; color: #008000; box-shadow: 0 2px 8px rgba(0,128,0,0.08);">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-person-circle me-3" style="font-size: 2.2rem; color:#008000;"></i>
-                        <div>
-                            <div class="fw-bold" style="color: #008000; font-size:1.05rem;">@(appState?.UserInfo?.Email ?? "Admin")</div>
-                            <small style="color: #008000; font-size:0.95rem;">@(appState?.UserInfo?.Role ?? "Administrator")</small>
+                <!-- User card (hidden for High Court role as requested) -->
+                @if (!isHighCourt)
+                {
+                    <div class="cms-user card border-0">
+                        <div class="card-body d-flex align-items-center p-3">
+                            <div class="cms-user-avatar me-3">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div class="cms-user-info">
+                                <div class="cms-user-email fw-semibold">@(appState?.UserInfo?.Email ?? "Admin")</div>
+                                <small class="cms-user-role">@(appState?.UserInfo?.Role ?? "Administrator")</small>
+                            </div>
                         </div>
                     </div>
+                }
+
+                <!-- Navigation -->
+                <div class="cms-nav mt-3">
+                    <div class="cms-section text-uppercase">Core</div>
+                    <a asp-page="/Index" class="cms-nav-link@(dashActive ? " active" : string.Empty)">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a asp-page="/Users/Index" class="cms-nav-link@(usersActive ? " active" : string.Empty)">
+                        <i class="bi bi-people"></i>
+                        <span>Users</span>
+                    </a>
+                    <a href="#" class="cms-nav-link portal-link" onclick="showLoginModal(); return false;">
+                        <i class="bi bi-door-open"></i>
+                        <span>Portal</span>
+                    </a>
+
+                    @if (!isHighCourt)
+                    {
+                        <div class="cms-section text-uppercase mt-3">Management</div>
+                        <a asp-page="/Products/Index" class="cms-nav-link@(productsActive ? " active" : string.Empty)">
+                            <i class="bi bi-box-seam"></i>
+                            <span>Products</span>
+                        </a>
+                        <a asp-page="/KYC/Index" class="cms-nav-link@(kycActive ? " active" : string.Empty)">
+                            <i class="bi bi-shield-check"></i>
+                            <span>KYC Verification</span>
+                        </a>
+                    }
                 </div>
 
-                <!-- Navigation Menu -->
-                <nav class="nav flex-column gap-2 mt-2 mb-3">
-                    <a asp-page="/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
-                        <i class="bi bi-speedometer2 me-3" style="font-size:1.3rem;"></i> Dashboard
-                    </a>
-                    <a asp-page="/Users/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
-                        <i class="bi bi-people me-3" style="font-size:1.3rem;"></i> Users
-                    </a>
-                    <a href="#" class="nav-link d-flex align-items-center px-3 py-3 rounded portal-link" onclick="showLoginModal(); return false;" style="color: #333; font-weight:600; font-size:1.08rem;">
-                        <i class="bi bi-door-open me-3" style="font-size:1.3rem;"></i> Portal
-                    </a>
-                    <a asp-page="/Products/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
-                        <i class="bi bi-box-seam me-3" style="font-size:1.3rem;"></i> Products
-                    </a>
-                    <a asp-page="/KYC/Index" class="nav-link d-flex align-items-center px-3 py-3 rounded" style="color: #333; font-weight:600; font-size:1.08rem;">
-                        <i class="bi bi-shield-check me-3" style="font-size:1.3rem;"></i> KYC Verification
-                    </a>
-                </nav>
+                <div class="mt-auto small text-center cms-footer-note">
+                    <span>© @DateTime.Now.Year Nana Caring</span>
+                </div>
             </div>
         </nav>
 
@@ -212,7 +239,7 @@
         </div>
         
         <!-- Main content area with left margin for sidebar -->
-        <div class="main-content" style="margin-left: 280px; min-height: calc(100vh - 80px); background: #fff; display: flex; flex-direction: column;">
+    <div class="main-content" style="margin-left: 280px; min-height: calc(100vh - 80px); background: #fff; display: flex; flex-direction: column;">
             <!-- Dynamic Page content - This is where navigation content will be rendered -->
             <main class="content-container" style="flex: 1 0 auto;">
                 <div class="container-fluid px-4 py-4">
@@ -626,6 +653,18 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <!-- Redux Store System -->
+    <script src="~/js/redux-store.js" asp-append-version="true"></script>
+    <script src="~/js/auth-slice.js" asp-append-version="true"></script>
+    <script src="~/js/products-slice.js" asp-append-version="true"></script>
+    <script src="~/js/users-slice.js" asp-append-version="true"></script>
+    <script src="~/js/store.js" asp-append-version="true"></script>
+    <script src="~/js/store-connector.js" asp-append-version="true"></script>
+    
+    <!-- Page-specific Redux Integrations -->
+    <script src="~/js/products-page.js" asp-append-version="true"></script>
+    <script src="~/js/users-page.js" asp-append-version="true"></script>
     
     <!-- Portal JavaScript Components -->
     <script src="~/js/portal-auth.js" asp-append-version="true"></script>

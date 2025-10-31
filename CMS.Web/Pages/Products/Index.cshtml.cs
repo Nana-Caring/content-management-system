@@ -13,6 +13,7 @@ namespace CMS.Web.Pages.Products
     public class IndexModel : BasePageModel
     {
         private readonly IApiService _apiService;
+        private readonly IProductService _productService;
         public List<Product> Products { get; set; } = new List<Product>();
         public string? ErrorMessage { get; set; }
         
@@ -25,9 +26,10 @@ namespace CMS.Web.Pages.Products
         public string SortField { get; set; } = "CreatedAt";
         public string SortDirection { get; set; } = "desc";
 
-        public IndexModel(IAppStateManager stateManager, IApiService apiService) : base(stateManager)
+        public IndexModel(IAppStateManager stateManager, IApiService apiService, IProductService productService) : base(stateManager)
         {
             _apiService = apiService;
+            _productService = productService;
         }
 
         public async Task OnGetAsync(string? search, string? dateRange, string? sortBy, 
@@ -44,7 +46,17 @@ namespace CMS.Web.Pages.Products
             
             try
             {
-                var allProducts = await _apiService.GetProductsAsync();
+                var adminProducts = await _productService.GetProductsAsync();
+                
+                // Convert AdminProduct to Product for display
+                var allProducts = adminProducts.Select(ap => new Product
+                {
+                    Id = ap.Id,
+                    Name = ap.Name ?? "Unknown Product",
+                    Description = ap.Description ?? "No description",
+                    CreatedAt = ap.CreatedAt ?? DateTime.Now,
+                    ApiLink = $"/admin/products/{ap.Id}"
+                }).ToList();
                 
                 // Convert to list first for consistency
                 var productsList = allProducts.ToList();
@@ -150,15 +162,8 @@ namespace CMS.Web.Pages.Products
                     RequiresAgeVerification = requiresAgeVerification
                 };
 
-                var result = await _apiService.CreateAdminProductAsync(request);
-                if (result.Success)
-                {
-                    TempData["SuccessMessage"] = result.Message ?? "Product created successfully";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = result.Message ?? "Failed to create product";
-                }
+                var product = await _productService.CreateProductAsync(request);
+                TempData["SuccessMessage"] = "Product created successfully and persisted automatically!";
             }
             catch (Exception ex)
             {
@@ -212,15 +217,8 @@ namespace CMS.Web.Pages.Products
                     RequiresAgeVerification = requiresAgeVerification
                 };
 
-                var result = await _apiService.UpdateAdminProductAsync(id, request);
-                if (result.Success)
-                {
-                    TempData["SuccessMessage"] = result.Message ?? "Product updated successfully";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = result.Message ?? "Failed to update product";
-                }
+                var product = await _productService.UpdateProductAsync(id, request);
+                TempData["SuccessMessage"] = "Product updated successfully and persisted automatically!";
             }
             catch (Exception ex)
             {
@@ -235,14 +233,14 @@ namespace CMS.Web.Pages.Products
         {
             try
             {
-                var result = await _apiService.DeleteAdminProductAsync(id);
-                if (result.Success)
+                bool success = await _productService.DeleteProductAsync(id);
+                if (success)
                 {
-                    TempData["SuccessMessage"] = result.Message ?? "Product deleted successfully";
+                    TempData["SuccessMessage"] = "Product deleted successfully and persisted automatically!";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = result.Message ?? "Failed to delete product";
+                    TempData["ErrorMessage"] = "Failed to delete product";
                 }
             }
             catch (Exception ex)
@@ -255,7 +253,7 @@ namespace CMS.Web.Pages.Products
 
         public async Task<IActionResult> OnGetProductJsonAsync(int id)
         {
-            var prod = await _apiService.GetAdminProductByIdOrSkuAsync(id.ToString());
+            var prod = await _productService.GetProductByIdAsync(id);
             if (prod == null) return new JsonResult(new { success = false, message = "Not found" }) { StatusCode = 404 };
             return new JsonResult(new { success = true, data = prod });
         }

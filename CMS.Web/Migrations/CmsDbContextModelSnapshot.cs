@@ -82,7 +82,7 @@ namespace CMS.Web.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
                 });
 
             modelBuilder.Entity("CMS.Web.Models.Transaction", b =>
@@ -118,7 +118,7 @@ namespace CMS.Web.Migrations
 
                     b.HasIndex("AccountId1");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
                 });
 
             modelBuilder.Entity("CMS.Web.Models.User", b =>
@@ -249,7 +249,7 @@ namespace CMS.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("CMS.Web.Models.Account", b =>

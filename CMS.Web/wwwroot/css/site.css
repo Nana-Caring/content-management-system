@@ -98,3 +98,52 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* CMS Sidebar Redesign (keeps Nana Caring colors) */
+:root {
+  --brand-pink-start: #f84c7d;
+  --brand-pink-end: #ff447b;
+  --brand-green: #008000;
+  --sidebar-width: 280px;
+}
+
+.cms-sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1000;
+  background: linear-gradient(135deg, var(--brand-pink-start) 0%, var(--brand-pink-end) 100%);
+  color: #fff;
+}
+
+.cms-sidebar-inner { padding: 1.2rem; }
+
+.cms-brand-logo {
+  width: 90px; height: 90px; object-fit: cover; border: 3px solid #fff; background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+.cms-brand-name { font-size: 1.1rem; color:#fff; letter-spacing: 1px; margin-top: .5rem; }
+
+.cms-user .card-body { background: #fff; border-radius: .75rem; box-shadow: 0 2px 8px rgba(0,128,0,0.08); }
+.cms-user-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-green); display:flex; align-items:center; justify-content:center; color:#fff; }
+.cms-user-email { color: var(--brand-green); font-size: 1rem; }
+.cms-user-role { color: var(--brand-green); font-size: .95rem; }
+
+.cms-section { color: rgba(255,255,255,.9); font-weight: 700; font-size: .78rem; letter-spacing: .08rem; opacity:.9; margin: .75rem .25rem; }
+
+.cms-nav { display:flex; flex-direction: column; }
+.cms-nav-link {
+  display:flex; align-items:center; gap:.75rem; color: #fff; text-decoration:none; font-weight:600; font-size:1.02rem;
+  padding: .85rem 1rem; border-radius: .65rem; transition: all .2s ease; opacity:.95;
+}
+.cms-nav-link i { font-size:1.2rem; width: 1.5rem; text-align:center; }
+.cms-nav-link:hover { background: rgba(255,255,255,.14); transform: translateX(3px); color:#fff; }
+.cms-nav-link.active { background:#fff; color: var(--brand-green); box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+.cms-nav-link.active i { color: var(--brand-green); }
+
+.cms-footer-note { color: rgba(255,255,255,.85); padding-top: .5rem; }
+
+@media (max-width: 768px) {
+  .cms-sidebar { transform: translateX(-100%); transition: transform .25s ease; position: fixed; top:0; left:0; }
+  .cms-sidebar.active { transform: translateX(0); }
+}

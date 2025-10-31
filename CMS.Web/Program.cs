@@ -47,6 +47,9 @@ builder.Services.AddHttpClient<IApiService, ApiService>(client =>
 builder.Services.AddScoped<IStateService, HybridStateService>();
 builder.Services.AddScoped<IAppStateManager, AppStateManager>();
 
+// Add Product service for automatic persistence
+builder.Services.AddScoped<IProductService, ProductService>();
+
 // Add JWT service
 builder.Services.AddScoped<IJwtService, JwtService>();
 
