@@ -119,7 +119,7 @@ body {
 .cms-sidebar-inner { padding: 1.2rem; }
 
 .cms-brand-logo {
-  width: 90px; height: 90px; object-fit: cover; border: 3px solid #fff; background: #fff;
+  width: 140px; height: 140px; object-fit: cover; background: #fff;
   box-shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 .cms-brand-name { font-size: 1.1rem; color:#fff; letter-spacing: 1px; margin-top: .5rem; }

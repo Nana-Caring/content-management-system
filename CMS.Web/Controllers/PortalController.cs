@@ -63,23 +63,43 @@ namespace CMS.Web.Controllers
                     var jsonContent = System.Text.Json.JsonSerializer.Serialize(externalPayload);
                     var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
                     
+                    _logger.LogInformation("Calling external API: {Url} with email: {Email}", $"{API_BASE_URL}/api/auth/admin-login", loginRequest.Email);
                     var externalResponse = await _httpClient.PostAsync($"{API_BASE_URL}/api/auth/admin-login", content);
+                    
+                    var responseContent = await externalResponse.Content.ReadAsStringAsync();
+                    _logger.LogInformation("External API response status: {Status}, Content: {Content}", externalResponse.StatusCode, responseContent);
+                    
                     if (externalResponse.IsSuccessStatusCode)
                     {
-                        var externalData = await externalResponse.Content.ReadAsStringAsync();
-                        _logger.LogInformation("External API login successful");
-                        return Ok(System.Text.Json.JsonSerializer.Deserialize<object>(externalData));
+                        _logger.LogInformation("External API login successful for: {Email}", loginRequest.Email);
+                        return Ok(System.Text.Json.JsonSerializer.Deserialize<object>(responseContent));
                     }
-                    _logger.LogWarning("External API login failed: {Status}", externalResponse.StatusCode);
+                    
+                    // Parse the error message from the API response
+                    try 
+                    {
+                        using var document = System.Text.Json.JsonDocument.Parse(responseContent);
+                        var errorMessage = document.RootElement.TryGetProperty("message", out var messageProp) 
+                            ? messageProp.GetString() ?? "Login failed"
+                            : "Login failed";
+                        
+                        _logger.LogWarning("External API login failed for {Email}: {Status} - {Message}", loginRequest.Email, externalResponse.StatusCode, errorMessage);
+                        
+                        // Return more specific error message
+                        return Unauthorized(new { message = errorMessage });
+                    }
+                    catch 
+                    {
+                        _logger.LogWarning("External API login failed for {Email}: {Status} - {Content}", loginRequest.Email, externalResponse.StatusCode, responseContent);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning("External API unavailable: {Message}", ex.Message);
                 }
 
-                // Fallback to local database (skip for now due to column casing issues)
-                _logger.LogInformation("Skipping local DB login due to column casing issues");
-                return Unauthorized(new { message = "Login failed. Please try again." });
+                _logger.LogInformation("All login attempts failed");
+                return Unauthorized(new { message = "Invalid admin credentials. Please check your email and password." });
             }
             catch (Exception ex)
             {

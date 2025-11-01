@@ -276,6 +276,7 @@ window.CMS.uiActions = uiActions;
 window.CMS.accountActions = accountActions;
 window.CMS.transactionActions = transactionActions;
 window.CMS.initializeStore = initializeStore;
+// Note: authActions are exported by auth-slice.js
 
 // Initialize store when DOM is ready
 if (document.readyState === 'loading') {

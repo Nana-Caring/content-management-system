@@ -77,19 +77,34 @@ async function handlePortalLogin(e) {
             localStorage.setItem(window.PORTAL_CONFIG.storage.userPassword, password);
             localStorage.setItem(window.PORTAL_CONFIG.storage.loginFlag, 'true');
             
+            // Sync with Redux store auth system
+            syncWithReduxAuth(tokenValue, username, data);
+            
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
             
             // Reload page to show portal sidebar
             window.location.reload();
         } else {
-            let errorMsg = 'Login failed.';
-            errorMsg += '\nStatus: ' + response.status + ' ' + response.statusText;
-            errorMsg += '\nResponse: ' + rawText;
-            alert(errorMsg);
+            let errorMsg = 'Login failed. ';
+            
+            // Try to parse the error message from the server
+            try {
+                const errorData = JSON.parse(rawText);
+                if (errorData.message) {
+                    errorMsg += errorData.message;
+                } else {
+                    errorMsg += 'Please check your credentials and try again.';
+                }
+            } catch {
+                errorMsg += 'Please check your credentials and try again.';
+            }
+            
+            // Show error in modal instead of alert
+            showLoginError(errorMsg);
         }
     } catch (err) {
-        alert('Login failed. Please try again. Error: ' + err);
+        showLoginError('Login failed. Please try again. Error: ' + err);
     }
 }
 
@@ -136,11 +151,8 @@ function checkPortalLoginStatus() {
  * Logout from portal
  */
 function logoutFromPortal() {
-    // Clear portal login flag and stored data
-    localStorage.removeItem(window.PORTAL_CONFIG.storage.loginFlag);
-    localStorage.removeItem(window.PORTAL_CONFIG.storage.token);
-    localStorage.removeItem(window.PORTAL_CONFIG.storage.userEmail);
-    localStorage.removeItem(window.PORTAL_CONFIG.storage.userPassword);
+    // Clear all authentication data (portal and Redux)
+    clearAllAuth();
     
     // Reload page to show main sidebar
     window.location.reload();
@@ -150,7 +162,23 @@ function logoutFromPortal() {
  * Get stored authentication token
  */
 function getAuthToken() {
-    return localStorage.getItem(window.PORTAL_CONFIG.storage.token);
+    // Try portal localStorage first
+    let token = localStorage.getItem(window.PORTAL_CONFIG.storage.token);
+    
+    // If not found, try Redux sessionStorage
+    if (!token) {
+        try {
+            const reduxAuth = sessionStorage.getItem('cms_auth');
+            if (reduxAuth) {
+                const authData = JSON.parse(reduxAuth);
+                token = authData.token;
+            }
+        } catch (error) {
+            console.error('Error parsing Redux auth data:', error);
+        }
+    }
+    
+    return token;
 }
 
 /**
@@ -180,3 +208,125 @@ async function makeAuthenticatedRequest(endpoint, options = {}) {
     
     return fetch(window.PORTAL_CONFIG.apiBaseUrl + endpoint, mergedOptions);
 }
+
+/**
+ * Sync portal authentication with Redux store
+ */
+function syncWithReduxAuth(token, email, authData) {
+    try {
+        // Create Redux-compatible auth data
+        const reduxAuthData = {
+            user: {
+                email: email,
+                name: authData.name || email,
+                role: authData.role || 'admin'
+            },
+            token: token,
+            refreshToken: authData.refreshToken || null,
+            expiresAt: authData.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+            isAuthenticated: true
+        };
+        
+        // Store in sessionStorage for Redux store
+        sessionStorage.setItem('cms_auth', JSON.stringify(reduxAuthData));
+        
+        // Dispatch to Redux store if it exists
+        if (window.CMS && window.CMS.store && window.CMS.authActions) {
+            window.CMS.store.dispatch(window.CMS.authActions.loginSuccess(reduxAuthData));
+        }
+        
+        console.log('Portal auth synced with Redux store');
+    } catch (error) {
+        console.error('Error syncing portal auth with Redux store:', error);
+    }
+}
+
+/**
+ * Clear both portal and Redux authentication
+ */
+function clearAllAuth() {
+    // Clear portal auth
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.loginFlag);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.token);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.userEmail);
+    localStorage.removeItem(window.PORTAL_CONFIG.storage.userPassword);
+    
+    // Clear Redux auth
+    sessionStorage.removeItem('cms_auth');
+    
+    // Dispatch logout to Redux store if it exists
+    if (window.CMS && window.CMS.store && window.CMS.authActions) {
+        window.CMS.store.dispatch(window.CMS.authActions.logout());
+    }
+}
+
+/**
+ * Initialize and sync authentication systems on page load
+ */
+function initializeAuthSync() {
+    try {
+        // Check if portal is logged in
+        const isPortalLoggedIn = localStorage.getItem(window.PORTAL_CONFIG.storage.loginFlag) === 'true';
+        const portalToken = localStorage.getItem(window.PORTAL_CONFIG.storage.token);
+        const portalEmail = localStorage.getItem(window.PORTAL_CONFIG.storage.userEmail);
+        
+        // Check Redux auth
+        const reduxAuthData = sessionStorage.getItem('cms_auth');
+        
+        if (isPortalLoggedIn && portalToken && !reduxAuthData) {
+            // Portal is logged in but Redux store is empty - sync them
+            console.log('Syncing portal auth to Redux store...');
+            syncWithReduxAuth(portalToken, portalEmail, { token: portalToken });
+        } else if (!isPortalLoggedIn && reduxAuthData) {
+            // Redux has auth but portal doesn't - clear Redux
+            console.log('Clearing orphaned Redux auth data...');
+            sessionStorage.removeItem('cms_auth');
+        }
+    } catch (error) {
+        console.error('Error during auth sync initialization:', error);
+    }
+}
+
+/**
+ * Show error message in the login modal
+ */
+function showLoginError(message) {
+    // Remove any existing error alerts
+    const existingError = document.getElementById('loginError');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Create error element
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'loginError';
+    errorDiv.className = 'alert alert-danger py-2 mb-3';
+    errorDiv.style.cssText = 'border-left: 4px solid #dc3545; background: #f8d7da; border: 1px solid #f5c6cb;';
+    
+    const errorContent = document.createElement('small');
+    errorContent.className = 'mb-0';
+    errorContent.style.color = '#721c24';
+    errorContent.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i><strong>Error:</strong> ${message.replace(/\n/g, '<br>')}`;
+    
+    errorDiv.appendChild(errorContent);
+    
+    // Insert before the login button
+    const loginForm = document.getElementById('loginForm');
+    const loginButton = loginForm.querySelector('button[type="submit"]');
+    if (loginButton) {
+        loginForm.insertBefore(errorDiv, loginButton);
+    }
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+        if (errorDiv && errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 8000);
+}
+
+// Initialize auth sync when the DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure all systems are loaded
+    setTimeout(initializeAuthSync, 100);
+});
