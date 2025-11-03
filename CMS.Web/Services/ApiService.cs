@@ -710,6 +710,7 @@ namespace CMS.Web.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 
                 _logger.LogInformation($"Making POST request to: {API_BASE_URL}{endpoint}");
+                _logger.LogInformation($"POST Request JSON: {json}");
                 
                 var response = await _httpClient.PostAsync($"{API_BASE_URL}{endpoint}", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
@@ -736,6 +737,7 @@ namespace CMS.Web.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 
                 _logger.LogInformation($"Making PUT request to: {API_BASE_URL}{endpoint}");
+                _logger.LogInformation($"PUT Request JSON: {json}");
                 
                 var response = await _httpClient.PutAsync($"{API_BASE_URL}{endpoint}", content);
                 var responseContent = await response.Content.ReadAsStringAsync();

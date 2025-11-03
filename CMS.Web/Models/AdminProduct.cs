@@ -12,7 +12,8 @@ namespace CMS.Web.Models
         [JsonPropertyName("brand")] public string? Brand { get; set; }
         [JsonPropertyName("description")] public string? Description { get; set; }
         [JsonPropertyName("detailedDescription")] public string? DetailedDescription { get; set; }
-        [JsonPropertyName("price")] public string? Price { get; set; }
+        // Backend expects numeric price; use decimal? to serialize as number (not string)
+        [JsonPropertyName("price")] public decimal? Price { get; set; }
         [JsonPropertyName("category")] public string? Category { get; set; }
         [JsonPropertyName("subcategory")] public string? Subcategory { get; set; }
         [JsonPropertyName("sku")] public string? Sku { get; set; }
@@ -58,7 +59,8 @@ namespace CMS.Web.Models
     {
         public string Name { get; set; } = string.Empty;
         public string Brand { get; set; } = string.Empty;
-        public string Price { get; set; } = "0";
+        // Send as numeric to satisfy backend validation
+        public decimal? Price { get; set; }
         public string Category { get; set; } = string.Empty;
         public string? Subcategory { get; set; }
         public string? Sku { get; set; }

@@ -24,8 +24,8 @@ namespace CMS.Web.Pages.Products
         public string Name { get; set; } = string.Empty;
         [BindProperty]
         public string Brand { get; set; } = string.Empty;
-        [BindProperty]
-        public string Price { get; set; } = "0";
+    [BindProperty]
+    public string Price { get; set; } = "0";
         [BindProperty]
         public string Category { get; set; } = string.Empty;
         [BindProperty]
@@ -74,7 +74,7 @@ namespace CMS.Web.Pages.Products
             {
                 Name = Name,
                 Brand = Brand,
-                Price = Price,
+                Price = TryParseDecimal(Price),
                 Category = Category,
                 Sku = Sku,
                 Description = Description,
@@ -112,6 +112,20 @@ namespace CMS.Web.Pages.Products
                 .Where(s => s.Length > 0)
                 .ToList();
             return parts.Count > 0 ? parts : null;
+        }
+
+        private static decimal? TryParseDecimal(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return null;
+            if (decimal.TryParse(input, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
+            {
+                return value;
+            }
+            if (decimal.TryParse(input, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.CurrentCulture, out value))
+            {
+                return value;
+            }
+            return null;
         }
     }
 }

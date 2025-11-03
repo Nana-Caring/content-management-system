@@ -28,9 +28,9 @@ namespace CMS.Web.Pages.Register
 
         public IActionResult OnGet()
         {
-            // Check if user has High Court role
-            var userRole = HttpContext.Session.GetString("UserRole");
-            if (userRole != "highcourt")
+            // Enforce High Court role using claims-backed app state
+            var role = CurrentUser?.Role ?? string.Empty;
+            if (!string.Equals(role, "highcourt", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToPage("/Index");
             }
@@ -42,9 +42,9 @@ namespace CMS.Web.Pages.Register
         {
             try
             {
-                // Check if user has High Court role
-                var userRole = HttpContext.Session.GetString("UserRole");
-                if (userRole != "highcourt")
+                // Enforce High Court role using claims-backed app state
+                var role = CurrentUser?.Role ?? string.Empty;
+                if (!string.Equals(role, "highcourt", StringComparison.OrdinalIgnoreCase))
                 {
                     return RedirectToPage("/Index");
                 }
@@ -54,23 +54,37 @@ namespace CMS.Web.Pages.Register
                     return Page();
                 }
 
-                // Create the request payload for the registration API
-                var registrationPayload = new
+                var isFunder = string.Equals(RegisterRequest.UserType, "funder", StringComparison.OrdinalIgnoreCase);
+                var endpoint = isFunder ? "/admin/users/register-funder" : "/admin/users/register-caregiver";
+
+                // Build payload using backend-required property names
+                var payload = new Dictionary<string, object?>
                 {
-                    user_type = RegisterRequest.UserType.ToLower(),
-                    first_name = RegisterRequest.FirstName,
-                    last_name = RegisterRequest.LastName,
-                    email = RegisterRequest.Email,
-                    phone = RegisterRequest.Phone,
-                    date_of_birth = RegisterRequest.DateOfBirth?.ToString("yyyy-MM-dd"),
-                    address = RegisterRequest.Address,
-                    city = RegisterRequest.City,
-                    state = RegisterRequest.State,
-                    zip_code = RegisterRequest.ZipCode
+                    ["firstName"] = RegisterRequest.FirstName,
+                    ["middleName"] = RegisterRequest.MiddleName,
+                    ["surname"] = RegisterRequest.LastName,
+                    ["email"] = RegisterRequest.Email,
+                    ["password"] = RegisterRequest.Password,
+                    ["Idnumber"] = RegisterRequest.Idnumber,
+                    ["phoneNumber"] = RegisterRequest.Phone,
                 };
 
-                // Call the registration API
-                var response = await _apiService.PostAsync<object>("api/register", registrationPayload);
+                // Optional home address fields
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.HomeAddressLine1)) payload["homeAddressLine1"] = RegisterRequest.HomeAddressLine1;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.HomeAddressLine2)) payload["homeAddressLine2"] = RegisterRequest.HomeAddressLine2;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.HomeCity)) payload["homeCity"] = RegisterRequest.HomeCity;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.HomeProvince)) payload["homeProvince"] = RegisterRequest.HomeProvince;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.HomeCode)) payload["homeCode"] = RegisterRequest.HomeCode;
+
+                // Optional postal address fields (commonly for funders)
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.PostalAddressLine1)) payload["postalAddressLine1"] = RegisterRequest.PostalAddressLine1;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.PostalAddressLine2)) payload["postalAddressLine2"] = RegisterRequest.PostalAddressLine2;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.PostalCity)) payload["postalCity"] = RegisterRequest.PostalCity;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.PostalProvince)) payload["postalProvince"] = RegisterRequest.PostalProvince;
+                if (!string.IsNullOrWhiteSpace(RegisterRequest.PostalCode)) payload["postalCode"] = RegisterRequest.PostalCode;
+
+                // Call the backend with bearer token via ApiService
+                var response = await _apiService.PostAsync<object>(endpoint, payload);
 
                 if (response != null)
                 {
@@ -104,6 +118,10 @@ namespace CMS.Web.Pages.Register
         [Display(Name = "First Name")]
         public string FirstName { get; set; } = string.Empty;
 
+        [StringLength(50, ErrorMessage = "Middle name cannot exceed 50 characters")]
+        [Display(Name = "Middle Name")]
+        public string? MiddleName { get; set; }
+
         [Required(ErrorMessage = "Last name is required")]
         [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters")]
         [Display(Name = "Last Name")]
@@ -114,28 +132,63 @@ namespace CMS.Web.Pages.Register
         [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Phone number is required")]
         [Phone(ErrorMessage = "Please enter a valid phone number")]
-        [Display(Name = "Phone")]
-        public string Phone { get; set; } = string.Empty;
+        [Display(Name = "Phone Number")]
+        public string? Phone { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "ID number is required")]
+        [RegularExpression("^[0-9]{13}$", ErrorMessage = "ID number must be exactly 13 digits")]
+        [Display(Name = "ID Number")] 
+        public string Idnumber { get; set; } = string.Empty;
 
         [Display(Name = "Date of Birth")]
         public DateTime? DateOfBirth { get; set; }
 
-        [StringLength(255, ErrorMessage = "Address cannot exceed 255 characters")]
-        [Display(Name = "Address")]
-        public string? Address { get; set; }
+        // Home address (optional)
+        [StringLength(200)]
+        [Display(Name = "Home Address Line 1")]
+        public string? HomeAddressLine1 { get; set; }
 
-        [StringLength(50, ErrorMessage = "City cannot exceed 50 characters")]
-        [Display(Name = "City")]
-        public string? City { get; set; }
+        [StringLength(200)]
+        [Display(Name = "Home Address Line 2")]
+        public string? HomeAddressLine2 { get; set; }
 
-        [StringLength(50, ErrorMessage = "State cannot exceed 50 characters")]
-        [Display(Name = "State")]
-        public string? State { get; set; }
+        [StringLength(50)]
+        [Display(Name = "Home City")]
+        public string? HomeCity { get; set; }
 
-        [StringLength(10, ErrorMessage = "Zip code cannot exceed 10 characters")]
-        [Display(Name = "Zip Code")]
-        public string? ZipCode { get; set; }
+        [StringLength(50)]
+        [Display(Name = "Home Province")]
+        public string? HomeProvince { get; set; }
+
+        [StringLength(10)]
+        [Display(Name = "Home Postal Code")]
+        public string? HomeCode { get; set; }
+
+        // Postal address (optional, useful for funders)
+        [StringLength(200)]
+        [Display(Name = "Postal Address Line 1")]
+        public string? PostalAddressLine1 { get; set; }
+
+        [StringLength(200)]
+        [Display(Name = "Postal Address Line 2")]
+        public string? PostalAddressLine2 { get; set; }
+
+        [StringLength(50)]
+        [Display(Name = "Postal City")]
+        public string? PostalCity { get; set; }
+
+        [StringLength(50)]
+        [Display(Name = "Postal Province")]
+        public string? PostalProvince { get; set; }
+
+        [StringLength(10)]
+        [Display(Name = "Postal Code")]
+        public string? PostalCode { get; set; }
     }
 }

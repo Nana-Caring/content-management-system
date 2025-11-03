@@ -63,6 +63,13 @@
                         </div>
 
                         <div class="row">
+                            <!-- Middle Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="middleName" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middleName" name="MiddleName" asp-for="RegisterRequest.MiddleName">
+                                <span asp-validation-for="RegisterRequest.MiddleName" class="text-danger"></span>
+                            </div>
+
                             <!-- Last Name -->
                             <div class="col-md-6 mb-3">
                                 <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
@@ -76,13 +83,19 @@
                                 <input type="email" class="form-control" id="email" name="Email" asp-for="RegisterRequest.Email" required>
                                 <span asp-validation-for="RegisterRequest.Email" class="text-danger"></span>
                             </div>
+                            <!-- Password -->
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" name="Password" asp-for="RegisterRequest.Password" required minlength="6" placeholder="At least 6 characters">
+                                <span asp-validation-for="RegisterRequest.Password" class="text-danger"></span>
+                            </div>
                         </div>
 
                         <div class="row">
                             <!-- Phone -->
                             <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="Phone" asp-for="RegisterRequest.Phone" required>
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="phone" name="Phone" asp-for="RegisterRequest.Phone">
                                 <span asp-validation-for="RegisterRequest.Phone" class="text-danger"></span>
                             </div>
 
@@ -95,34 +108,73 @@
                         </div>
 
                         <div class="row">
-                            <!-- Address -->
-                            <div class="col-md-12 mb-3">
-                                <label for="address" class="form-label">Address</label>
-                                <textarea class="form-control" id="address" name="Address" asp-for="RegisterRequest.Address" rows="3"></textarea>
-                                <span asp-validation-for="RegisterRequest.Address" class="text-danger"></span>
+                            <!-- ID Number -->
+                            <div class="col-md-6 mb-3">
+                                <label for="idnumber" class="form-label">ID Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="idnumber" name="Idnumber" asp-for="RegisterRequest.Idnumber" required maxlength="13" pattern="^[0-9]{13}$" placeholder="13 digits">
+                                <span asp-validation-for="RegisterRequest.Idnumber" class="text-danger"></span>
                             </div>
                         </div>
 
+                        <!-- Home Address (optional) -->
                         <div class="row">
-                            <!-- City -->
-                            <div class="col-md-4 mb-3">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" name="City" asp-for="RegisterRequest.City">
-                                <span asp-validation-for="RegisterRequest.City" class="text-danger"></span>
+                            <div class="col-md-6 mb-3">
+                                <label for="homeAddressLine1" class="form-label">Home Address Line 1</label>
+                                <input type="text" class="form-control" id="homeAddressLine1" asp-for="RegisterRequest.HomeAddressLine1">
+                                <span asp-validation-for="RegisterRequest.HomeAddressLine1" class="text-danger"></span>
                             </div>
-
-                            <!-- State -->
-                            <div class="col-md-4 mb-3">
-                                <label for="state" class="form-label">State</label>
-                                <input type="text" class="form-control" id="state" name="State" asp-for="RegisterRequest.State">
-                                <span asp-validation-for="RegisterRequest.State" class="text-danger"></span>
+                            <div class="col-md-6 mb-3">
+                                <label for="homeAddressLine2" class="form-label">Home Address Line 2</label>
+                                <input type="text" class="form-control" id="homeAddressLine2" asp-for="RegisterRequest.HomeAddressLine2">
+                                <span asp-validation-for="RegisterRequest.HomeAddressLine2" class="text-danger"></span>
                             </div>
-
-                            <!-- Zip Code -->
+                        </div>
+                        <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label for="zipCode" class="form-label">Zip Code</label>
-                                <input type="text" class="form-control" id="zipCode" name="ZipCode" asp-for="RegisterRequest.ZipCode">
-                                <span asp-validation-for="RegisterRequest.ZipCode" class="text-danger"></span>
+                                <label for="homeCity" class="form-label">Home City</label>
+                                <input type="text" class="form-control" id="homeCity" asp-for="RegisterRequest.HomeCity">
+                                <span asp-validation-for="RegisterRequest.HomeCity" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="homeProvince" class="form-label">Home Province</label>
+                                <input type="text" class="form-control" id="homeProvince" asp-for="RegisterRequest.HomeProvince">
+                                <span asp-validation-for="RegisterRequest.HomeProvince" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="homeCode" class="form-label">Home Postal Code</label>
+                                <input type="text" class="form-control" id="homeCode" asp-for="RegisterRequest.HomeCode">
+                                <span asp-validation-for="RegisterRequest.HomeCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <!-- Postal Address (optional, often used for Funders) -->
+                        <div class="row funder-only" style="display:none;">
+                            <div class="col-md-6 mb-3">
+                                <label for="postalAddressLine1" class="form-label">Postal Address Line 1</label>
+                                <input type="text" class="form-control" id="postalAddressLine1" asp-for="RegisterRequest.PostalAddressLine1">
+                                <span asp-validation-for="RegisterRequest.PostalAddressLine1" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="postalAddressLine2" class="form-label">Postal Address Line 2</label>
+                                <input type="text" class="form-control" id="postalAddressLine2" asp-for="RegisterRequest.PostalAddressLine2">
+                                <span asp-validation-for="RegisterRequest.PostalAddressLine2" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row funder-only" style="display:none;">
+                            <div class="col-md-4 mb-3">
+                                <label for="postalCity" class="form-label">Postal City</label>
+                                <input type="text" class="form-control" id="postalCity" asp-for="RegisterRequest.PostalCity">
+                                <span asp-validation-for="RegisterRequest.PostalCity" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="postalProvince" class="form-label">Postal Province</label>
+                                <input type="text" class="form-control" id="postalProvince" asp-for="RegisterRequest.PostalProvince">
+                                <span asp-validation-for="RegisterRequest.PostalProvince" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="postalCode" class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" id="postalCode" asp-for="RegisterRequest.PostalCode">
+                                <span asp-validation-for="RegisterRequest.PostalCode" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -145,4 +197,19 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/register.js" asp-append-version="true"></script>
+    <script>
+        // Toggle funder-only fields based on user type
+        document.addEventListener('DOMContentLoaded', function() {
+            const userType = document.getElementById('userType');
+            const funderOnlyRows = document.querySelectorAll('.funder-only');
+            function updateVisibility() {
+                const isFunder = (userType?.value || '').toLowerCase() === 'funder';
+                funderOnlyRows.forEach(r => r.style.display = isFunder ? '' : 'none');
+            }
+            if (userType) {
+                userType.addEventListener('change', updateVisibility);
+                updateVisibility();
+            }
+        });
+    </script>
 }

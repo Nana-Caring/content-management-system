@@ -7,6 +7,7 @@ using CMS.Web.Models;
 using CMS.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace CMS.Web.Pages.Products
 {
@@ -27,7 +28,7 @@ namespace CMS.Web.Pages.Products
         [BindProperty]
         public string Brand { get; set; } = string.Empty;
         [BindProperty]
-        public string Price { get; set; } = "0";
+    public string Price { get; set; } = "0";
         [BindProperty]
         public string Category { get; set; } = string.Empty;
         [BindProperty]
@@ -70,7 +71,7 @@ namespace CMS.Web.Pages.Products
 
             Name = prod.Name ?? string.Empty;
             Brand = prod.Brand ?? string.Empty;
-            Price = prod.Price ?? "0";
+            Price = (prod.Price?.ToString(CultureInfo.InvariantCulture)) ?? "0";
             Category = prod.Category ?? string.Empty;
             Sku = prod.Sku;
             Description = prod.Description;
@@ -100,7 +101,7 @@ namespace CMS.Web.Pages.Products
             {
                 Name = Name,
                 Brand = Brand,
-                Price = Price,
+                Price = TryParseDecimal(Price),
                 Category = Category,
                 Sku = Sku,
                 Description = Description,
@@ -138,6 +139,20 @@ namespace CMS.Web.Pages.Products
                 .Where(s => s.Length > 0)
                 .ToList();
             return parts.Count > 0 ? parts : null;
+        }
+
+        private static decimal? TryParseDecimal(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return null;
+            if (decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
+            {
+                return value;
+            }
+            if (decimal.TryParse(input, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
+            {
+                return value;
+            }
+            return null;
         }
     }
 }

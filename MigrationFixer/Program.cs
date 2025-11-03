@@ -1,6 +1,38 @@
-﻿using Npgsql;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Npgsql;
 
-const string connectionString = "Host=dpg-d04muamuk2gs73drrong-a.oregon-postgres.render.com;Port=5432;Database=nana_caring_ts9m;Username=nana_caring_ts9m_user;Password=hJVRlGcNxewOc0PdKIWtyI7ou1zjXOoy;SSL Mode=Require;Trust Server Certificate=true";
+// Build configuration from appsettings.json, user secrets, and environment variables
+var builder = Host.CreateApplicationBuilder(args);
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets(typeof(Program).Assembly, optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables();
+
+var configuration = builder.Configuration;
+
+// Precedence: Env var -> ConnectionStrings:MigrationFixer -> ConnectionStrings:DefaultConnection
+var connectionString = Environment.GetEnvironmentVariable("MIGRATIONFIXER_CONNECTION_STRING");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    connectionString = configuration.GetConnectionString("MigrationFixer")
+        ?? configuration.GetConnectionString("DefaultConnection")
+        ?? configuration["ConnectionStrings:MigrationFixer"]
+        ?? configuration["ConnectionStrings:DefaultConnection"];
+}
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    Console.WriteLine("Error: Missing database connection string.\n" +
+        "Set one of the following:\n" +
+        "  - Env var MIGRATIONFIXER_CONNECTION_STRING\n" +
+        "  - User secret ConnectionStrings:MigrationFixer (recommended)\n" +
+        "  - appsettings.json ConnectionStrings:MigrationFixer (for non-secret dev only)\n\n" +
+        "Examples (PowerShell):\n" +
+        "  $env:MIGRATIONFIXER_CONNECTION_STRING=\"Host=...;Port=5432;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true\"\n" +
+        "  dotnet user-secrets set \"ConnectionStrings:MigrationFixer\" \"Host=...;Port=5432;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true\" --project \"c:\\Users\\princ\\OneDrive\\Documents\\TOBUN\\NANA Project\\CMS\\MigrationFixer\\MigrationFixer.csproj\"\n");
+    return;
+}
 
 Console.WriteLine("Fixing migration history...");
 
@@ -33,7 +65,8 @@ try
     ";
     
     using var checkCommand = new NpgsqlCommand(checkTableSql, connection);
-    var tableExists = (bool)await checkCommand.ExecuteScalarAsync();
+    var scalar = await checkCommand.ExecuteScalarAsync();
+    var tableExists = scalar is bool b && b;
     
     Console.WriteLine($"Products table exists: {tableExists}");
     

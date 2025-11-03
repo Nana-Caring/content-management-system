@@ -145,7 +145,7 @@ namespace CMS.Web.Pages.Products
                 {
                     Name = name,
                     Brand = brand,
-                    Price = price,
+                    Price = TryParseDecimal(price),
                     Category = category,
                     Sku = sku,
                     Description = description,
@@ -225,7 +225,7 @@ namespace CMS.Web.Pages.Products
                 {
                     Name = name,
                     Brand = brand,
-                    Price = price,
+                    Price = TryParseDecimal(price),
                     Category = category,
                     Sku = sku,
                     Description = description,
@@ -361,6 +361,21 @@ namespace CMS.Web.Pages.Products
                 .Where(s => s.Length > 0)
                 .ToList();
             return parts.Count > 0 ? parts : null;
+        }
+
+        private static decimal? TryParseDecimal(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return null;
+            if (decimal.TryParse(input, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
+            {
+                return value;
+            }
+            // Try current culture as a fallback
+            if (decimal.TryParse(input, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.CurrentCulture, out value))
+            {
+                return value;
+            }
+            return null;
         }
     }
 }
