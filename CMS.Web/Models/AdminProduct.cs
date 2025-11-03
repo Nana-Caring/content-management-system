@@ -12,8 +12,10 @@ namespace CMS.Web.Models
         [JsonPropertyName("brand")] public string? Brand { get; set; }
         [JsonPropertyName("description")] public string? Description { get; set; }
         [JsonPropertyName("detailedDescription")] public string? DetailedDescription { get; set; }
-        // Backend expects numeric price; use decimal? to serialize as number (not string)
-        [JsonPropertyName("price")] public decimal? Price { get; set; }
+        // Backend may send price as string or number; use converter to handle both
+        [JsonPropertyName("price")]
+        [JsonConverter(typeof(FlexibleDecimalConverter))]
+        public decimal? Price { get; set; }
         [JsonPropertyName("category")] public string? Category { get; set; }
         [JsonPropertyName("subcategory")] public string? Subcategory { get; set; }
         [JsonPropertyName("sku")] public string? Sku { get; set; }

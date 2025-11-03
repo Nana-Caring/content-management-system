@@ -43,8 +43,8 @@ function initializePortalAuth() {
 async function handlePortalLogin(e) {
     e.preventDefault();
     
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('modal-username').value;
+    const password = document.getElementById('modal-password').value;
     
     if (!username || !password) {
         alert('Please enter both username and password');

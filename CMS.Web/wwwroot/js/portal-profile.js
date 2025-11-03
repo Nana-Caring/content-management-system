@@ -31,18 +31,18 @@ async function loadProfileData() {
  */
 function populateProfile(user) {
     // Basic personal information
-    document.getElementById('firstName').value = user.firstName || '';
-    document.getElementById('middleName').value = user.middleName || '';
-    document.getElementById('surname').value = user.surname || '';
-    document.getElementById('email').value = user.email || '';
-    document.getElementById('phoneNumber').value = user.phoneNumber || '';
+    document.getElementById('profile-firstName').value = user.firstName || '';
+    document.getElementById('profile-middleName').value = user.middleName || '';
+    document.getElementById('profile-surname').value = user.surname || '';
+    document.getElementById('profile-email').value = user.email || '';
+    document.getElementById('profile-phoneNumber').value = user.phoneNumber || '';
     
     // Postal address
-    const postalLine1 = document.getElementById('postalAddressLine1');
-    const postalLine2 = document.getElementById('postalAddressLine2');
-    const postalCity = document.getElementById('postalCity');
-    const postalProvince = document.getElementById('postalProvince');
-    const postalCode = document.getElementById('postalCode');
+    const postalLine1 = document.getElementById('profile-postalAddressLine1');
+    const postalLine2 = document.getElementById('profile-postalAddressLine2');
+    const postalCity = document.getElementById('profile-postalCity');
+    const postalProvince = document.getElementById('profile-postalProvince');
+    const postalCode = document.getElementById('profile-postalCode');
     
     if (postalLine1) postalLine1.value = user.postalAddressLine1 || '';
     if (postalLine2) postalLine2.value = user.postalAddressLine2 || '';
@@ -51,11 +51,11 @@ function populateProfile(user) {
     if (postalCode) postalCode.value = user.postalCode || '';
     
     // Home address
-    const homeLine1 = document.getElementById('homeAddressLine1');
-    const homeLine2 = document.getElementById('homeAddressLine2');
-    const homeCity = document.getElementById('homeCity');
-    const homeProvince = document.getElementById('homeProvince');
-    const homeCode = document.getElementById('homeCode');
+    const homeLine1 = document.getElementById('profile-homeAddressLine1');
+    const homeLine2 = document.getElementById('profile-homeAddressLine2');
+    const homeCity = document.getElementById('profile-homeCity');
+    const homeProvince = document.getElementById('profile-homeProvince');
+    const homeCode = document.getElementById('profile-homeCode');
     
     if (homeLine1) homeLine1.value = user.homeAddressLine1 || '';
     if (homeLine2) homeLine2.value = user.homeAddressLine2 || '';
@@ -127,7 +127,7 @@ function updateProfileDisplay(user) {
  */
 function toggleEditMode() {
     isEditMode = !isEditMode;
-    const inputs = document.querySelectorAll('#profileForm input:not(#email)');
+    const inputs = document.querySelectorAll('#profileForm input:not(#profile-email)');
     const editBtn = document.getElementById('editBtn');
     const actionButtons = document.getElementById('actionButtons');
     

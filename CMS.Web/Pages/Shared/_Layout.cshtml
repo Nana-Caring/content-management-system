@@ -173,12 +173,12 @@
           <div class="modal-body p-4" style="background: #fff; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; box-shadow: 0 4px 24px rgba(248,76,125,0.10);">
             <form id="loginForm" autocomplete="off">
               <div class="mb-4">
-                <label for="username" class="form-label fw-semibold" style="color:#008000;">Username</label>
-                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="username" name="username" placeholder="Enter your username" />
+                <label for="modal-username" class="form-label fw-semibold" style="color:#008000;">Username</label>
+                <input type="text" class="form-control form-control-lg rounded-3 border border-2 border-success" id="modal-username" name="username" placeholder="Enter your username" />
               </div>
               <div class="mb-4">
-                <label for="password" class="form-label fw-semibold" style="color:#008000;">Password</label>
-                <input type="password" class="form-control form-control-lg rounded-3 border border-2 border-success" id="password" name="password" placeholder="Enter password" />
+                <label for="modal-password" class="form-label fw-semibold" style="color:#008000;">Password</label>
+                <input type="password" class="form-control form-control-lg rounded-3 border border-2 border-success" id="modal-password" name="password" placeholder="Enter password" />
               </div>
               <div class="mb-3 text-center">
                 <span class="text-muted" style="font-size:0.95rem;">
@@ -377,26 +377,26 @@
                                                 <div class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label fw-semibold">First Name</label>
-                                                        <input type="text" class="form-control" id="firstName" name="firstName" readonly>
+                                                        <input type="text" class="form-control" id="profile-firstName" name="firstName" readonly>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label fw-semibold">Middle Name</label>
-                                                        <input type="text" class="form-control" id="middleName" name="middleName" readonly>
+                                                        <input type="text" class="form-control" id="profile-middleName" name="middleName" readonly>
                                                     </div>
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label fw-semibold">Last Name</label>
-                                                        <input type="text" class="form-control" id="surname" name="surname" readonly>
+                                                        <input type="text" class="form-control" id="profile-surname" name="surname" readonly>
                                                     </div>
                                                     <div class="col-md-6 mb-3">
                                                         <label class="form-label fw-semibold">Email Address</label>
-                                                        <input type="email" class="form-control" id="email" name="email" readonly>
+                                                        <input type="email" class="form-control" id="profile-email" name="email" readonly>
                                                     </div>
                                                 </div>
                                                 <div class="mb-4">
                                                     <label class="form-label fw-semibold">Phone Number</label>
-                                                    <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber" readonly>
+                                                    <input type="tel" class="form-control" id="profile-phoneNumber" name="phoneNumber" readonly>
                                                 </div>
                                                 
                                                 <div class="mt-4" id="actionButtons" style="display: none;">
@@ -422,25 +422,25 @@
                                                     <h6 class="text-muted mb-3"><i class="bi bi-mailbox me-2"></i>Postal Address</h6>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Address Line 1</label>
-                                                        <input type="text" class="form-control" id="postalAddressLine1" name="postalAddressLine1" readonly>
+                                                        <input type="text" class="form-control" id="profile-postalAddressLine1" name="postalAddressLine1" readonly>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Address Line 2</label>
-                                                        <input type="text" class="form-control" id="postalAddressLine2" name="postalAddressLine2" readonly>
+                                                        <input type="text" class="form-control" id="profile-postalAddressLine2" name="postalAddressLine2" readonly>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label fw-semibold">City</label>
-                                                            <input type="text" class="form-control" id="postalCity" name="postalCity" readonly>
+                                                            <input type="text" class="form-control" id="profile-postalCity" name="postalCity" readonly>
                                                         </div>
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label fw-semibold">Province</label>
-                                                            <input type="text" class="form-control" id="postalProvince" name="postalProvince" readonly>
+                                                            <input type="text" class="form-control" id="profile-postalProvince" name="postalProvince" readonly>
                                                         </div>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Postal Code</label>
-                                                        <input type="text" class="form-control" id="postalCode" name="postalCode" readonly>
+                                                        <input type="text" class="form-control" id="profile-postalCode" name="postalCode" readonly>
                                                     </div>
                                                 </div>
                                                 
@@ -448,25 +448,25 @@
                                                     <h6 class="text-muted mb-3"><i class="bi bi-house me-2"></i>Home Address</h6>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Address Line 1</label>
-                                                        <input type="text" class="form-control" id="homeAddressLine1" name="homeAddressLine1" readonly>
+                                                        <input type="text" class="form-control" id="profile-homeAddressLine1" name="homeAddressLine1" readonly>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Address Line 2</label>
-                                                        <input type="text" class="form-control" id="homeAddressLine2" name="homeAddressLine2" readonly>
+                                                        <input type="text" class="form-control" id="profile-homeAddressLine2" name="homeAddressLine2" readonly>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label fw-semibold">City</label>
-                                                            <input type="text" class="form-control" id="homeCity" name="homeCity" readonly>
+                                                            <input type="text" class="form-control" id="profile-homeCity" name="homeCity" readonly>
                                                         </div>
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label fw-semibold">Province</label>
-                                                            <input type="text" class="form-control" id="homeProvince" name="homeProvince" readonly>
+                                                            <input type="text" class="form-control" id="profile-homeProvince" name="homeProvince" readonly>
                                                         </div>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Postal Code</label>
-                                                        <input type="text" class="form-control" id="homeCode" name="homeCode" readonly>
+                                                        <input type="text" class="form-control" id="profile-homeCode" name="homeCode" readonly>
                                                     </div>
                                                 </div>
                                             </div>
