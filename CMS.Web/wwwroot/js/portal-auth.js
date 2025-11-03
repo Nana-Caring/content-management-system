@@ -8,13 +8,13 @@ window.PORTAL_CONFIG = window.PORTAL_CONFIG || {
     // Use same-origin API to avoid CORS and leverage local PortalController
     apiBaseUrl: '',
     endpoints: {
-        adminLogin: '/api/portal/admin-login',
+        userLogin: '/api/portal/admin-login', // Endpoint accepts any user credentials
         userProfile: '/api/portal/me'
     },
     storage: {
-        token: 'admin-token',
-        userEmail: 'admin-user-email',
-        userPassword: 'admin-user-password',
+        token: 'portal-token',
+        userEmail: 'portal-user-email',
+        userPassword: 'portal-user-password',
         loginFlag: 'portal-logged-in'
     }
 };
@@ -52,7 +52,7 @@ async function handlePortalLogin(e) {
     }
     
     try {
-        const response = await fetch(window.PORTAL_CONFIG.apiBaseUrl + window.PORTAL_CONFIG.endpoints.adminLogin, {
+        const response = await fetch(window.PORTAL_CONFIG.apiBaseUrl + window.PORTAL_CONFIG.endpoints.userLogin, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

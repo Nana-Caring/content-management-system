@@ -290,6 +290,28 @@ namespace CMS.Web.Pages.Users
             try
             {
                 var success = await _apiService.DeleteUserAsync(id);
+                
+                // Return JSON response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    if (success)
+                    {
+                        return new JsonResult(new { 
+                            success = true,
+                            message = "User deleted successfully.",
+                            data = new { id = id } // Return the deleted user ID for UI removal
+                        });
+                    }
+                    else
+                    {
+                        return new JsonResult(new { 
+                            success = false,
+                            message = "Failed to delete user." 
+                        }) { StatusCode = 400 };
+                    }
+                }
+                
+                // Handle traditional form submissions
                 if (success)
                 {
                     TempData["SuccessMessage"] = "User deleted successfully.";
@@ -301,8 +323,16 @@ namespace CMS.Web.Pages.Users
             }
             catch (Exception ex)
             {
+                // Return JSON error response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = false,
+                        message = "An error occurred while deleting the user: " + ex.Message
+                    }) { StatusCode = 500 };
+                }
+                
                 TempData["ErrorMessage"] = "An error occurred while deleting the user.";
-                // Log the exception for debugging
                 Console.WriteLine($"Error deleting user: {ex.Message}");
             }
 
@@ -317,18 +347,46 @@ namespace CMS.Web.Pages.Users
                 
                 if (result.Success)
                 {
-                    return new JsonResult(new { message = result.Message });
+                    // Get updated user data to return complete information
+                    var updatedUser = await _apiService.GetUserByIdAsync(userId);
+                    
+                    return new JsonResult(new { 
+                        success = true,
+                        message = result.Message ?? "User blocked successfully",
+                        data = updatedUser != null ? new {
+                            id = updatedUser.Id,
+                            fullName = updatedUser.FullName,
+                            firstName = updatedUser.FirstName,
+                            surname = updatedUser.Surname,
+                            middleName = updatedUser.MiddleName,
+                            email = updatedUser.Email,
+                            phoneNumber = updatedUser.PhoneNumber,
+                            role = updatedUser.Role,
+                            relation = updatedUser.Relation,
+                            status = updatedUser.Status,
+                            isBlocked = updatedUser.IsBlocked,
+                            blockReason = updatedUser.BlockReason,
+                            createdAt = updatedUser.CreatedAt,
+                            updatedAt = updatedUser.UpdatedAt
+                        } : null
+                    });
                 }
                 else
                 {
                     Response.StatusCode = 400;
-                    return new JsonResult(new { message = result.Message });
+                    return new JsonResult(new { 
+                        success = false,
+                        message = result.Message ?? "Failed to block user" 
+                    });
                 }
             }
             catch (Exception ex)
             {
                 Response.StatusCode = 500;
-                return new JsonResult(new { message = $"An error occurred while blocking the user: {ex.Message}" });
+                return new JsonResult(new { 
+                    success = false,
+                    message = $"An error occurred while blocking the user: {ex.Message}" 
+                });
             }
         }
 
@@ -340,18 +398,46 @@ namespace CMS.Web.Pages.Users
                 
                 if (result.Success)
                 {
-                    return new JsonResult(new { message = result.Message });
+                    // Get updated user data to return complete information
+                    var updatedUser = await _apiService.GetUserByIdAsync(userId);
+                    
+                    return new JsonResult(new { 
+                        success = true,
+                        message = result.Message ?? "User unblocked successfully",
+                        data = updatedUser != null ? new {
+                            id = updatedUser.Id,
+                            fullName = updatedUser.FullName,
+                            firstName = updatedUser.FirstName,
+                            surname = updatedUser.Surname,
+                            middleName = updatedUser.MiddleName,
+                            email = updatedUser.Email,
+                            phoneNumber = updatedUser.PhoneNumber,
+                            role = updatedUser.Role,
+                            relation = updatedUser.Relation,
+                            status = updatedUser.Status,
+                            isBlocked = updatedUser.IsBlocked,
+                            blockReason = updatedUser.BlockReason,
+                            createdAt = updatedUser.CreatedAt,
+                            updatedAt = updatedUser.UpdatedAt
+                        } : null
+                    });
                 }
                 else
                 {
                     Response.StatusCode = 400;
-                    return new JsonResult(new { message = result.Message });
+                    return new JsonResult(new { 
+                        success = false,
+                        message = result.Message ?? "Failed to unblock user" 
+                    });
                 }
             }
             catch (Exception ex)
             {
                 Response.StatusCode = 500;
-                return new JsonResult(new { message = $"An error occurred while unblocking the user: {ex.Message}" });
+                return new JsonResult(new { 
+                    success = false,
+                    message = $"An error occurred while unblocking the user: {ex.Message}" 
+                });
             }
         }
 
@@ -363,18 +449,46 @@ namespace CMS.Web.Pages.Users
                 
                 if (result.Success)
                 {
-                    return new JsonResult(new { message = result.Message });
+                    // Get updated user data to return complete information
+                    var updatedUser = await _apiService.GetUserByIdAsync(userId);
+                    
+                    return new JsonResult(new { 
+                        success = true,
+                        message = result.Message ?? "User suspended successfully",
+                        data = updatedUser != null ? new {
+                            id = updatedUser.Id,
+                            fullName = updatedUser.FullName,
+                            firstName = updatedUser.FirstName,
+                            surname = updatedUser.Surname,
+                            middleName = updatedUser.MiddleName,
+                            email = updatedUser.Email,
+                            phoneNumber = updatedUser.PhoneNumber,
+                            role = updatedUser.Role,
+                            relation = updatedUser.Relation,
+                            status = updatedUser.Status,
+                            isBlocked = updatedUser.IsBlocked,
+                            blockReason = updatedUser.BlockReason,
+                            createdAt = updatedUser.CreatedAt,
+                            updatedAt = updatedUser.UpdatedAt
+                        } : null
+                    });
                 }
                 else
                 {
                     Response.StatusCode = 400;
-                    return new JsonResult(new { message = result.Message });
+                    return new JsonResult(new { 
+                        success = false,
+                        message = result.Message ?? "Failed to suspend user" 
+                    });
                 }
             }
             catch (Exception ex)
             {
                 Response.StatusCode = 500;
-                return new JsonResult(new { message = $"An error occurred while suspending the user: {ex.Message}" });
+                return new JsonResult(new { 
+                    success = false,
+                    message = $"An error occurred while suspending the user: {ex.Message}" 
+                });
             }
         }
     }

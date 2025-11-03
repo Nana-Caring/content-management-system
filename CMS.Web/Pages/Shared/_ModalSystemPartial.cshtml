@@ -1,0 +1,52 @@
+@*
+    Modal System Partial View
+    Include this in your layout or pages to enable modal functionality
+*@
+
+<!-- Modal CSS -->
+<link rel="stylesheet" href="~/css/modal.css" />
+
+<!-- Modal JavaScript -->
+<script src="~/js/modal-system.js"></script>
+
+<!-- Modal Root Container -->
+<div id="modal-root"></div>
+
+<script>
+// Product-specific modal helper functions
+window.showProductUpdateSuccess = function(productName) {
+    Modal.showSuccess('Product Updated', `"${productName}" has been updated successfully!`);
+};
+
+window.showProductUpdateError = function(error) {
+    Modal.showError('Update Failed', error || 'Failed to update the product. Please try again.');
+};
+
+window.confirmProductDelete = function(productName, deleteCallback) {
+    return Modal.confirmDelete(productName, deleteCallback);
+};
+
+window.showLoadingModal = function(message) {
+    return Modal.showLoading('Processing', message || 'Please wait while we process your request...');
+};
+
+window.showFormErrors = function(errors) {
+    let errorMessage = 'Please correct the following errors:<ul>';
+    errors.forEach(error => {
+        errorMessage += `<li>${error}</li>`;
+    });
+    errorMessage += '</ul>';
+    Modal.showError('Validation Error', errorMessage);
+};
+
+// Generic success/error handlers for API responses
+window.handleApiResponse = function(response, successMessage, errorMessage) {
+    if (response && response.success) {
+        Modal.showSuccess('Success', successMessage || 'Operation completed successfully');
+        return true;
+    } else {
+        Modal.showError('Error', response?.message || errorMessage || 'Operation failed');
+        return false;
+    }
+};
+</script>

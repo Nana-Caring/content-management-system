@@ -5,7 +5,6 @@
 }
 
 @section Scripts {
-    <meta name="__RequestVerificationToken" content="@Html.AntiForgeryToken()" />
 }
 
 <!-- Hidden form for anti-forgery token -->
@@ -731,7 +730,7 @@
                                         }
                                         else if (user.IsBlocked)
                                         {
-                                            <li><a class="dropdown-item" href="#" onclick="unblockUser(@user.Id, '@user.FullName')"><i class="fas fa-check me-2 text-success"></i>Unblock User</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="showUnblockModal(@user.Id, '@user.FullName')"><i class="fas fa-check me-2 text-success"></i>Unblock User</a></li>
                                         }
                                         else if (user.Status?.ToLower() == "suspended")
                                         {
@@ -1002,14 +1001,14 @@ let currentUserName = null;
 
 // Helper function to get anti-forgery token
 function getAntiForgeryToken() {
-    // Try to get from meta tag first (if available), then from any existing form
-    const metaToken = document.querySelector('meta[name="__RequestVerificationToken"]')?.getAttribute('content');
-    const formToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-    return metaToken || formToken || '';
+    // Read the token value from the hidden input rendered by @Html.AntiForgeryToken()
+    const formToken = document.querySelector('input[name="__RequestVerificationToken"]');
+    return formToken?.value || '';
 }
 
 // Show block modal function
 function showBlockModal(userId, userName) {
+    console.log('🔨 Block modal triggered for user:', userId, userName);
     currentUserId = userId;
     currentUserName = userName;
     document.getElementById('blockUserName').textContent = userName;
@@ -1021,6 +1020,7 @@ function showBlockModal(userId, userName) {
 
 // Show suspend modal function
 function showSuspendModal(userId, userName) {
+    console.log('⏸️ Suspend modal triggered for user:', userId, userName);
     currentUserId = userId;
     currentUserName = userName;
     document.getElementById('suspendUserName').textContent = userName;
@@ -1032,6 +1032,7 @@ function showSuspendModal(userId, userName) {
 
 // Show delete modal function
 function showDeleteModal(userId, userName) {
+    console.log('🗑️ Delete modal triggered for user:', userId, userName);
     currentUserId = userId;
     currentUserName = userName;
     document.getElementById('deleteUserName').textContent = userName;
@@ -1042,95 +1043,42 @@ function showDeleteModal(userId, userName) {
     deleteModal.show();
 }
 
-// Unblock user function
+// Show unblock modal function
+function showUnblockModal(userId, userName) {
+    console.log('🔓 Unblock modal triggered for user:', userId, userName);
+    currentUserId = userId;
+    currentUserName = userName;
+    const nameSpan = document.getElementById('unblockUserName');
+    if (nameSpan) nameSpan.textContent = userName;
+    const modal = new bootstrap.Modal(document.getElementById('unblockModal'));
+    modal.show();
+}
+
+// Unblock user function - calls the enhanced version with real-time updates
 async function unblockUser(userId, userName) {
+    console.log('🔓 Unblock user triggered for user:', userId, userName);
     if (!confirm(`Are you sure you want to unblock ${userName}?`)) {
         return;
     }
     
-    try {
-        const response = await fetch(`/admin/users/${userId}/unblock`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('success', `${userName} has been unblocked successfully!`);
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showAlert('danger', result.message || 'Failed to unblock user');
-        }
-    } catch (error) {
-        showAlert('danger', 'An error occurred while unblocking the user');
-        console.error('Unblock user error:', error);
-    }
+    // Call the enhanced unblock function with loader
+    await unblockUserWithLoader(userId);
 }
 
-// Unsuspend user function
+// Unsuspend user function - calls the enhanced version with real-time updates  
 async function unsuspendUser(userId, userName) {
+    console.log('▶️ Unsuspend user triggered for user:', userId, userName);
     if (!confirm(`Are you sure you want to lift the suspension for ${userName}?`)) {
         return;
     }
     
-    try {
-        const response = await fetch(`/admin/users/${userId}/unsuspend`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showAlert('success', `Suspension for ${userName} has been lifted successfully!`);
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showAlert('danger', result.message || 'Failed to unsuspend user');
-        }
-    } catch (error) {
-        showAlert('danger', 'An error occurred while unsuspending the user');
-        console.error('Unsuspend user error:', error);
-    }
+    // Call unblock function since unsuspending is handled the same way
+    await unblockUserWithLoader(userId);
 }
 
-// Block user function
-function blockUser(userId, userName) {
-    currentUserId = userId;
-    currentUserName = userName;
-    document.getElementById('blockUserName').textContent = userName;
-    document.getElementById('blockReason').value = '';
-    
-    const blockModal = new bootstrap.Modal(document.getElementById('blockModal'));
-    blockModal.show();
-}
+// Block function is now handled by showBlockModal above
 
-// Unblock user function (modal version)
-function unblockUser(userId, userName) {
-    currentUserId = userId;
-    currentUserName = userName;
-    document.getElementById('unblockUserName').textContent = userName;
-    
-    const unblockModal = new bootstrap.Modal(document.getElementById('unblockModal'));
-    unblockModal.show();
-}
-
-// Suspend user function
-function suspendUser(userId, userName) {
-    currentUserId = userId;
-    currentUserName = userName;
-    document.getElementById('suspendUserName').textContent = userName;
-    document.getElementById('suspendReason').value = '';
-    
-    const suspendModal = new bootstrap.Modal(document.getElementById('suspendModal'));
-    suspendModal.show();
-}
+// Suspend function is now handled by showSuspendModal above
 
 // Confirm block action
 async function confirmBlock() {
@@ -1211,190 +1159,427 @@ const ProfessionalLoader = {
 };
 
 // Enhanced user action functions with loader integration
+// Enhanced User Table Update Function
+function updateUserInTable(userData) {
+    console.log('🔄 Updating user in table:', userData);
+    
+    if (!userData || !userData.id) {
+        console.warn('❌ Invalid user data provided for table update');
+        return;
+    }
+
+    // Find the table row for this user
+    const userRow = document.querySelector(`tr[data-user-id="${userData.id}"]`);
+    if (!userRow) {
+        console.warn(`❌ User row not found for ID: ${userData.id}`);
+        console.log('Available user rows:', document.querySelectorAll('tr[data-user-id]'));
+        return;
+    }
+
+    console.log('✅ Found user row for ID:', userData.id);
+
+    try {
+        const cells = userRow.querySelectorAll('td');
+        
+        // Update Status Column (index 8 - Status)
+        const statusCell = cells[8];
+        if (statusCell && userData.hasOwnProperty('isBlocked')) {
+            let statusHtml = '';
+            if (userData.isBlocked) {
+                statusHtml = `
+                    <span class="badge bg-danger">
+                        <i class="fas fa-ban me-1"></i>Blocked
+                    </span>`;
+                if (userData.blockReason) {
+                    const truncatedReason = userData.blockReason.length > 20 
+                        ? userData.blockReason.substring(0, 20) + "..." 
+                        : userData.blockReason;
+                    statusHtml += `
+                        <div>
+                            <small class="text-muted" style="font-size: 0.7rem;" title="${userData.blockReason}">
+                                ${truncatedReason}
+                            </small>
+                        </div>`;
+                }
+            } else if (userData.status && userData.status.toLowerCase() === 'suspended') {
+                statusHtml = `
+                    <span class="badge bg-warning">
+                        <i class="fas fa-pause me-1"></i>Suspended
+                    </span>`;
+                if (userData.blockReason) {
+                    const truncatedReason = userData.blockReason.length > 20 
+                        ? userData.blockReason.substring(0, 20) + "..." 
+                        : userData.blockReason;
+                    statusHtml += `
+                        <div>
+                            <small class="text-muted" style="font-size: 0.7rem;" title="${userData.blockReason}">
+                                ${truncatedReason}
+                            </small>
+                        </div>`;
+                }
+            } else {
+                statusHtml = `
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Active
+                    </span>`;
+            }
+            statusCell.innerHTML = statusHtml;
+            console.log('✅ Updated status cell');
+        }
+
+        // Update Actions Column (index 9 - Actions)
+        const actionsCell = cells[9];
+        if (actionsCell) {
+            let actionsHtml = `
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="User Actions">
+                        <i class="fas fa-cog"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu">`;
+            
+            if (userData.status?.toLowerCase() === 'active' && !userData.isBlocked) {
+                actionsHtml += `
+                    <li><a class="dropdown-item" href="#" onclick="showBlockModal(${userData.id}, '${userData.fullName}')"><i class="fas fa-ban me-2 text-warning"></i>Block User</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="showSuspendModal(${userData.id}, '${userData.fullName}')"><i class="fas fa-clock me-2 text-orange"></i>Suspend User</a></li>`;
+            } else if (userData.isBlocked) {
+                actionsHtml += `
+                    <li><a class="dropdown-item" href="#" onclick="showUnblockModal(${userData.id}, '${userData.fullName}')"><i class="fas fa-check me-2 text-success"></i>Unblock User</a></li>`;
+            } else if (userData.status?.toLowerCase() === 'suspended') {
+                actionsHtml += `
+                    <li><a class="dropdown-item" href="#" onclick="unsuspendUser(${userData.id}, '${userData.fullName}')"><i class="fas fa-unlock me-2 text-info"></i>Unsuspend User</a></li>`;
+            }
+            
+            actionsHtml += `
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="showDeleteModal(${userData.id}, '${userData.fullName}')"><i class="fas fa-trash me-2"></i>Delete User</a></li>
+                    </ul>
+                </div>`;
+            
+            actionsCell.innerHTML = actionsHtml;
+            
+            // IMPORTANT: Re-initialize Bootstrap dropdown for the new HTML
+            const newDropdownButton = actionsCell.querySelector('.dropdown-toggle');
+            if (newDropdownButton && typeof bootstrap !== 'undefined') {
+                try {
+                    // Initialize Bootstrap dropdown
+                    new bootstrap.Dropdown(newDropdownButton);
+                    console.log('✅ Initialized Bootstrap dropdown for updated actions');
+                } catch (dropdownError) {
+                    console.warn('⚠️ Failed to initialize Bootstrap dropdown:', dropdownError);
+                }
+            }
+            
+            console.log('✅ Updated actions cell');
+        }
+
+        // Add visual feedback to show the row was updated
+        userRow.style.transition = 'all 0.3s ease';
+        userRow.style.backgroundColor = '#d4edda'; // Light green
+        userRow.style.transform = 'scale(1.005)';
+        
+        // Add a "Updated!" badge temporarily
+        const nameCell = userRow.querySelector('td:nth-child(2)');
+        if (nameCell) {
+            const existingBadge = nameCell.querySelector('.update-badge');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            const updateBadge = document.createElement('span');
+            updateBadge.className = 'badge bg-success ms-2 update-badge animate__animated animate__pulse';
+            updateBadge.innerHTML = '<i class="fas fa-check"></i> Updated!';
+            nameCell.appendChild(updateBadge);
+            
+            // Reset visual feedback after animation
+            setTimeout(() => {
+                userRow.style.backgroundColor = '';
+                userRow.style.transform = '';
+                if (updateBadge && updateBadge.parentElement) {
+                    updateBadge.remove();
+                }
+            }, 3000);
+        }
+
+        console.log(`🎉 Successfully updated user ${userData.id} in table`);
+        
+        // Show a brief success notification
+        if (typeof Modal !== 'undefined' && Modal.showSuccess) {
+            Modal.showSuccess(
+                'Table Updated!',
+                `User "${userData.fullName}" status has been updated in the table. Changes are now visible immediately!`,
+                null,
+                2000 // Auto-close after 2 seconds
+            );
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating user in table:', error);
+        
+        if (typeof Modal !== 'undefined' && Modal.showError) {
+            Modal.showError(
+                'Update Display Error',
+                'The user action was completed successfully, but there was an issue updating the table display. The page will refresh to show the changes.'
+            );
+        }
+        
+        // Fallback: refresh page after a delay if table update fails
+        setTimeout(() => {
+            console.log('Refreshing page due to table update error...');
+            window.location.reload();
+        }, 2000);
+    }
+}
+
+// Enhanced Block User Function with Real-time Updates
 async function blockUserWithLoader(userId, reason) {
-    const loaderController = ProfessionalLoader.showWithDelay('Blocking user...', 100, 'users');
+    // Show loading modal
+    let loadingModal = null;
+    if (typeof Modal !== 'undefined' && Modal.showLoading) {
+        loadingModal = Modal.showLoading('Blocking user...', 'Please wait while we process this action.');
+    } else {
+        console.log('Blocking user...');
+    }
     
     try {
-        const response = await fetch(`/admin/users/${userId}/block`, {
-            method: 'PUT',
+        const response = await fetch(`?handler=BlockUser&userId=${userId}`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
             body: JSON.stringify({ Reason: reason })
         });
         
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        
         if (response.ok) {
-            let result;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                result = await response.json();
-            } else {
-                result = { message: 'User blocked successfully' };
-            }
+            const result = await response.json();
             
-            // Close modal
-            const blockModal = bootstrap.Modal.getInstance(document.getElementById('blockModal'));
-            blockModal.hide();
-            
-            // Show success message
-            showNotification(result.message || 'User blocked successfully', 'success');
-            
-            // Update loader message
-            document.getElementById('loader-message').textContent = 'Refreshing data...';
-            
-            // Refresh the page to show updated status
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            loaderController.hide();
-            let errorMessage = 'Failed to block user';
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const error = await response.json();
-                    errorMessage = error.message || errorMessage;
-                } else {
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage = errorText;
-                    }
+            if (result.success) {
+                // Close block modal
+                const blockModal = bootstrap.Modal.getInstance(document.getElementById('blockModal'));
+                if (blockModal) {
+                    blockModal.hide();
                 }
-            } catch (parseError) {
-                console.error('Error parsing response:', parseError);
-                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                
+                // Update the UI immediately with the returned data
+                if (result.data) {
+                    updateUserInTable(result.data);
+                }
+                
+                // Show success modal
+                if (typeof Modal !== 'undefined') {
+                    Modal.showSuccess(
+                        'User Blocked Successfully!',
+                        `User has been blocked and their status is now updated in the table!`
+                    );
+                }
+            } else {
+                if (typeof Modal !== 'undefined') {
+                    Modal.showError(
+                        'Block Failed',
+                        result.message || 'Failed to block user. Please try again.'
+                    );
+                }
             }
-            showNotification(errorMessage, 'error');
+        } else {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            if (typeof Modal !== 'undefined') {
+                Modal.showError(
+                    'Server Error',
+                    `Failed to block user. Server error: ${response.status}. Please check the console for details.`
+                );
+            }
         }
     } catch (error) {
-        loaderController.hide();
-        console.error('Error blocking user:', error);
-        showNotification('An error occurred while blocking the user', 'error');
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        console.error('Block error:', error);
+        if (typeof Modal !== 'undefined') {
+            Modal.showError(
+                'Network Error',
+                'A network error occurred while blocking the user. Please check your connection and try again.'
+            );
+        }
+        
+        // Fallback: refresh after error
+        (async () => {
+            try {
+                await fetch(`/Users?handler=BlockUser&userId=${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: JSON.stringify({ Reason: reason })
+                });
+                console.log('Fallback block request completed');
+                window.location.reload();
+            } catch (fallbackError) {
+                console.error('Fallback request failed:', fallbackError);
+            }
+        })();
     }
 }
 
+// Enhanced Unblock User Function with Real-time Updates
 async function unblockUserWithLoader(userId) {
-    const loaderController = ProfessionalLoader.showWithDelay('Unblocking user...', 100, 'users');
+    // Show loading modal
+    let loadingModal = null;
+    if (typeof Modal !== 'undefined' && Modal.showLoading) {
+        loadingModal = Modal.showLoading('Unblocking user...', 'Please wait while we process this action.');
+    } else {
+        console.log('Unblocking user...');
+    }
     
     try {
-        const response = await fetch(`/admin/users/${userId}/unblock`, {
-            method: 'PUT',
+        const response = await fetch(`?handler=UnblockUser&userId=${userId}`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             }
         });
         
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        
         if (response.ok) {
-            let result;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                result = await response.json();
-            } else {
-                result = { message: 'User unblocked successfully' };
-            }
+            const result = await response.json();
             
-            // Close modal
-            const unblockModal = bootstrap.Modal.getInstance(document.getElementById('unblockModal'));
-            unblockModal.hide();
-            
-            showNotification(result.message || 'User unblocked successfully', 'success');
-            
-            // Update loader message
-            document.getElementById('loader-message').textContent = 'Refreshing data...';
-            
-            // Refresh the page to show updated status
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            loaderController.hide();
-            let errorMessage = 'Failed to unblock user';
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const error = await response.json();
-                    errorMessage = error.message || errorMessage;
-                } else {
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage = errorText;
-                    }
+            if (result.success) {
+                // Close unblock modal if open
+                const unblockModal = bootstrap.Modal.getInstance(document.getElementById('unblockModal'));
+                if (unblockModal) {
+                    unblockModal.hide();
                 }
-            } catch (parseError) {
-                console.error('Error parsing response:', parseError);
-                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                // Update the UI immediately with the returned data
+                if (result.data) {
+                    updateUserInTable(result.data);
+                }
+                
+                // Show success modal
+                if (typeof Modal !== 'undefined') {
+                    Modal.showSuccess(
+                        'User Unblocked Successfully!',
+                        `User has been unblocked and their status is now updated in the table!`
+                    );
+                }
+            } else {
+                if (typeof Modal !== 'undefined') {
+                    Modal.showError(
+                        'Unblock Failed',
+                        result.message || 'Failed to unblock user. Please try again.'
+                    );
+                }
             }
-            showNotification(errorMessage, 'error');
+        } else {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            if (typeof Modal !== 'undefined') {
+                Modal.showError(
+                    'Server Error',
+                    `Failed to unblock user. Server error: ${response.status}. Please check the console for details.`
+                );
+            }
         }
     } catch (error) {
-        loaderController.hide();
-        console.error('Error unblocking user:', error);
-        showNotification('An error occurred while unblocking the user', 'error');
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        console.error('Unblock error:', error);
+        if (typeof Modal !== 'undefined') {
+            Modal.showError(
+                'Network Error',
+                'A network error occurred while unblocking the user. Please check your connection and try again.'
+            );
+        }
     }
 }
 
+// Enhanced Suspend User Function with Real-time Updates
 async function suspendUserWithLoader(userId, reason) {
-    const loaderController = ProfessionalLoader.showWithDelay('Suspending user...', 100, 'users');
+    // Show loading modal
+    let loadingModal = null;
+    if (typeof Modal !== 'undefined' && Modal.showLoading) {
+        loadingModal = Modal.showLoading('Suspending user...', 'Please wait while we process this action.');
+    } else {
+        console.log('Suspending user...');
+    }
     
     try {
-        const response = await fetch(`/admin/users/${userId}/suspend`, {
-            method: 'PUT',
+        const response = await fetch(`?handler=SuspendUser&userId=${userId}`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
-            body: JSON.stringify({ Reason: reason, SuspensionDays: 30 })
+            body: JSON.stringify({ Reason: reason })
         });
         
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        
         if (response.ok) {
-            let result;
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                result = await response.json();
-            } else {
-                result = { message: 'User suspended successfully' };
-            }
+            const result = await response.json();
             
-            // Close modal
-            const suspendModal = bootstrap.Modal.getInstance(document.getElementById('suspendModal'));
-            suspendModal.hide();
-            
-            // Show success message
-            showNotification(result.message || 'User suspended successfully', 'success');
-            
-            // Update loader message
-            document.getElementById('loader-message').textContent = 'Refreshing data...';
-            
-            // Refresh the page to show updated status
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            loaderController.hide();
-            let errorMessage = 'Failed to suspend user';
-            try {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const error = await response.json();
-                    errorMessage = error.message || errorMessage;
-                } else {
-                    const errorText = await response.text();
-                    if (errorText) {
-                        errorMessage = errorText;
-                    }
+            if (result.success) {
+                // Close suspend modal
+                const suspendModal = bootstrap.Modal.getInstance(document.getElementById('suspendModal'));
+                if (suspendModal) {
+                    suspendModal.hide();
                 }
-            } catch (parseError) {
-                console.error('Error parsing response:', parseError);
-                errorMessage = `Server error: ${response.status} ${response.statusText}`;
+                
+                // Update the UI immediately with the returned data
+                if (result.data) {
+                    updateUserInTable(result.data);
+                }
+                
+                // Show success modal
+                if (typeof Modal !== 'undefined') {
+                    Modal.showSuccess(
+                        'User Suspended Successfully!',
+                        `User has been suspended and their status is now updated in the table!`
+                    );
+                }
+            } else {
+                if (typeof Modal !== 'undefined') {
+                    Modal.showError(
+                        'Suspend Failed',
+                        result.message || 'Failed to suspend user. Please try again.'
+                    );
+                }
             }
-            showNotification(errorMessage, 'error');
+        } else {
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            if (typeof Modal !== 'undefined') {
+                Modal.showError(
+                    'Server Error',
+                    `Failed to suspend user. Server error: ${response.status}. Please check the console for details.`
+                );
+            }
         }
     } catch (error) {
-        loaderController.hide();
-        console.error('Error suspending user:', error);
-        showNotification('An error occurred while suspending the user', 'error');
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
+        console.error('Suspend error:', error);
+        if (typeof Modal !== 'undefined') {
+            Modal.showError(
+                'Network Error',
+                'A network error occurred while suspending the user. Please check your connection and try again.'
+            );
+        }
     }
 }
 
@@ -1448,8 +1633,74 @@ function scrollToUser(userId) {
     }
 }
 
+// Initialize Bootstrap dropdowns for all action buttons
+function initializeAllDropdowns() {
+    console.log('🔧 Re-initializing dropdowns after page load...');
+    
+    // Wait for DOM and use broader selectors
+    setTimeout(() => {
+        // Try multiple selectors to catch all dropdown buttons
+        const selectors = [
+            '.dropdown-toggle',
+            '[data-bs-toggle="dropdown"]',
+            '#usersTableBody .dropdown-toggle',
+            'button.dropdown-toggle'
+        ];
+        
+        let allButtons = [];
+        selectors.forEach(selector => {
+            const buttons = document.querySelectorAll(selector);
+            buttons.forEach(btn => {
+                if (!allButtons.includes(btn)) {
+                    allButtons.push(btn);
+                }
+            });
+        });
+        
+        console.log(`🔧 Found ${allButtons.length} dropdown buttons to initialize`);
+        
+        allButtons.forEach((button, index) => {
+            try {
+                // Skip if already initialized
+                if (button.hasAttribute('data-dropdown-initialized')) {
+                    console.log(`⏭️ Skipping already initialized dropdown ${index + 1}`);
+                    return;
+                }
+                
+                if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                    // Dispose existing instance
+                    let existing = bootstrap.Dropdown.getInstance(button);
+                    if (existing) {
+                        existing.dispose();
+                    }
+                    
+                    new bootstrap.Dropdown(button);
+                    button.setAttribute('data-dropdown-initialized', 'true');
+                    console.log(`✅ Initialized dropdown ${index + 1}/${allButtons.length}`, button);
+                } else {
+                    console.warn('⚠️ Bootstrap not available');
+                }
+            } catch (error) {
+                console.warn('⚠️ Failed to initialize dropdown:', error, button);
+            }
+        });
+        
+        // Force re-scan for any missed buttons
+        const tableBody = document.getElementById('usersTableBody');
+        if (tableBody) {
+            const tableDropdowns = tableBody.querySelectorAll('.dropdown-toggle');
+            console.log(`📊 Table has ${tableDropdowns.length} dropdown buttons`);
+        }
+        
+    }, 200); // Longer delay to ensure everything is loaded
+}
+
 // Page load integration
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap dropdowns for all action buttons
+    console.log('🔧 Initializing Bootstrap dropdowns on page load...');
+    initializeAllDropdowns();
+    
     // Show loader on initial page load if we have many users
     const userCount = @Model.TotalCount;
     
@@ -1485,8 +1736,97 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Debug helper function for users table
+    window.debugUserUpdate = function(userId) {
+        console.log('🔍 Debugging User Update for ID:', userId);
+        
+        // Check if row exists
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        console.log('Row found:', row);
+        
+        // Check table structure
+        const allRows = document.querySelectorAll('tr[data-user-id]');
+        console.log('All user rows:', allRows.length);
+        
+        // Check cells
+        if (row) {
+            const statusCell = row.querySelectorAll('td')[8]; // Status column
+            const actionsCell = row.querySelectorAll('td')[9]; // Actions column
+            console.log('Status cell:', statusCell);
+            console.log('Actions cell:', actionsCell);
+        }
+        
+        return { row, statusCell: row?.querySelectorAll('td')[8], actionsCell: row?.querySelectorAll('td')[9] };
+    };
+
+    // Manual dropdown fix function (can be called from console if needed)
+    window.fixAllDropdowns = function() {
+        console.log('🛠️ Manual dropdown fix initiated...');
+        
+        // Remove all existing dropdown initializations
+        document.querySelectorAll('.dropdown-toggle, [data-bs-toggle="dropdown"]').forEach(btn => {
+            btn.removeAttribute('data-dropdown-initialized');
+            try {
+                let existing = bootstrap.Dropdown.getInstance(btn);
+                if (existing) {
+                    existing.dispose();
+                }
+            } catch (e) { /* ignore */ }
+        });
+        
+        // Re-initialize all dropdowns
+        setTimeout(() => {
+            initializeAllDropdowns();
+        }, 100);
+        
+        console.log('✅ All dropdowns have been re-initialized');
+        return 'Dropdown fix complete!';
+    };
+
+    // Debug function to inspect dropdowns
+    window.debugDropdowns = function() {
+        console.log('🔍 Debugging dropdown state...');
+        console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
+        
+        const tableBody = document.getElementById('usersTableBody');
+        console.log('Table body found:', !!tableBody);
+        
+        const allDropdowns = document.querySelectorAll('.dropdown-toggle');
+        console.log(`Total .dropdown-toggle elements: ${allDropdowns.length}`);
+        
+        const bsToggleDropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+        console.log(`Total [data-bs-toggle="dropdown"] elements: ${bsToggleDropdowns.length}`);
+        
+        allDropdowns.forEach((btn, i) => {
+            const instance = bootstrap.Dropdown.getInstance(btn);
+            console.log(`Dropdown ${i + 1}:`, {
+                hasInstance: !!instance,
+                visible: btn.offsetParent !== null,
+                initialized: btn.hasAttribute('data-dropdown-initialized'),
+                classes: btn.className
+            });
+        });
+        
+        return `Found ${allDropdowns.length} dropdowns`;
+    };
+
     // Initialize scroll functionality for the users table
     initializeScrollFunctionality();
+    
+    // Re-initialize dropdowns periodically to catch any missed ones
+    setTimeout(() => {
+        console.log('🔧 Re-initializing dropdowns after page load...');
+        initializeAllDropdowns();
+    }, 1000);
+    
+    // Also re-initialize when the page becomes visible (in case of tab switching)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            setTimeout(() => {
+                initializeAllDropdowns();
+            }, 200);
+        }
+    });
     
     // Auto-collapse filter panel if no filters are active
     const filterPanel = document.getElementById('filterPanel');
@@ -1570,21 +1910,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Confirm delete action
+// Enhanced Confirm Delete Function with Real-time UI Updates
 async function confirmDelete() {
     const deleteData = document.getElementById('deleteUserData').checked;
     const confirmDelete = document.getElementById('confirmDelete').checked;
     
     if (!confirmDelete) {
-        alert('Please confirm that you understand this action is permanent.');
+        if (typeof Modal !== 'undefined') {
+            Modal.showError(
+                'Confirmation Required',
+                'Please confirm that you understand this action is permanent by checking the confirmation box.'
+            );
+        } else {
+            alert('Please confirm that you understand this action is permanent.');
+        }
         return;
     }
 
+    // Show loading modal
+    let loadingModal = null;
+    if (typeof Modal !== 'undefined' && Modal.showLoading) {
+        loadingModal = Modal.showLoading('Deleting user...', 'Please wait while we permanently remove this user.');
+    } else {
+        console.log('Deleting user...');
+    }
+
     try {
-        const response = await fetch(`/admin/users/${currentUserId}`, {
-            method: 'DELETE',
+        const response = await fetch(`?handler=Delete&id=${currentUserId}`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             },
             body: JSON.stringify({ 
@@ -1593,25 +1949,104 @@ async function confirmDelete() {
             })
         });
 
-        // Check if response is successful before parsing JSON
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
         }
 
-        const result = await response.json();
+        if (response.ok) {
+            const result = await response.json();
 
-        if (result.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-            modal.hide();
-            
-            showAlert('success', `${currentUserName} has been deleted successfully!`);
-            setTimeout(() => location.reload(), 2000);
+            if (result.success) {
+                // Close delete modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Remove the user row from table immediately
+                const userRow = document.querySelector(`tr[data-user-id="${currentUserId}"]`);
+                if (userRow) {
+                    // Add deletion animation
+                    userRow.style.transition = 'all 0.5s ease';
+                    userRow.style.backgroundColor = '#f8d7da'; // Light red
+                    userRow.style.opacity = '0.5';
+                    userRow.style.transform = 'scale(0.95)';
+                    
+                    setTimeout(() => {
+                        userRow.style.height = '0';
+                        userRow.style.padding = '0';
+                        userRow.style.margin = '0';
+                        userRow.style.border = 'none';
+                        
+                        setTimeout(() => {
+                            userRow.remove();
+                            console.log(`✅ Removed user row ${currentUserId} from table`);
+                        }, 300);
+                    }, 300);
+                }
+                
+                // Show success modal
+                if (typeof Modal !== 'undefined') {
+                    Modal.showSuccess(
+                        'User Deleted Successfully!',
+                        `"${currentUserName}" has been permanently deleted and removed from the system.`
+                    );
+                } else {
+                    showAlert('success', `${currentUserName} has been deleted successfully!`);
+                }
+                
+            } else {
+                if (typeof Modal !== 'undefined') {
+                    Modal.showError(
+                        'Delete Failed',
+                        result.message || 'Failed to delete user. Please try again.'
+                    );
+                } else {
+                    showAlert('danger', result.message || 'Failed to delete user');
+                }
+            }
         } else {
-            showAlert('danger', result.message || 'Failed to delete user');
+            const errorText = await response.text();
+            console.error('Server response:', errorText);
+            if (typeof Modal !== 'undefined') {
+                Modal.showError(
+                    'Server Error',
+                    `Failed to delete user. Server error: ${response.status}. Please check the console for details.`
+                );
+            } else {
+                showAlert('danger', 'Server error occurred while deleting user');
+            }
         }
     } catch (error) {
-        showAlert('danger', 'An error occurred while deleting the user');
+        if (typeof Modal !== 'undefined' && Modal.hide) {
+            Modal.hide();
+        }
         console.error('Delete user error:', error);
+        if (typeof Modal !== 'undefined') {
+            Modal.showError(
+                'Network Error',
+                'A network error occurred while deleting the user. Please check your connection and try again.'
+            );
+        } else {
+            showAlert('danger', 'An error occurred while deleting the user');
+        }
+        
+        // Fallback: try again with basic fetch
+        (async () => {
+            try {
+                await fetch(`/Users?handler=Delete&id=${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    },
+                    body: new FormData()
+                });
+                console.log('Fallback delete request completed');
+                window.location.reload();
+            } catch (fallbackError) {
+                console.error('Fallback delete failed:', fallbackError);
+            }
+        })();
     }
 }
 

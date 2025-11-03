@@ -21,29 +21,52 @@ namespace CMS.Web.Services
         }
 
         private ISession? Session => _httpContextAccessor.HttpContext?.Session;
+        
+        private async Task<bool> IsJavaScriptAvailableAsync()
+        {
+            try
+            {
+                // Try a simple JS interop call to check if JavaScript is available
+                await _jsRuntime.InvokeVoidAsync("eval", "void(0)");
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                // JavaScript interop is not available (server-side rendering)
+                return false;
+            }
+            catch
+            {
+                // Other errors, assume JS is available but there's another issue
+                return true;
+            }
+        }
 
         public async Task<T?> GetStateAsync<T>(string key) where T : class
         {
             try
             {
-                // First try localStorage (persistent)
-                try
+                // First try localStorage (persistent) - only if JavaScript is available
+                if (await IsJavaScriptAvailableAsync())
                 {
-                    var localValue = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
-                    if (!string.IsNullOrEmpty(localValue))
+                    try
                     {
-                        var result = JsonConvert.DeserializeObject<T>(localValue);
-                        if (result != null)
+                        var localValue = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+                        if (!string.IsNullOrEmpty(localValue))
                         {
-                            // Also store in session for faster access
-                            await SetSessionAsync(key, result);
-                            return result;
+                            var result = JsonConvert.DeserializeObject<T>(localValue);
+                            if (result != null)
+                            {
+                                // Also store in session for faster access
+                                await SetSessionAsync(key, result);
+                                return result;
+                            }
                         }
                     }
-                }
-                catch (Exception)
-                {
-                    // localStorage not available, fall back to session
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, $"localStorage not available for key: {key}, falling back to session");
+                    }
                 }
 
                 // Fall back to session
@@ -60,17 +83,21 @@ namespace CMS.Web.Services
         {
             try
             {
-                // Store in both localStorage and session
+                // Always store in session first
                 await SetSessionAsync(key, value);
                 
-                try
+                // Only try localStorage if JavaScript is available (client-side)
+                if (await IsJavaScriptAvailableAsync())
                 {
-                    var serializedValue = JsonConvert.SerializeObject(value);
-                    await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, serializedValue);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, $"Could not store in localStorage for key: {key}, using session only");
+                    try
+                    {
+                        var serializedValue = JsonConvert.SerializeObject(value);
+                        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, serializedValue);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, $"Could not store in localStorage for key: {key}, using session only");
+                    }
                 }
             }
             catch (Exception ex)
@@ -83,16 +110,20 @@ namespace CMS.Web.Services
         {
             try
             {
-                // Remove from both
+                // Remove from session
                 await RemoveSessionAsync(key);
                 
-                try
+                // Only try localStorage if JavaScript is available (client-side)
+                if (await IsJavaScriptAvailableAsync())
                 {
-                    await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
-                }
-                catch (Exception)
-                {
-                    // Ignore localStorage errors
+                    try
+                    {
+                        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, $"Could not remove from localStorage for key: {key}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -107,13 +138,17 @@ namespace CMS.Web.Services
             {
                 await ClearSessionAsync();
                 
-                try
+                // Only try localStorage if JavaScript is available (client-side)
+                if (await IsJavaScriptAvailableAsync())
                 {
-                    await _jsRuntime.InvokeVoidAsync("localStorage.clear");
-                }
-                catch (Exception)
-                {
-                    // Ignore localStorage errors
+                    try
+                    {
+                        await _jsRuntime.InvokeVoidAsync("localStorage.clear");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Could not clear localStorage");
+                    }
                 }
             }
             catch (Exception ex)
@@ -126,16 +161,19 @@ namespace CMS.Web.Services
         {
             try
             {
-                // Check localStorage first
-                try
+                // Check localStorage first - only if JavaScript is available
+                if (await IsJavaScriptAvailableAsync())
                 {
-                    var value = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
-                    if (!string.IsNullOrEmpty(value))
-                        return true;
-                }
-                catch (Exception)
-                {
-                    // Fall back to session
+                    try
+                    {
+                        var value = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", key);
+                        if (!string.IsNullOrEmpty(value))
+                            return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, $"Could not check localStorage for key: {key}");
+                    }
                 }
 
                 // Check session

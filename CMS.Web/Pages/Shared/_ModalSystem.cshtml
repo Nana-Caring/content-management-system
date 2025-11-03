@@ -1,0 +1,59 @@
+@*
+    Modal System Partial View
+    Include this in your layout or pages to enable modal functionality
+*@
+
+<!-- Modal CSS -->
+<link rel="stylesheet" href="~/css/modal.css" />
+
+<!-- Modal JavaScript -->
+<script src="~/js/modal-system.js"></script>
+
+<!-- Modal Root Container -->
+<div id="modal-root"></div>
+
+@* 
+    Usage Examples:
+    
+    JavaScript:
+    - Modal.showSuccess('Title', 'Message')
+    - Modal.showError('Title', 'Message')
+    - Modal.showConfirm('Title', 'Message', { onConfirm: () => { /* action */ } })
+    - Modal.confirmDelete('Item Name', () => { /* delete action */ })
+    
+    HTML Attributes:
+    - <button data-modal="success" data-modal-title="Success" data-modal-message="Operation completed">Show Success</button>
+    - <button data-modal="confirm" data-modal-title="Delete" data-modal-message="Are you sure?">Confirm Delete</button>
+*@
+
+<style>
+/* Additional modal styles can be added here if needed */
+</style>
+
+<script>
+// Additional modal helper functions
+window.showProductUpdateSuccess = function(productName) {
+    Modal.showSuccess('Product Updated', `"${productName}" has been updated successfully!`);
+};
+
+window.showProductUpdateError = function(error) {
+    Modal.showError('Update Failed', error || 'Failed to update the product. Please try again.');
+};
+
+window.confirmProductDelete = function(productName, deleteCallback) {
+    return Modal.confirmDelete(productName, deleteCallback);
+};
+
+window.showLoadingModal = function(message) {
+    return Modal.showLoading('Processing', message || 'Please wait while we process your request...');
+};
+
+window.showFormErrors = function(errors) {
+    let errorMessage = 'Please correct the following errors:<ul>';
+    errors.forEach(error => {
+        errorMessage += `<li>${error}</li>`;
+    });
+    errorMessage += '</ul>';
+    Modal.showError('Validation Error', errorMessage);
+};
+</script>

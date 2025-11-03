@@ -46,7 +46,7 @@ namespace CMS.Web.Controllers
         }
 
         /// <summary>
-        /// Portal login endpoint
+        /// Portal login endpoint - accepts any valid user credentials for portal access
         /// </summary>
         [HttpPost("admin-login")]
         public async Task<IActionResult> PortalLogin([FromBody] AdminLoginRequest loginRequest)
@@ -63,8 +63,9 @@ namespace CMS.Web.Controllers
                     var jsonContent = System.Text.Json.JsonSerializer.Serialize(externalPayload);
                     var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
                     
-                    _logger.LogInformation("Calling external API: {Url} with email: {Email}", $"{API_BASE_URL}/api/auth/admin-login", loginRequest.Email);
-                    var externalResponse = await _httpClient.PostAsync($"{API_BASE_URL}/api/auth/admin-login", content);
+                    // Try user login endpoint for portal access (any valid user can access portal)
+                    _logger.LogInformation("Calling external API: {Url} with email: {Email}", $"{API_BASE_URL}/api/auth/login", loginRequest.Email);
+                    var externalResponse = await _httpClient.PostAsync($"{API_BASE_URL}/api/auth/login", content);
                     
                     var responseContent = await externalResponse.Content.ReadAsStringAsync();
                     _logger.LogInformation("External API response status: {Status}, Content: {Content}", externalResponse.StatusCode, responseContent);
@@ -99,7 +100,7 @@ namespace CMS.Web.Controllers
                 }
 
                 _logger.LogInformation("All login attempts failed");
-                return Unauthorized(new { message = "Invalid admin credentials. Please check your email and password." });
+                return Unauthorized(new { message = "Invalid credentials. Please check your email and password." });
             }
             catch (Exception ex)
             {

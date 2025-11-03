@@ -6,6 +6,29 @@
 
 <script>
     // Initialize page-specific loader theme
+    // Debug helper function
+    window.debugProductUpdate = function(productId) {
+        console.log('🔍 Debugging Product Update for ID:', productId);
+        
+        // Check if row exists
+        const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+        console.log('Row found:', row);
+        
+        // Check table structure
+        const allRows = document.querySelectorAll('tr[data-product-id]');
+        console.log('All product rows:', allRows.length);
+        
+        // Check cells
+        if (row) {
+            const nameCell = row.querySelector('.product-name');
+            const descCell = row.querySelector('.product-description');
+            console.log('Name cell:', nameCell);
+            console.log('Description cell:', descCell);
+        }
+        
+        return { row, nameCell: row?.querySelector('.product-name'), descCell: row?.querySelector('.product-description') };
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         // Set products theme for this page
         if (window.ProfessionalLoader) {
@@ -408,12 +431,12 @@
                 {
                     foreach (var product in Model.Products)
                     {
-                        <tr>
+                        <tr data-product-id="@product.Id">
                             <td>
                                 <span class="id-badge">#@product.Id</span>
                             </td>
                             <td>
-                                <div class="fw-semibold">@(product.Name ?? "Unnamed Product")</div>
+                                <div class="fw-semibold product-name" title="@(product.Name ?? "Unnamed Product")">@(product.Name ?? "Unnamed Product")</div>
                                 <small class="text-muted">Product ID: @product.Id</small>
                             </td>
                             <td>
@@ -432,11 +455,11 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(product.Description))
                                 {
-                                    <div>@(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</div>
+                                    <div class="product-description" title="@product.Description">@(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</div>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">No description</span>
+                                    <span class="text-muted product-description">No description</span>
                                 }
                             </td>
                             <td>
@@ -445,12 +468,13 @@
                             </td>
                             <td>
                                 <div class="action-buttons">
-                                    <button type="button" class="btn btn-sm btn-warning modern-btn js-edit-btn" data-product-id="@product.Id" title="Edit Product">
+                                    <button type="button" class="btn btn-sm btn-warning modern-btn js-edit-btn" 
+                                            data-product-id="@product.Id" 
+                                            data-product-name="@(product.Name ?? "Unnamed Product")" 
+                                            title="Edit Product">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-danger modern-btn" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#deleteModal" 
+                                    <button type="button" class="btn btn-sm btn-danger modern-btn js-delete-btn" 
                                             data-product-id="@product.Id" 
                                             data-product-name="@(product.Name ?? "Unnamed Product")"
                                             title="Delete Product">
@@ -807,4 +831,350 @@ function scrollToTop() {
         });
     }
 }
+
+// Enhanced Product Update with Modal Feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Show loading modal
+            let loadingModal = null;
+            if (typeof Modal !== 'undefined' && Modal.showLoading) {
+                loadingModal = Modal.showLoading('Updating product...', 'Please wait while we save your changes.');
+            } else {
+                console.log('Updating product...');
+            }
+            
+            try {
+                const formData = new FormData(editForm);
+                const productName = formData.get('name') || 'Product';
+                const productId = formData.get('id');
+                
+                // Debug: Log form data being sent
+                console.log('📤 Submitting product update:');
+                console.log('- Product ID:', productId);
+                console.log('- Product Name:', productName);
+                console.log('- Form Action:', editForm.action);
+                for (let [key, value] of formData.entries()) {
+                    console.log(`- ${key}:`, value);
+                }
+                
+                const response = await fetch(editForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+                
+                if (typeof Modal !== 'undefined' && Modal.hide) {
+                    Modal.hide();
+                }
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Debug: Log server response
+                    console.log('📥 Server Response:', result);
+                    
+                    if (result.success) {
+                        console.log('✅ Update successful, received data:', result.data);
+                        
+                        // Close edit modal first
+                        const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                        if (editModal) {
+                            editModal.hide();
+                        }
+                        
+                        // Update the UI immediately with the returned data
+                        updateProductInTable(result.data);
+                        
+                        // Show success modal
+                        if (typeof Modal !== 'undefined') {
+                            Modal.showSuccess(
+                                'Product Updated Successfully!',
+                                `"${productName}" has been updated successfully and changes are now live in the table below!`
+                            );
+                        }
+                        
+                        // Remove the automatic refresh since we're updating the table directly
+                        console.log('🎯 Product update complete - no page refresh needed');
+                        
+                    } else {
+                        console.error('❌ Update failed:', result.message);
+                        if (typeof Modal !== 'undefined') {
+                            Modal.showError(
+                                'Update Failed',
+                                result.message || 'Failed to update product. Please try again.'
+                            );
+                        }
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Server error response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        responseText: errorText
+                    });
+                    if (typeof Modal !== 'undefined') {
+                        Modal.showError(
+                            'Server Error',
+                            `Failed to update product. Server error: ${response.status}. Please check the console for details.`
+                        );
+                    }
+                }
+            } catch (error) {
+                if (typeof Modal !== 'undefined' && Modal.hide) {
+                    Modal.hide();
+                }
+                console.error('Update error:', error);
+                if (typeof Modal !== 'undefined') {
+                    Modal.showError(
+                        'Network Error',
+                        'A network error occurred while updating the product. Please check your connection and try again.'
+                    );
+                }
+            }
+        });
+    }
+    
+    // Enhanced Delete Confirmation with Modal
+    const deleteButtons = document.querySelectorAll('.js-delete-btn');
+    deleteButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name') || 'this product';
+            
+            if (typeof Modal !== 'undefined' && Modal.showConfirm) {
+                Modal.showConfirm(
+                    'Delete Product',
+                    `Are you sure you want to delete "${productName}"? This action cannot be undone.`,
+                    async () => {
+                let loadingModal = null;
+                if (typeof Modal !== 'undefined' && Modal.showLoading) {
+                    loadingModal = Modal.showLoading('Deleting product...', 'Please wait while we remove this product.');
+                } else {
+                    console.log('Deleting product...');
+                }
+                
+                try {
+                    const deleteForm = document.getElementById('deleteForm');
+                    document.getElementById('deleteId').value = productId;
+                    
+                    const formData = new FormData(deleteForm);
+                    
+                    const response = await fetch(deleteForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (typeof Modal !== 'undefined' && Modal.hide) {
+                        Modal.hide();
+                    }
+                    
+                    if (response.ok) {
+                        Modal.showSuccess('Product Deleted', `"${productName}" has been deleted successfully.`);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        Modal.showError('Delete Failed', 'Failed to delete the product. Please try again.');
+                    }
+                } catch (error) {
+                    if (typeof Modal !== 'undefined' && Modal.hide) {
+                        Modal.hide();
+                    }
+                    console.error('Delete error:', error);
+                    if (typeof Modal !== 'undefined') {
+                        Modal.showError(
+                            'Delete Failed',
+                            'A network error occurred while deleting the product. Please check your connection and try again.'
+                        );
+                    }
+                }
+            }); // End of confirm modal callback
+            } else {
+                // Fallback if Modal is not available
+                if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+                    // Simple delete without modal loading - wrapped in async function
+                    (async () => {
+                        try {
+                            const deleteForm = document.getElementById('deleteForm');
+                            document.getElementById('deleteId').value = productId;
+                            const formData = new FormData(deleteForm);
+                            
+                            const response = await fetch(deleteForm.action, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            
+                            if (response.ok) {
+                                alert(`"${productName}" has been deleted successfully.`);
+                                window.location.reload();
+                            } else {
+                                alert('Failed to delete the product. Please try again.');
+                            }
+                        } catch (error) {
+                            console.error('Delete error:', error);
+                            alert('A network error occurred while deleting the product.');
+                        }
+                    })();
+                }
+            }
+        });
+    });
+
+    // Enhanced Function to update product data in the table without page reload
+    function updateProductInTable(productData) {
+        console.log('🔄 Updating product in table:', productData);
+        
+        if (!productData || !productData.id) {
+            console.warn('❌ Invalid product data provided for table update');
+            return;
+        }
+
+        // Find the table row for this product
+        const productRow = document.querySelector(`tr[data-product-id="${productData.id}"]`);
+        if (!productRow) {
+            console.warn(`❌ Product row not found for ID: ${productData.id}`);
+            console.log('Available rows:', document.querySelectorAll('tr[data-product-id]'));
+            return;
+        }
+
+        console.log('✅ Found product row for ID:', productData.id);
+
+        try {
+            // Update the product name in the table
+            const nameCell = productRow.querySelector('.product-name');
+            if (nameCell && productData.name) {
+                nameCell.textContent = productData.name;
+                nameCell.setAttribute('title', productData.name);
+                console.log('✅ Updated product name to:', productData.name);
+            }
+
+            // Update the description in the table
+            const descriptionCell = productRow.querySelector('.product-description');
+            if (descriptionCell && productData.description) {
+                const truncatedDesc = productData.description.length > 100 
+                    ? productData.description.substring(0, 100) + '...' 
+                    : productData.description;
+                
+                // Handle both div and span elements
+                if (descriptionCell.tagName === 'DIV') {
+                    descriptionCell.textContent = truncatedDesc;
+                } else {
+                    // If it's a "No description" span, replace it with div
+                    const newDescDiv = document.createElement('div');
+                    newDescDiv.className = 'product-description';
+                    newDescDiv.textContent = truncatedDesc;
+                    newDescDiv.setAttribute('title', productData.description);
+                    descriptionCell.parentElement.replaceChild(newDescDiv, descriptionCell);
+                }
+                console.log('✅ Updated description');
+            }
+
+            // Update table cells based on available data
+            const cells = productRow.querySelectorAll('td');
+            
+            // Column 1: ID (already set, no need to update)
+            
+            // Column 2: Name (already updated above)
+            
+            // Column 3: API Link (if present)
+            if (productData.apiLink && cells[2]) {
+                const apiCell = cells[2];
+                if (productData.apiLink) {
+                    apiCell.innerHTML = `<a href="${productData.apiLink}" target="_blank" class="api-link" title="Open API Link">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        ${productData.apiLink.length > 30 ? productData.apiLink.substring(0, 30) + "..." : productData.apiLink}
+                    </a>`;
+                }
+            }
+            
+            // Column 4: Description (already updated above)
+            
+            // Column 5: Created At (no need to update)
+
+            // Add visual feedback to show the row was updated
+            productRow.style.transition = 'all 0.3s ease';
+            productRow.style.backgroundColor = '#d4edda'; // Light green
+            productRow.style.transform = 'scale(1.01)';
+            
+            // Add a "Updated!" badge temporarily
+            const nameContainer = productRow.querySelector('.product-name').parentElement;
+            const existingBadge = nameContainer.querySelector('.update-badge');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            const updateBadge = document.createElement('span');
+            updateBadge.className = 'badge bg-success ms-2 update-badge animate__animated animate__pulse';
+            updateBadge.innerHTML = '<i class="fas fa-check"></i> Updated!';
+            nameContainer.appendChild(updateBadge);
+            
+            // Reset visual feedback after animation
+            setTimeout(() => {
+                productRow.style.backgroundColor = '';
+                productRow.style.transform = '';
+                if (updateBadge && updateBadge.parentElement) {
+                    updateBadge.remove();
+                }
+            }, 3000);
+
+            // Update edit button data attributes
+            const editBtn = productRow.querySelector('.js-edit-btn');
+            if (editBtn && productData.name) {
+                editBtn.setAttribute('data-product-name', productData.name);
+                // Update other attributes if available
+                if (productData.id) editBtn.setAttribute('data-product-id', productData.id);
+                console.log('✅ Updated edit button attributes');
+            }
+
+            // Update delete button data attributes  
+            const deleteBtn = productRow.querySelector('.js-delete-btn');
+            if (deleteBtn && productData.name) {
+                deleteBtn.setAttribute('data-product-name', productData.name);
+                if (productData.id) deleteBtn.setAttribute('data-product-id', productData.id);
+                console.log('✅ Updated delete button attributes');
+            }
+
+            console.log(`🎉 Successfully updated product ${productData.id} in table`);
+            
+            // Show a brief success notification
+            if (typeof Modal !== 'undefined' && Modal.showSuccess) {
+                Modal.showSuccess(
+                    'Table Updated!',
+                    `Product "${productData.name}" has been updated in the table. Changes are now visible immediately!`,
+                    null,
+                    2000 // Auto-close after 2 seconds
+                );
+            }
+            
+        } catch (error) {
+            console.error('❌ Error updating product in table:', error);
+            
+            if (typeof Modal !== 'undefined' && Modal.showError) {
+                Modal.showError(
+                    'Update Display Error',
+                    'The product was saved successfully, but there was an issue updating the table display. The page will refresh to show the changes.'
+                );
+            }
+            
+            // Fallback: refresh page after a delay if table update fails
+            setTimeout(() => {
+                console.log('Refreshing page due to table update error...');
+                window.location.reload();
+            }, 2000);
+        }
+    }
+});
 </script>

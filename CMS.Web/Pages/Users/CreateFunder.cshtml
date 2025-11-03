@@ -1,0 +1,282 @@
+@page "/Users/CreateFunder"
+@model CMS.Web.Pages.Users.CreateFunderModel
+@{
+    ViewData["Title"] = "Register New Funder";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-plus"></i> Register New Funder
+                    </h3>
+                    <a href="/Users" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Users
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                    {
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> @Model.SuccessMessage
+                        </div>
+                    }
+
+                    <form method="post" id="funderForm" class="needs-validation" novalidate>
+                        <div class="row">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="fas fa-user"></i> Personal Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="FirstName" class="form-label">First Name *</label>
+                                            <input asp-for="FunderRequest.FirstName" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.FirstName" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="MiddleName" class="form-label">Middle Name</label>
+                                            <input asp-for="FunderRequest.MiddleName" class="form-control">
+                                            <span asp-validation-for="FunderRequest.MiddleName" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="Surname" class="form-label">Surname *</label>
+                                            <input asp-for="FunderRequest.Surname" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.Surname" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="Email" class="form-label">Email Address *</label>
+                                            <input asp-for="FunderRequest.Email" type="email" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.Email" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="Password" class="form-label">Password *</label>
+                                            <input asp-for="FunderRequest.Password" type="password" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.Password" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="Idnumber" class="form-label">ID Number *</label>
+                                            <input asp-for="FunderRequest.Idnumber" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.Idnumber" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="PhoneNumber" class="form-label">Phone Number *</label>
+                                            <input asp-for="FunderRequest.PhoneNumber" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.PhoneNumber" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address Information -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5><i class="fas fa-map-marker-alt"></i> Address Information</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Home Address -->
+                                        <h6 class="text-primary">Home Address</h6>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="HomeAddressLine1" class="form-label">Address Line 1 *</label>
+                                            <input asp-for="FunderRequest.HomeAddressLine1" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.HomeAddressLine1" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="HomeAddressLine2" class="form-label">Address Line 2</label>
+                                            <input asp-for="FunderRequest.HomeAddressLine2" class="form-control">
+                                            <span asp-validation-for="FunderRequest.HomeAddressLine2" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="HomeCity" class="form-label">City *</label>
+                                                    <input asp-for="FunderRequest.HomeCity" class="form-control" required>
+                                                    <span asp-validation-for="FunderRequest.HomeCity" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="HomeProvince" class="form-label">Province *</label>
+                                                    <input asp-for="FunderRequest.HomeProvince" class="form-control" required>
+                                                    <span asp-validation-for="FunderRequest.HomeProvince" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-4">
+                                            <label for="HomeCode" class="form-label">Postal Code *</label>
+                                            <input asp-for="FunderRequest.HomeCode" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.HomeCode" class="text-danger"></span>
+                                        </div>
+
+                                        <!-- Postal Address -->
+                                        <hr>
+                                        <h6 class="text-primary">Postal Address</h6>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="PostalAddressLine1" class="form-label">Address Line 1 *</label>
+                                            <input asp-for="FunderRequest.PostalAddressLine1" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.PostalAddressLine1" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="PostalAddressLine2" class="form-label">Address Line 2</label>
+                                            <input asp-for="FunderRequest.PostalAddressLine2" class="form-control">
+                                            <span asp-validation-for="FunderRequest.PostalAddressLine2" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="PostalCity" class="form-label">City *</label>
+                                                    <input asp-for="FunderRequest.PostalCity" class="form-control" required>
+                                                    <span asp-validation-for="FunderRequest.PostalCity" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-group mb-3">
+                                                    <label for="PostalProvince" class="form-label">Province *</label>
+                                                    <input asp-for="FunderRequest.PostalProvince" class="form-control" required>
+                                                    <span asp-validation-for="FunderRequest.PostalProvince" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label for="PostalCode" class="form-label">Postal Code *</label>
+                                            <input asp-for="FunderRequest.PostalCode" class="form-control" required>
+                                            <span asp-validation-for="FunderRequest.PostalCode" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-secondary me-2" onclick="history.back()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-user-plus"></i> Register Funder
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('funderForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading modal
+            Modal.showLoading('Registering funder...', 'Please wait while we create the account.');
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+            
+            // Prepare form data
+            const formData = new FormData(form);
+            
+            // Submit form via AJAX
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                Modal.hide(); // Hide loading modal
+                
+                if (data.success) {
+                    Modal.showSuccess(
+                        'Funder Registered Successfully!',
+                        `The funder account has been created successfully. Account details have been set up.`,
+                        () => {
+                            // Reset form or redirect
+                            window.location.href = '/Users';
+                        }
+                    );
+                } else {
+                    Modal.showError(
+                        'Registration Failed',
+                        data.message || 'An error occurred while registering the funder.'
+                    );
+                }
+            })
+            .catch(error => {
+                Modal.hide(); // Hide loading modal
+                console.error('Error:', error);
+                Modal.showError(
+                    'Network Error',
+                    'A network error occurred. Please check your connection and try again.'
+                );
+            })
+            .finally(() => {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Register Funder';
+            });
+        });
+    }
+    
+    // Copy home address to postal address functionality
+    const copyAddressBtn = document.createElement('button');
+    copyAddressBtn.type = 'button';
+    copyAddressBtn.className = 'btn btn-outline-secondary btn-sm mb-3';
+    copyAddressBtn.innerHTML = '<i class="fas fa-copy"></i> Copy from Home Address';
+    copyAddressBtn.onclick = function() {
+        document.querySelector('[name="FunderRequest.PostalAddressLine1"]').value = document.querySelector('[name="FunderRequest.HomeAddressLine1"]').value;
+        document.querySelector('[name="FunderRequest.PostalAddressLine2"]').value = document.querySelector('[name="FunderRequest.HomeAddressLine2"]').value;
+        document.querySelector('[name="FunderRequest.PostalCity"]').value = document.querySelector('[name="FunderRequest.HomeCity"]').value;
+        document.querySelector('[name="FunderRequest.PostalProvince"]').value = document.querySelector('[name="FunderRequest.HomeProvince"]').value;
+        document.querySelector('[name="FunderRequest.PostalCode"]').value = document.querySelector('[name="FunderRequest.HomeCode"]').value;
+    };
+    
+    // Insert copy button before postal address line 1
+    const postalSection = document.querySelector('h6.text-primary:last-of-type');
+    if (postalSection) {
+        postalSection.parentNode.insertBefore(copyAddressBtn, postalSection.nextElementSibling);
+    }
+});
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

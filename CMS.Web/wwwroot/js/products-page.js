@@ -17,10 +17,10 @@ class ProductsPageComponent extends window.CMS.StoreComponent {
         // Connect to store
         this.connect(
             (state) => ({
-                products: state.products.items,
-                isLoading: state.products.isLoading,
-                error: state.products.error,
-                filters: state.products.filters
+                products: state.products?.items || [],
+                isLoading: state.products?.isLoading || false,
+                error: state.products?.error || null,
+                filters: state.products?.filters || {}
             }),
             (dispatch) => ({
                 fetchProducts: (filters) => dispatch(window.CMS.productActions.fetchProducts(filters)),
@@ -107,9 +107,9 @@ class ProductsPageComponent extends window.CMS.StoreComponent {
             this.connector.bindTable(
                 table,
                 (state) => ({
-                    items: state.products.items,
-                    isLoading: state.products.isLoading,
-                    error: state.products.error
+                    items: state.products?.items || [],
+                    isLoading: state.products?.isLoading || false,
+                    error: state.products?.error || null
                 }),
                 (product) => `
                     <tr>

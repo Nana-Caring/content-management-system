@@ -583,6 +583,220 @@ namespace CMS.Web.Controllers
             }
         }
 
+        // PRODUCT ENDPOINTS
+
+        /// <summary>
+        /// Get all products
+        /// </summary>
+        [HttpGet("products")]
+        public async Task<IActionResult> GetProducts()
+        {
+            try
+            {
+                var products = await _context.Products.ToListAsync();
+                var adminProducts = products.Select(p => new AdminProduct
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    CreatedAt = p.CreatedAt,
+                    IsActive = true
+                }).ToList();
+
+                return Ok(new AdminProductListResponse
+                {
+                    Success = true,
+                    Data = adminProducts,
+                    Message = "Products retrieved successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving products");
+                return StatusCode(500, new AdminProductListResponse
+                {
+                    Success = false,
+                    Message = "Failed to retrieve products"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get product by ID
+        /// </summary>
+        [HttpGet("products/{id}")]
+        public async Task<IActionResult> GetProduct(int id)
+        {
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                {
+                    return NotFound(new AdminProductResponse
+                    {
+                        Success = false,
+                        Message = "Product not found"
+                    });
+                }
+
+                var adminProduct = new AdminProduct
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    CreatedAt = product.CreatedAt,
+                    IsActive = true
+                };
+
+                return Ok(new AdminProductResponse
+                {
+                    Success = true,
+                    Data = adminProduct,
+                    Message = "Product retrieved successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving product {id}");
+                return StatusCode(500, new AdminProductResponse
+                {
+                    Success = false,
+                    Message = "Failed to retrieve product"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Update product
+        /// </summary>
+        [HttpPut("products/{id}")]
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] AdminProductUpdateRequest request)
+        {
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                {
+                    return NotFound(new AdminProductResponse
+                    {
+                        Success = false,
+                        Message = "Product not found"
+                    });
+                }
+
+                // Update product properties
+                product.Name = request.Name ?? product.Name;
+                product.Description = request.Description ?? product.Description;
+
+                _context.Products.Update(product);
+                await _context.SaveChangesAsync();
+
+                var adminProduct = new AdminProduct
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    CreatedAt = product.CreatedAt,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+
+                _logger.LogInformation($"Product {id} updated successfully by user {GetCurrentUserId()}");
+
+                return Ok(new AdminProductResponse
+                {
+                    Success = true,
+                    Data = adminProduct,
+                    Message = "Product updated successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating product {id}");
+                return StatusCode(500, new AdminProductResponse
+                {
+                    Success = false,
+                    Message = "Failed to update product"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Create new product
+        /// </summary>
+        [HttpPost("products")]
+        public async Task<IActionResult> CreateProduct([FromBody] AdminProductCreateRequest request)
+        {
+            try
+            {
+                var product = new Product
+                {
+                    Name = request.Name,
+                    Description = request.Description ?? string.Empty,
+                    ApiLink = string.Empty, // Set default or from request if available
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+
+                var adminProduct = new AdminProduct
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    CreatedAt = product.CreatedAt,
+                    IsActive = true
+                };
+
+                _logger.LogInformation($"Product created successfully by user {GetCurrentUserId()}");
+
+                return Created($"/admin/products/{product.Id}", new AdminProductResponse
+                {
+                    Success = true,
+                    Data = adminProduct,
+                    Message = "Product created successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating product");
+                return StatusCode(500, new AdminProductResponse
+                {
+                    Success = false,
+                    Message = "Failed to create product"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Delete product
+        /// </summary>
+        [HttpDelete("products/{id}")]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                {
+                    return NotFound(new { success = false, message = "Product not found" });
+                }
+
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Product {id} deleted successfully by user {GetCurrentUserId()}");
+
+                return Ok(new { success = true, message = "Product deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting product {id}");
+                return StatusCode(500, new { success = false, message = "Failed to delete product" });
+            }
+        }
+
         /// <summary>
         /// Get current user ID from JWT token
         /// </summary>

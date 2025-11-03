@@ -163,10 +163,35 @@ namespace CMS.Web.Pages.Products
                 };
 
                 var product = await _productService.CreateProductAsync(request);
+                
+                // Return JSON response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = true, 
+                        message = "Product created successfully and persisted automatically!",
+                        data = new {
+                            id = product.Id,
+                            name = product.Name,
+                            brand = product.Brand,
+                            description = product.Description
+                        }
+                    });
+                }
+                
                 TempData["SuccessMessage"] = "Product created successfully and persisted automatically!";
             }
             catch (Exception ex)
             {
+                // Return JSON error response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = false, 
+                        message = "An error occurred while creating the product: " + ex.Message
+                    }) { StatusCode = 400 };
+                }
+                
                 TempData["ErrorMessage"] = "An error occurred while creating the product.";
                 Console.WriteLine(ex);
             }
@@ -218,10 +243,49 @@ namespace CMS.Web.Pages.Products
                 };
 
                 var product = await _productService.UpdateProductAsync(id, request);
+                
+                // Return JSON response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = true, 
+                        message = "Product updated successfully and persisted automatically!",
+                        data = new {
+                            id = product.Id,
+                            name = product.Name,
+                            brand = product.Brand,
+                            description = product.Description,
+                            price = product.Price,
+                            category = product.Category,
+                            sku = product.Sku,
+                            detailedDescription = product.DetailedDescription,
+                            image = product.Image,
+                            inStock = product.InStock,
+                            stockQuantity = product.StockQuantity,
+                            isActive = product.IsActive,
+                            minAge = product.MinAge,
+                            maxAge = product.MaxAge,
+                            ageCategory = product.AgeCategory,
+                            requiresAgeVerification = product.RequiresAgeVerification,
+                            createdAt = product.CreatedAt,
+                            updatedAt = product.UpdatedAt
+                        }
+                    });
+                }
+                
                 TempData["SuccessMessage"] = "Product updated successfully and persisted automatically!";
             }
             catch (Exception ex)
             {
+                // Return JSON error response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = false, 
+                        message = "An error occurred while updating the product: " + ex.Message
+                    }) { StatusCode = 400 };
+                }
+                
                 TempData["ErrorMessage"] = "An error occurred while updating the product.";
                 Console.WriteLine(ex);
             }
@@ -234,6 +298,26 @@ namespace CMS.Web.Pages.Products
             try
             {
                 bool success = await _productService.DeleteProductAsync(id);
+                
+                // Return JSON response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    if (success)
+                    {
+                        return new JsonResult(new { 
+                            success = true, 
+                            message = "Product deleted successfully and persisted automatically!"
+                        });
+                    }
+                    else
+                    {
+                        return new JsonResult(new { 
+                            success = false, 
+                            message = "Failed to delete product"
+                        }) { StatusCode = 400 };
+                    }
+                }
+                
                 if (success)
                 {
                     TempData["SuccessMessage"] = "Product deleted successfully and persisted automatically!";
@@ -245,6 +329,15 @@ namespace CMS.Web.Pages.Products
             }
             catch (Exception ex)
             {
+                // Return JSON error response for AJAX calls
+                if (Request.Headers.Accept.Contains("application/json"))
+                {
+                    return new JsonResult(new { 
+                        success = false, 
+                        message = "An error occurred while deleting the product: " + ex.Message
+                    }) { StatusCode = 400 };
+                }
+                
                 TempData["ErrorMessage"] = "An error occurred while deleting the product.";
                 Console.WriteLine(ex);
             }
