@@ -189,14 +189,12 @@ function populateProfile(user) {
     }
     
     function populateElements() {
-        // Get fresh references to elements
-        const firstNameInput = document.getElementById('profileFirstName');
-        const lastNameInput = document.getElementById('profileLastName');
-        const emailInput = document.getElementById('profileEmailInput');
-        const phoneInput = document.getElementById('profilePhone');
-        const dobInput = document.getElementById('profileDateOfBirth');
-        const genderInput = document.getElementById('profileGender');
-        const addressInput = document.getElementById('profileAddress');
+        // Get fresh references to elements - USING CORRECT IDs!
+        const firstNameInput = document.getElementById('profile-firstName');
+        const lastNameInput = document.getElementById('profile-surname');
+        const emailInput = document.getElementById('profile-email');
+        const phoneInput = document.getElementById('profile-phoneNumber');
+        const middleNameInput = document.getElementById('profile-middleName');
     
         // DISPLAY EXACT API DATA - NO FALLBACKS!
         if (firstNameInput) {
