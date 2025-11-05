@@ -41,13 +41,63 @@ function loadPortalSectionData(section) {
  * Load dashboard data from API
  */
 async function loadDashboardData() {
+    console.log('🎯 Loading dashboard data...');
+    
+    // Check if PortalAPI is available
+    if (!window.PortalAPI) {
+        console.error('❌ PortalAPI not available!');
+        showDashboardError('Portal API not loaded. Please refresh the page.');
+        return;
+    }
+    
+    // Check if portal token exists
+    const portalToken = localStorage.getItem('portal-token');
+    console.log('🔑 Portal token exists:', !!portalToken);
+    
+    if (!portalToken) {
+        console.warn('⚠️ No portal token found - user needs to login');
+        showDashboardAuthError();
+        return;
+    }
+    
     try {
-        const response = await makeAuthenticatedRequest('/api/portal/me');
-
-        if (response.ok) {
-            const data = await response.json();
-            const user = data.user;
+        // Show loading state
+        showDashboardLoading();
+        
+        console.log('📦 Loading user data from login response cache...');
+        
+        // Get user data from login response (cached by PortalPersistence)
+        const user = window.PortalPersistence?.getCurrentUser();
+        
+        if (!user || !user.Accounts) {
+            console.error('❌ No user data or accounts found in cache');
+            throw new Error('User data not found. Please log in again.');
+        }
+        
+        console.log('📥 User data loaded from cache:', {
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            surname: user.surname,
+            accountCount: user.Accounts.length
+        });
+        
+        console.log('💳 Accounts loaded from cache:', user.Accounts);
+        
+        // User data already includes accounts (attached during login)
+        const data = { user };
+        
+        console.log('📋 Data keys:', Object.keys(data));
+        
+        if (data && data.user) {
             const transactions = data.recentTransactions || [];
+            
+            console.log('✅ User data valid:', {
+                userId: user.id,
+                email: user.email,
+                accountCount: user.Accounts ? user.Accounts.length : 0,
+                transactionCount: transactions.length
+            });
             
             // Calculate statistics
             const stats = calculateDashboardStats(user, transactions);
@@ -57,12 +107,49 @@ async function loadDashboardData() {
             
             // Load recent activity
             loadRecentActivity(transactions, user);
+            
+            console.log('✅ Dashboard loaded successfully');
         } else {
-            throw new Error('Failed to load dashboard data');
+            console.error('❌ Invalid response data:', data);
+            throw new Error('Invalid response data - missing user object');
         }
     } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        showDashboardError();
+        console.error('❌ Error loading dashboard data:', error);
+        console.error('Error details:', {
+            message: error.message,
+            status: error.status,
+            stack: error.stack
+        });
+        
+        // Check if it's an authentication error
+        if (error.message.includes('authentication') || error.message.includes('log in again') || error.status === 401) {
+            showDashboardAuthError();
+        } else {
+            showDashboardError(error.message);
+        }
+    }
+}
+
+/**
+ * Show loading state for dashboard
+ */
+function showDashboardLoading() {
+    const elements = ['accountBalance', 'totalTransactions', 'totalBeneficiaries', 'activeAccounts'];
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    });
+    
+    const activityContainer = document.getElementById('recentActivity');
+    if (activityContainer) {
+        activityContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2">Loading dashboard data...</p>
+            </div>
+        `;
     }
 }
 
@@ -74,26 +161,24 @@ function calculateDashboardStats(user, transactions) {
     let accountCount = 0;
     let dependentCount = 0;
     
-    // Calculate balance from user accounts
-    if (user.accounts) {
-        user.accounts.forEach(account => {
+    // Calculate balance from user accounts (handle both 'Accounts' and 'accounts')
+    const userAccounts = user.Accounts || user.accounts || [];
+    userAccounts.forEach(account => {
+        totalBalance += parseFloat(account.balance || 0);
+        accountCount++;
+    });
+    
+    // Add dependent accounts (handle both 'Dependents' and 'dependents')
+    const userDependents = user.Dependents || user.dependents || [];
+    dependentCount = userDependents.length;
+    
+    userDependents.forEach(dependent => {
+        const dependentAccounts = dependent.Accounts || dependent.accounts || [];
+        dependentAccounts.forEach(account => {
             totalBalance += parseFloat(account.balance || 0);
             accountCount++;
         });
-    }
-    
-    // Add dependent accounts
-    if (user.Dependents) {
-        dependentCount = user.Dependents.length;
-        user.Dependents.forEach(dependent => {
-            if (dependent.accounts) {
-                dependent.accounts.forEach(account => {
-                    totalBalance += parseFloat(account.balance || 0);
-                    accountCount++;
-                });
-            }
-        });
-    }
+    });
     
     return {
         totalBalance,
@@ -121,16 +206,42 @@ function updateDashboardStats(stats) {
 /**
  * Show dashboard error state
  */
-function showDashboardError() {
+function showDashboardError(errorMessage = 'Error loading dashboard data') {
     const elements = ['accountBalance', 'totalTransactions', 'totalBeneficiaries', 'activeAccounts'];
     elements.forEach(id => {
         const element = document.getElementById(id);
-        if (element) element.textContent = 'Error';
+        if (element) element.innerHTML = '<span class="text-danger">--</span>';
     });
     
     const activityContainer = document.getElementById('recentActivity');
     if (activityContainer) {
-        activityContainer.innerHTML = '<p class="text-danger">Error loading dashboard data</p>';
+        activityContainer.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> ${errorMessage}
+                <button onclick="loadDashboardData()" class="btn btn-sm btn-outline-danger float-end">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Show authentication error state
+ */
+function showDashboardAuthError() {
+    const activityContainer = document.getElementById('recentActivity');
+    if (activityContainer) {
+        activityContainer.innerHTML = `
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-shield-exclamation me-2"></i>
+                <strong>Authentication Required:</strong> Please log in to view your dashboard.
+                <button onclick="showLoginModal()" class="btn btn-sm btn-outline-warning float-end">
+                    <i class="bi bi-box-arrow-in-right"></i> Login
+                </button>
+            </div>
+        `;
     }
 }
 

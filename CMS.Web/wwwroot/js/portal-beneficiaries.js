@@ -11,6 +11,18 @@ function loadBeneficiariesData() {
     const container = document.getElementById('beneficiariesContainer');
     if (!container) return;
     
+    // Check authentication using PortalPersistence
+    if (!window.PortalPersistence?.isLoggedIn()) {
+        console.warn('🔒 Not authenticated for beneficiaries');
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-lock me-2"></i>
+                Please log in to view your beneficiaries.
+            </div>
+        `;
+        return;
+    }
+    
     // Mock beneficiaries data for now
     // TODO: Replace with actual API call when endpoint is available
     const beneficiaries = [

@@ -3,47 +3,100 @@
  * Handles transaction data loading and display
  */
 
+// Transaction filter state
+let currentFilters = {
+    page: 1,
+    limit: 10,
+    accountId: null,
+    type: null,
+    startDate: null,
+    endDate: null
+};
+
 /**
  * Load transactions data from API
  */
-async function loadTransactionsData() {
+async function loadTransactionsData(filters = {}) {
     const container = document.getElementById('transactionsContainer');
     if (!container) return;
     
+    // Check authentication using PortalPersistence
+    if (!window.PortalPersistence?.isLoggedIn()) {
+        console.warn('🔒 Not authenticated for transactions');
+        container.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-lock me-2"></i>
+                Please log in to view your transactions.
+            </div>
+        `;
+        return;
+    }
+    
+    // Update current filters
+    currentFilters = { ...currentFilters, ...filters };
+    
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading transactions...</p>
+        </div>
+    `;
+    
     try {
-        const response = await makeAuthenticatedRequest('/api/portal/me');
-
-        if (response.ok) {
-            const data = await response.json();
-            const transactions = data.recentTransactions || [];
-            
-            if (transactions.length === 0) {
-                container.innerHTML = '<p class="text-muted">No recent transactions found.</p>';
-                return;
-            }
-            
-            // Render transactions table
-            renderTransactionsTable(container, transactions);
-            
-        } else {
-            throw new Error('Failed to load transactions data');
+        // Use PortalAPI to get transactions with filters
+        const data = await window.PortalAPI.getPortalUserTransactions(currentFilters);
+        
+        const transactions = data.transactions || [];
+        const pagination = data.pagination || null;
+        
+        if (transactions.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No transactions found.
+                </div>
+            `;
+            return;
         }
+        
+        // Render transactions table with pagination
+        renderTransactionsTable(container, transactions, pagination);
+        
     } catch (error) {
         console.error('Error loading transactions data:', error);
-        container.innerHTML = '<p class="text-danger">Error loading transactions data</p>';
+        
+        let errorMessage = 'Error loading transactions data';
+        if (error.message.includes('authentication') || error.status === 401) {
+            errorMessage = 'Authentication required. Please log in to view transactions.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        container.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> ${errorMessage}
+                <button onclick="loadTransactionsData()" class="btn btn-sm btn-outline-danger float-end">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
 /**
  * Render transactions table
  */
-function renderTransactionsTable(container, transactions) {
+function renderTransactionsTable(container, transactions, pagination = null) {
     // Calculate summary statistics
-    const totalAmount = transactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-    const creditTransactions = transactions.filter(t => t.type === 'Credit');
-    const debitTransactions = transactions.filter(t => t.type !== 'Credit');
+    const totalAmount = transactions.reduce((sum, t) => sum + Math.abs(parseFloat(t.amount || 0)), 0);
+    const creditTransactions = transactions.filter(t => parseFloat(t.amount || 0) > 0);
+    const debitTransactions = transactions.filter(t => parseFloat(t.amount || 0) < 0);
     const totalCredit = creditTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-    const totalDebit = debitTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+    const totalDebit = Math.abs(debitTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0));
     
     container.innerHTML = `
         <!-- Summary Cards -->
@@ -51,8 +104,9 @@ function renderTransactionsTable(container, transactions) {
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
-                        <h6 class="card-title">Total Transactions</h6>
+                        <h6 class="card-title">Showing</h6>
                         <h4 class="mb-0">${transactions.length}</h4>
+                        ${pagination ? `<small>of ${pagination.total} total</small>` : ''}
                     </div>
                 </div>
             </div>
@@ -65,7 +119,7 @@ function renderTransactionsTable(container, transactions) {
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-warning text-white">
+                <div class="card bg-danger text-white">
                     <div class="card-body text-center">
                         <h6 class="card-title">Total Debits</h6>
                         <h4 class="mb-0">R${totalDebit.toFixed(2)}</h4>
@@ -76,7 +130,9 @@ function renderTransactionsTable(container, transactions) {
                 <div class="card bg-info text-white">
                     <div class="card-body text-center">
                         <h6 class="card-title">Net Amount</h6>
-                        <h4 class="mb-0">R${(totalCredit - totalDebit).toFixed(2)}</h4>
+                        <h4 class="mb-0 ${(totalCredit - totalDebit) >= 0 ? '' : 'text-warning'}">
+                            R${(totalCredit - totalDebit).toFixed(2)}
+                        </h4>
                     </div>
                 </div>
             </div>
@@ -97,7 +153,12 @@ function renderTransactionsTable(container, transactions) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${transactions.map(transaction => `
+                    ${transactions.map(transaction => {
+                        const amount = parseFloat(transaction.amount || 0);
+                        const isCredit = amount > 0;
+                        const displayType = transaction.type || (isCredit ? 'Credit' : 'Debit');
+                        
+                        return `
                         <tr>
                             <td>
                                 <div class="fw-semibold">
@@ -109,13 +170,13 @@ function renderTransactionsTable(container, transactions) {
                             </td>
                             <td>
                                 <span class="fw-bold text-primary">
-                                    ${escapeHtml(transaction.reference || 'N/A')}
+                                    ${escapeHtml(transaction.reference || transaction.id || 'N/A')}
                                 </span>
                             </td>
                             <td>
                                 <div>${escapeHtml(transaction.description || 'No description')}</div>
-                                ${transaction.metadata && transaction.metadata.source ? 
-                                    `<small class="text-muted">Source: ${escapeHtml(transaction.metadata.source)}</small>` : 
+                                ${transaction.metadata && transaction.metadata.merchant ? 
+                                    `<small class="text-muted">Merchant: ${escapeHtml(transaction.metadata.merchant)}</small>` : 
                                     ''
                                 }
                             </td>
@@ -126,13 +187,13 @@ function renderTransactionsTable(container, transactions) {
                                 ` : '<span class="text-muted">N/A</span>'}
                             </td>
                             <td>
-                                <span class="badge ${transaction.type === 'Credit' ? 'bg-success' : 'bg-primary'}">
-                                    ${escapeHtml(transaction.type || 'Unknown')}
+                                <span class="badge ${isCredit ? 'bg-success' : 'bg-danger'}">
+                                    ${escapeHtml(displayType)}
                                 </span>
                             </td>
                             <td>
-                                <span class="fw-bold ${transaction.type === 'Credit' ? 'text-success' : 'text-primary'}">
-                                    ${transaction.type === 'Credit' ? '+' : ''}R${parseFloat(transaction.amount || 0).toFixed(2)}
+                                <span class="fw-bold ${isCredit ? 'text-success' : 'text-danger'}">
+                                    ${isCredit ? '+' : ''}R${Math.abs(amount).toFixed(2)}
                                 </span>
                             </td>
                             <td>
@@ -143,15 +204,87 @@ function renderTransactionsTable(container, transactions) {
                                 ` : '<span class="text-muted">-</span>'}
                             </td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         </div>
         
-        ${transactions.length >= 10 ? `
-            <div class="text-center mt-3">
-                <small class="text-muted">Showing ${transactions.length} most recent transactions</small>
-            </div>
-        ` : ''}
+        ${pagination ? renderPagination(pagination) : ''}
     `;
 }
+
+/**
+ * Render pagination controls
+ */
+function renderPagination(pagination) {
+    const { page, totalPages, total, limit } = pagination;
+    
+    if (totalPages <= 1) return '';
+    
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+    }
+    
+    return `
+        <nav aria-label="Transaction pagination">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted">
+                    Showing ${((page - 1) * limit) + 1} to ${Math.min(page * limit, total)} of ${total} transactions
+                </div>
+                <ul class="pagination mb-0">
+                    <li class="page-item ${page === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadTransactionsData({ page: ${page - 1} }); return false;">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    
+                    ${startPage > 1 ? `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="loadTransactionsData({ page: 1 }); return false;">1</a>
+                        </li>
+                        ${startPage > 2 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+                    ` : ''}
+                    
+                    ${pages.map(p => `
+                        <li class="page-item ${p === page ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="loadTransactionsData({ page: ${p} }); return false;">${p}</a>
+                        </li>
+                    `).join('')}
+                    
+                    ${endPage < totalPages ? `
+                        ${endPage < totalPages - 1 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="loadTransactionsData({ page: ${totalPages} }); return false;">${totalPages}</a>
+                        </li>
+                    ` : ''}
+                    
+                    <li class="page-item ${page === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadTransactionsData({ page: ${page + 1} }); return false;">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    `;
+}
+
+/**
+ * Helper function to escape HTML
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+

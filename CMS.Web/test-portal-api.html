@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal API Test Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .test-card {
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .test-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .test-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .test-pending {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .badge-lg {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">
+            <i class="bi bi-shield-check"></i> Portal API Test Suite
+        </h1>
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">API Base URL:</label>
+                        <input type="text" id="apiBaseUrl" class="form-control" value="https://nanacaring-backend.onrender.com">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Mode:</label>
+                        <select id="apiMode" class="form-select">
+                            <option value="remote">Remote API</option>
+                            <option value="local">Local API</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="updateConfig()">
+                    <i class="bi bi-gear"></i> Update Configuration
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Results Summary -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Test Results Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h3 id="totalTests">0</h3>
+                        <p class="text-muted">Total Tests</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 id="passedTests" class="text-success">0</h3>
+                        <p class="text-muted">Passed</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 id="failedTests" class="text-danger">0</h3>
+                        <p class="text-muted">Failed</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 id="successRate">0%</h3>
+                        <p class="text-muted">Success Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Login Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test1-status" class="badge bg-secondary">PENDING</span>
+                    Test 1: Admin Login
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Authenticate admin and obtain admin token</p>
+                <div class="mb-3">
+                    <label class="form-label">Admin Email:</label>
+                    <input type="email" id="adminEmail" class="form-control" value="admin@nanacaring.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Admin Password:</label>
+                    <input type="password" id="adminPassword" class="form-control" value="nanacaring2025">
+                </div>
+                <button class="btn btn-primary" onclick="testAdminLogin()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test1-result"></div>
+            </div>
+        </div>
+
+        <!-- Get Users Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test2-status" class="badge bg-secondary">PENDING</span>
+                    Test 2: Get Users List
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Retrieve list of all users in the system</p>
+                <button class="btn btn-primary" onclick="testGetUsers()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test2-result"></div>
+            </div>
+        </div>
+
+        <!-- Portal Login Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test3-status" class="badge bg-secondary">PENDING</span>
+                    Test 3: Portal Login (Admin as User)
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Log in as a user to access portal</p>
+                <div class="mb-3">
+                    <label class="form-label">User Email:</label>
+                    <input type="email" id="userEmail" class="form-control" value="dependent@demo.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">User Password:</label>
+                    <input type="password" id="userPassword" class="form-control" value="Emma123!">
+                </div>
+                <button class="btn btn-primary" onclick="testPortalLogin()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test3-result"></div>
+            </div>
+        </div>
+
+        <!-- Get Portal User Details Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test4-status" class="badge bg-secondary">PENDING</span>
+                    Test 4: Get Portal User Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Get detailed information about portal user</p>
+                <button class="btn btn-primary" onclick="testGetPortalUserDetails()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test4-result"></div>
+            </div>
+        </div>
+
+        <!-- Get Portal Accounts Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test5-status" class="badge bg-secondary">PENDING</span>
+                    Test 5: Get Portal User Accounts
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Get all accounts belonging to portal user</p>
+                <button class="btn btn-primary" onclick="testGetPortalAccounts()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test5-result"></div>
+            </div>
+        </div>
+
+        <!-- Get Portal Transactions Test -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span id="test6-status" class="badge bg-secondary">PENDING</span>
+                    Test 6: Get Portal User Transactions
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Get transaction history for portal user</p>
+                <div class="mb-3">
+                    <label class="form-label">Page:</label>
+                    <input type="number" id="transPage" class="form-control" value="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Limit:</label>
+                    <input type="number" id="transLimit" class="form-control" value="10">
+                </div>
+                <button class="btn btn-primary" onclick="testGetPortalTransactions()">
+                    <i class="bi bi-play-fill"></i> Run Test
+                </button>
+                <div id="test6-result"></div>
+            </div>
+        </div>
+
+        <!-- Run All Tests -->
+        <div class="card">
+            <div class="card-body text-center">
+                <button class="btn btn-success btn-lg" onclick="runAllTests()">
+                    <i class="bi bi-play-circle"></i> Run All Tests
+                </button>
+                <button class="btn btn-warning btn-lg ms-2" onclick="clearAllTests()">
+                    <i class="bi bi-arrow-clockwise"></i> Clear Results
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="wwwroot/js/portal-api.js"></script>
+    <script>
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 6
+        };
+
+        function updateConfig() {
+            const baseUrl = document.getElementById('apiBaseUrl').value;
+            const mode = document.getElementById('apiMode').value;
+            
+            window.PortalAPI.config.baseUrl = baseUrl;
+            window.PortalAPI.setUseLocal(mode === 'local');
+            
+            alert(`Configuration updated!\nBase URL: ${baseUrl}\nMode: ${mode.toUpperCase()}`);
+        }
+
+        function updateSummary() {
+            document.getElementById('totalTests').textContent = testResults.total;
+            document.getElementById('passedTests').textContent = testResults.passed;
+            document.getElementById('failedTests').textContent = testResults.failed;
+            
+            const successRate = testResults.total > 0 
+                ? ((testResults.passed / testResults.total) * 100).toFixed(1) 
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+        }
+
+        function showResult(testNum, status, message, data = null) {
+            const statusBadge = document.getElementById(`test${testNum}-status`);
+            const resultDiv = document.getElementById(`test${testNum}-result`);
+            
+            if (status === 'success') {
+                statusBadge.className = 'badge bg-success';
+                statusBadge.textContent = 'PASSED';
+                testResults.passed++;
+            } else {
+                statusBadge.className = 'badge bg-danger';
+                statusBadge.textContent = 'FAILED';
+                testResults.failed++;
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="test-result test-${status}">
+                    <strong>${status === 'success' ? '✓' : '✗'} ${message}</strong>
+                    ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+                </div>
+            `;
+            
+            updateSummary();
+        }
+
+        async function testAdminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            try {
+                const result = await window.PortalAPI.adminLogin(email, password);
+                showResult(1, 'success', 'Admin login successful', {
+                    user: result.user,
+                    tokenReceived: !!result.accessToken || !!result.jwt
+                });
+            } catch (error) {
+                showResult(1, 'error', 'Admin login failed', { error: error.message });
+            }
+        }
+
+        async function testGetUsers() {
+            try {
+                const result = await window.PortalAPI.getUsers({ page: 1, limit: 5 });
+                showResult(2, 'success', 'Get users successful', {
+                    userCount: result.data?.users?.length || 0,
+                    total: result.data?.total || 0
+                });
+            } catch (error) {
+                showResult(2, 'error', 'Get users failed', { error: error.message });
+            }
+        }
+
+        async function testPortalLogin() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            
+            try {
+                const result = await window.PortalAPI.portalLogin(email, password);
+                showResult(3, 'success', 'Portal login successful', {
+                    user: result.user,
+                    tokenReceived: !!result.token
+                });
+            } catch (error) {
+                showResult(3, 'error', 'Portal login failed', { error: error.message });
+            }
+        }
+
+        async function testGetPortalUserDetails() {
+            try {
+                const result = await window.PortalAPI.getPortalUserDetails();
+                showResult(4, 'success', 'Get user details successful', {
+                    userName: `${result.user?.firstName} ${result.user?.surname}`,
+                    accountCount: result.user?.Accounts?.length || 0,
+                    transactionCount: result.recentTransactions?.length || 0
+                });
+            } catch (error) {
+                showResult(4, 'error', 'Get user details failed', { error: error.message });
+            }
+        }
+
+        async function testGetPortalAccounts() {
+            try {
+                const result = await window.PortalAPI.getPortalUserAccounts();
+                showResult(5, 'success', 'Get accounts successful', {
+                    accountCount: result.accounts?.length || 0,
+                    accounts: result.accounts
+                });
+            } catch (error) {
+                showResult(5, 'error', 'Get accounts failed', { error: error.message });
+            }
+        }
+
+        async function testGetPortalTransactions() {
+            const page = parseInt(document.getElementById('transPage').value);
+            const limit = parseInt(document.getElementById('transLimit').value);
+            
+            try {
+                const result = await window.PortalAPI.getPortalUserTransactions({ page, limit });
+                showResult(6, 'success', 'Get transactions successful', {
+                    transactionCount: result.transactions?.length || 0,
+                    pagination: result.pagination
+                });
+            } catch (error) {
+                showResult(6, 'error', 'Get transactions failed', { error: error.message });
+            }
+        }
+
+        async function runAllTests() {
+            clearAllTests();
+            
+            await testAdminLogin();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testGetUsers();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testPortalLogin();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testGetPortalUserDetails();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testGetPortalAccounts();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testGetPortalTransactions();
+        }
+
+        function clearAllTests() {
+            testResults = { passed: 0, failed: 0, total: 6 };
+            
+            for (let i = 1; i <= 6; i++) {
+                const statusBadge = document.getElementById(`test${i}-status`);
+                const resultDiv = document.getElementById(`test${i}-result`);
+                
+                statusBadge.className = 'badge bg-secondary';
+                statusBadge.textContent = 'PENDING';
+                resultDiv.innerHTML = '';
+            }
+            
+            updateSummary();
+        }
+    </script>
+</body>
+</html>

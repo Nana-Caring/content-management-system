@@ -677,6 +677,12 @@
     <script src="~/js/products-page.js" asp-append-version="true"></script>
     <script src="~/js/users-page.js" asp-append-version="true"></script>
     
+    <!-- Portal API Service (must load first) -->
+    <script src="~/js/portal-api.js" asp-append-version="true"></script>
+    
+    <!-- Portal Data Persistence Manager -->
+    <script src="~/js/portal-persistence.js" asp-append-version="true"></script>
+    
     <!-- Portal JavaScript Components -->
     <script src="~/js/portal-auth.js" asp-append-version="true"></script>
     <script src="~/js/portal-navigation.js" asp-append-version="true"></script>
@@ -685,6 +691,9 @@
     <script src="~/js/portal-accounts.js" asp-append-version="true"></script>
     <script src="~/js/portal-transactions.js" asp-append-version="true"></script>
     <script src="~/js/portal-beneficiaries.js" asp-append-version="true"></script>
+    
+    <!-- Portal Initialization Check (Uncomment for debugging) -->
+    @* <script src="~/js/portal-init-check.js" asp-append-version="true"></script> *@
 
     @RenderSection("Scripts", required: false)
 
@@ -1086,9 +1095,7 @@
     </script>
     <!-- Core JS dependencies -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Portal scripts -->
-    <script src="~/js/portal-auth.js" asp-append-version="true"></script>
-    <script src="~/js/portal-navigation.js" asp-append-version="true"></script>
+    <!-- Portal scripts (portal-api.js already loaded earlier with other portal scripts) -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Wire login form submit handler and toggle sidebars based on portal auth state

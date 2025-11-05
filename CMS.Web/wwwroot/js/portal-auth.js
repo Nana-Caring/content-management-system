@@ -43,68 +43,266 @@ function initializePortalAuth() {
 async function handlePortalLogin(e) {
     e.preventDefault();
     
+    // Prevent double submission
+    if (window.portalLoginInProgress) {
+        console.log('⚠️ Login already in progress, ignoring duplicate submission');
+        return;
+    }
+    
     const username = document.getElementById('modal-username').value;
     const password = document.getElementById('modal-password').value;
     
     if (!username || !password) {
-        alert('Please enter both username and password');
+        showLoginError('Please enter both username and password');
         return;
     }
     
+    // Check if PortalAPI is available
+    if (!window.PortalAPI || typeof window.PortalAPI.portalLogin !== 'function') {
+        console.error('PortalAPI is not loaded. Make sure portal-api.js is loaded before portal-auth.js');
+        showLoginError('Portal API service is not available. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Set flag to prevent double submission
+    window.portalLoginInProgress = true;
+    
+    // Show loading state
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Logging in...';
+    
     try {
-        const response = await fetch(window.PORTAL_CONFIG.apiBaseUrl + window.PORTAL_CONFIG.endpoints.userLogin, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            // Server expects { Email, Password }
-            body: JSON.stringify({ email: username, password: password })
-        });
+        // Use PortalAPI service for login
+        const data = await window.PortalAPI.portalLogin(username, password);
         
-        let data, rawText;
-        try {
-            rawText = await response.text();
-            data = JSON.parse(rawText);
-        } catch {
-            data = {};
-        }
+        // Check for token in various possible fields (token, accessToken, jwt)
+        const token = data.token || data.accessToken || data.jwt;
+        const user = data.user;
         
-        if (response.ok && data && (data.token || data.accessToken || data.jwt)) {
-            // Store credentials and token
-            const tokenValue = data.token || data.accessToken || data.jwt;
-            localStorage.setItem(window.PORTAL_CONFIG.storage.token, tokenValue);
-            localStorage.setItem(window.PORTAL_CONFIG.storage.userEmail, username);
-            localStorage.setItem(window.PORTAL_CONFIG.storage.userPassword, password);
-            localStorage.setItem(window.PORTAL_CONFIG.storage.loginFlag, 'true');
+        if (token && user) {
+            console.log('Portal login successful:', {
+                username: username,
+                userId: user.id,
+                role: user.role,
+                tokenLength: token.length
+            });
             
-            // Sync with Redux store auth system
-            syncWithReduxAuth(tokenValue, username, data);
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
-            
-            // Reload page to show portal sidebar
-            window.location.reload();
-        } else {
-            let errorMsg = 'Login failed. ';
-            
-            // Try to parse the error message from the server
-            try {
-                const errorData = JSON.parse(rawText);
-                if (errorData.message) {
-                    errorMsg += errorData.message;
-                } else {
-                    errorMsg += 'Please check your credentials and try again.';
-                }
-            } catch {
-                errorMsg += 'Please check your credentials and try again.';
+            // If token wasn't in 'token' field, normalize it
+            if (!data.token) {
+                data.token = token;
             }
             
-            // Show error in modal instead of alert
-            showLoginError(errorMsg);
+            // Store password for compatibility (if needed)
+            localStorage.setItem(window.PORTAL_CONFIG.storage.userPassword, password);
+            
+            // No need to sync with Redux - portal uses its own auth system
+            // The PortalAPI already stores the token and user data
+            
+            console.log('✅ Login complete - waiting for data to persist...');
+            
+            // Close modal (but don't wait for it)
+            try {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                if (modal) modal.hide();
+            } catch (e) {
+                console.log('Modal close skipped:', e.message);
+            }
+            
+            // Verify data is saved before reloading using PortalPersistence
+            const isLoggedIn = window.PortalPersistence?.isLoggedIn() || false;
+            const currentUser = window.PortalPersistence?.getCurrentUser();
+            console.log('🔍 Verifying saved data:', {
+                isLoggedIn: isLoggedIn,
+                hasUser: !!currentUser,
+                userHasAccounts: currentUser?.Accounts?.length || 0
+            });
+            
+            // Use the login response data directly - NO API CALLS!
+            console.log('🎯 Using login response data directly...');
+            
+            // Show portal UI
+            const mainSidebar = document.getElementById('mainSidebar');
+            const portalSidebar = document.getElementById('portalSidebar');
+            const cmsContent = document.getElementById('cmsContent');
+            const portalContent = document.getElementById('portalContent');
+            
+            if (mainSidebar) mainSidebar.style.display = 'none';
+            if (portalSidebar) portalSidebar.style.display = 'block';
+            if (cmsContent) cmsContent.style.display = 'none';
+            if (portalContent) portalContent.style.display = 'block';
+            
+            // Show dashboard and populate ALL sections with response data
+            showPortalSection('dashboard');
+            
+            // Use the login response data (user + accounts) directly
+            const responseData = data; // This is the login response {user, accounts, token}
+            console.log('📊 Populating ALL sections with response data:', responseData);
+            
+            // FORCE LOAD ALL SECTIONS IMMEDIATELY - NO DELAYS!
+            console.log('� FORCING ALL SECTIONS TO LOAD NOW!!!');
+            
+            // Dashboard - IMMEDIATE
+            if (typeof updateDashboardData === 'function' && responseData.user?.Accounts) {
+                console.log('📈 LOADING DASHBOARD NOW...');
+                updateDashboardData(responseData.user);
+            }
+            if (typeof loadDashboardData === 'function') {
+                console.log('📈 CALLING loadDashboardData NOW...');
+                loadDashboardData();
+            }
+            
+            // Profile - DIRECT POPULATION FROM LOGIN RESPONSE!
+            console.log('👤 POPULATING PROFILE DIRECTLY...');
+            if (responseData.user) {
+                const user = responseData.user;
+                console.log('📝 Profile data:', user);
+                
+                // Directly set profile form fields using ACTUAL element IDs from _Layout.cshtml
+                try {
+                    const firstNameEl = document.getElementById('profile-firstName');
+                    const middleNameEl = document.getElementById('profile-middleName');
+                    const surnameEl = document.getElementById('profile-surname');
+                    const emailEl = document.getElementById('profile-email');
+                    const phoneEl = document.getElementById('profile-phoneNumber');
+                    
+                    console.log('🔍 Profile elements found:', {
+                        firstName: !!firstNameEl,
+                        middleName: !!middleNameEl,
+                        surname: !!surnameEl,
+                        email: !!emailEl,
+                        phone: !!phoneEl
+                    });
+                    
+                    if (firstNameEl) {
+                        firstNameEl.value = user.firstName || '';
+                        console.log('✅ First name set:', user.firstName);
+                    } else {
+                        console.error('❌ profile-firstName element not found!');
+                    }
+                    
+                    if (middleNameEl) {
+                        middleNameEl.value = user.middleName || '';
+                        console.log('✅ Middle name set:', user.middleName);
+                    }
+                    
+                    if (surnameEl) {
+                        surnameEl.value = user.surname || '';
+                        console.log('✅ Surname set:', user.surname);
+                    } else {
+                        console.error('❌ profile-surname element not found!');
+                    }
+                    
+                    if (emailEl) {
+                        emailEl.value = user.email || '';
+                        console.log('✅ Email set:', user.email);
+                    } else {
+                        console.error('❌ profile-email element not found!');
+                    }
+                    
+                    if (phoneEl) {
+                        phoneEl.value = user.phoneNumber || '';
+                        console.log('✅ Phone set:', user.phoneNumber);
+                    }
+                    
+                    // Set address fields if available
+                    const postalLine1El = document.getElementById('profile-postalAddressLine1');
+                    const postalLine2El = document.getElementById('profile-postalAddressLine2');
+                    const postalCityEl = document.getElementById('profile-postalCity');
+                    const postalProvinceEl = document.getElementById('profile-postalProvince');
+                    const postalCodeEl = document.getElementById('profile-postalCode');
+                    
+                    if (postalLine1El && user.postalAddressLine1) {
+                        postalLine1El.value = user.postalAddressLine1;
+                        console.log('✅ Postal address line 1 set:', user.postalAddressLine1);
+                    }
+                    if (postalLine2El && user.postalAddressLine2) {
+                        postalLine2El.value = user.postalAddressLine2;
+                        console.log('✅ Postal address line 2 set:', user.postalAddressLine2);
+                    }
+                    if (postalCityEl && user.postalCity) {
+                        postalCityEl.value = user.postalCity;
+                        console.log('✅ Postal city set:', user.postalCity);
+                    }
+                    if (postalProvinceEl && user.postalProvince) {
+                        postalProvinceEl.value = user.postalProvince;
+                        console.log('✅ Postal province set:', user.postalProvince);
+                    }
+                    if (postalCodeEl && user.postalCode) {
+                        postalCodeEl.value = user.postalCode;
+                        console.log('✅ Postal code set:', user.postalCode);
+                    }
+                    
+                    console.log('🎯 PROFILE POPULATED DIRECTLY FROM LOGIN!');
+                } catch (profileError) {
+                    console.error('❌ Profile population error:', profileError);
+                }
+            }
+            
+            // Also call the profile loading function for compatibility
+            if (typeof loadProfileData === 'function') {
+                loadProfileData();
+            }
+            
+            // Accounts - IMMEDIATE
+            if (typeof loadAccountsData === 'function') {
+                console.log('💳 LOADING ACCOUNTS NOW...');
+                loadAccountsData();
+            } else {
+                console.error('❌ loadAccountsData function NOT FOUND!');
+            }
+            
+            // Transactions - IMMEDIATE
+            if (typeof loadTransactionsData === 'function') {
+                console.log('💰 LOADING TRANSACTIONS NOW...');
+                loadTransactionsData();
+            } else {
+                console.error('❌ loadTransactionsData function NOT FOUND!');
+            }
+            
+            // Beneficiaries - IMMEDIATE
+            if (typeof loadBeneficiariesData === 'function') {
+                console.log('👥 LOADING BENEFICIARIES NOW...');
+                loadBeneficiariesData();
+            } else {
+                console.error('❌ loadBeneficiariesData function NOT FOUND!');
+            }
+            
+            console.log('🔥 ALL SECTIONS FORCED TO LOAD - DONE!');
+            
+            console.log('✅ Portal populated with login response data!');
+        } else {
+            console.error('Invalid response - missing token or user:', { 
+                hasToken: !!token, 
+                hasUser: !!user,
+                response: data 
+            });
+            throw new Error('Invalid response from server - missing authentication data');
         }
     } catch (err) {
-        showLoginError('Login failed. Please try again. Error: ' + err);
+        console.error('Portal login error:', err);
+        
+        // Clear the login in progress flag on error
+        window.portalLoginInProgress = false;
+        
+        // Reset button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        
+        // Show error message
+        let errorMsg = 'Login failed. ';
+        if (err.status === 401) {
+            errorMsg += 'Invalid credentials. Please check your username and password.';
+        } else if (err.status === 404) {
+            errorMsg += 'User not found.';
+        } else if (err.message) {
+            errorMsg += err.message;
+        } else {
+            errorMsg += 'Please try again.';
+        }
+        
+        showLoginError(errorMsg);
     }
 }
 
@@ -112,31 +310,77 @@ async function handlePortalLogin(e) {
  * Check portal login status and toggle sidebars
  */
 function checkPortalLoginStatus() {
-    const isPortalLoggedIn = localStorage.getItem(window.PORTAL_CONFIG.storage.loginFlag) === 'true';
+    // Use PortalPersistence for consistent authentication checking
+    const isPortalLoggedIn = window.PortalPersistence?.isLoggedIn() || false;
     const mainSidebar = document.getElementById('mainSidebar');
     const portalSidebar = document.getElementById('portalSidebar');
     const portalUserName = document.getElementById('portalUserName');
     const cmsContent = document.getElementById('cmsContent');
     const portalContent = document.getElementById('portalContent');
     
+    console.log('🔍 Checking portal login status:', { 
+        isPortalLoggedIn,
+        hasMainSidebar: !!mainSidebar,
+        hasPortalSidebar: !!portalSidebar,
+        hasCmsContent: !!cmsContent,
+        hasPortalContent: !!portalContent
+    });
+    
     if (isPortalLoggedIn) {
+        console.log('✅ Portal is logged in - showing portal UI');
+        
         // Hide main sidebar, show portal sidebar
-        if (mainSidebar) mainSidebar.style.display = 'none';
-        if (portalSidebar) portalSidebar.style.display = 'block';
+        if (mainSidebar) {
+            mainSidebar.style.display = 'none';
+            console.log('  ✓ Main sidebar hidden');
+        }
+        if (portalSidebar) {
+            portalSidebar.style.display = 'block';
+            console.log('  ✓ Portal sidebar shown');
+        }
         
         // Hide CMS content, show portal content
-        if (cmsContent) cmsContent.style.display = 'none';
-        if (portalContent) portalContent.style.display = 'block';
+        if (cmsContent) {
+            cmsContent.style.display = 'none';
+            console.log('  ✓ CMS content hidden');
+        }
+        if (portalContent) {
+            portalContent.style.display = 'block';
+            console.log('  ✓ Portal content shown');
+        }
         
-        // Update portal user name
-    const userEmail = localStorage.getItem(window.PORTAL_CONFIG.storage.userEmail);
-        if (portalUserName && userEmail) {
-            portalUserName.textContent = userEmail;
+        // Update portal user name using PortalPersistence
+        const currentUser = window.PortalPersistence?.getCurrentUser();
+        
+        console.log('  📧 User email:', currentUser?.email);
+        console.log('  👤 User data:', currentUser ? 'Available' : 'Not found');
+        
+        if (portalUserName) {
+            if (currentUser) {
+                try {
+                    const displayName = currentUser.firstName && currentUser.surname 
+                        ? `${currentUser.firstName} ${currentUser.surname}` 
+                        : currentUser.email || 'Portal User';
+                    portalUserName.textContent = displayName;
+                    console.log('  ✓ Portal user name set to:', displayName);
+                } catch (e) {
+                    portalUserName.textContent = userEmail || 'Portal User';
+                    console.log('  ⚠️ Error parsing user data:', e.message);
+                }
+            } else if (userEmail) {
+                portalUserName.textContent = userEmail;
+                console.log('  ✓ Portal user name set to email:', userEmail);
+            }
+        } else {
+            console.log('  ⚠️ Portal user name element not found');
         }
         
         // Show dashboard section by default
+        console.log('  📊 Loading dashboard section...');
         showPortalSection('dashboard');
     } else {
+        console.log('ℹ️ Portal not logged in - showing CMS UI');
+        
         // Show main sidebar, hide portal sidebar
         if (mainSidebar) mainSidebar.style.display = 'block';
         if (portalSidebar) portalSidebar.style.display = 'none';
@@ -162,23 +406,41 @@ function logoutFromPortal() {
  * Get stored authentication token
  */
 function getAuthToken() {
-    // Try portal localStorage first
-    let token = localStorage.getItem(window.PORTAL_CONFIG.storage.token);
-    
-    // If not found, try Redux sessionStorage
-    if (!token) {
-        try {
-            const reduxAuth = sessionStorage.getItem('cms_auth');
-            if (reduxAuth) {
-                const authData = JSON.parse(reduxAuth);
-                token = authData.token;
-            }
-        } catch (error) {
-            console.error('Error parsing Redux auth data:', error);
+    // Use PortalAPI service if available
+    if (window.PortalAPI) {
+        const portalToken = window.PortalAPI.storage.portalToken;
+        const token = localStorage.getItem(portalToken);
+        
+        if (token) {
+            console.log('Using portal token for API request');
+            return token;
         }
     }
     
-    return token;
+    // Fallback to legacy portal token
+    let portalToken = localStorage.getItem(window.PORTAL_CONFIG.storage.token);
+    
+    if (portalToken) {
+        console.log('Using legacy portal token for API request');
+        return portalToken;
+    }
+    
+    // Only fall back to admin token if no portal token exists
+    try {
+        const reduxAuth = sessionStorage.getItem('cms_auth');
+        if (reduxAuth) {
+            const authData = JSON.parse(reduxAuth);
+            if (authData.token) {
+                console.log('Falling back to admin token - portal login may be required');
+                return authData.token;
+            }
+        }
+    } catch (error) {
+        console.error('Error parsing Redux auth data:', error);
+    }
+    
+    console.warn('No authentication token found');
+    return null;
 }
 
 /**
@@ -187,7 +449,10 @@ function getAuthToken() {
 async function makeAuthenticatedRequest(endpoint, options = {}) {
     const token = getAuthToken();
     if (!token) {
-        throw new Error('No authentication token found');
+        // Show login modal if no token is found
+        console.error('No authentication token found for portal request');
+        showLoginModal();
+        throw new Error('Authentication required - please login to the portal');
     }
     
     const defaultOptions = {
@@ -206,84 +471,66 @@ async function makeAuthenticatedRequest(endpoint, options = {}) {
         }
     };
     
-    return fetch(window.PORTAL_CONFIG.apiBaseUrl + endpoint, mergedOptions);
-}
-
-/**
- * Sync portal authentication with Redux store
- */
-function syncWithReduxAuth(token, email, authData) {
     try {
-        // Create Redux-compatible auth data
-        const reduxAuthData = {
-            user: {
-                email: email,
-                name: authData.name || email,
-                role: authData.role || 'admin'
-            },
-            token: token,
-            refreshToken: authData.refreshToken || null,
-            expiresAt: authData.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-            isAuthenticated: true
-        };
+        const response = await fetch(window.PORTAL_CONFIG.apiBaseUrl + endpoint, mergedOptions);
         
-        // Store in sessionStorage for Redux store
-        sessionStorage.setItem('cms_auth', JSON.stringify(reduxAuthData));
-        
-        // Dispatch to Redux store if it exists
-        if (window.CMS && window.CMS.store && window.CMS.authActions) {
-            window.CMS.store.dispatch(window.CMS.authActions.loginSuccess(reduxAuthData));
+        // If we get 401, the token might be invalid or expired
+        if (response.status === 401) {
+            console.error('Authentication failed - token may be invalid or expired');
+            // Clear invalid token
+            localStorage.removeItem(window.PORTAL_CONFIG.storage.token);
+            showLoginModal();
+            throw new Error('Authentication failed - please login again');
         }
         
-        console.log('Portal auth synced with Redux store');
+        return response;
     } catch (error) {
-        console.error('Error syncing portal auth with Redux store:', error);
+        if (error.message.includes('Authentication failed')) {
+            throw error;
+        }
+        console.error('Request failed:', error);
+        throw new Error('Network request failed');
     }
 }
 
 /**
- * Clear both portal and Redux authentication
+ * Clear portal authentication
  */
 function clearAllAuth() {
-    // Clear portal auth
+    // Clear portal auth from localStorage (using PortalAPI storage keys)
+    localStorage.removeItem('portal-logged-in');
+    localStorage.removeItem('portal-token');
+    localStorage.removeItem('portal-user-email');
+    localStorage.removeItem('portal-current-user');
     localStorage.removeItem(window.PORTAL_CONFIG.storage.loginFlag);
     localStorage.removeItem(window.PORTAL_CONFIG.storage.token);
     localStorage.removeItem(window.PORTAL_CONFIG.storage.userEmail);
     localStorage.removeItem(window.PORTAL_CONFIG.storage.userPassword);
     
-    // Clear Redux auth
-    sessionStorage.removeItem('cms_auth');
-    
-    // Dispatch logout to Redux store if it exists
-    if (window.CMS && window.CMS.store && window.CMS.authActions) {
-        window.CMS.store.dispatch(window.CMS.authActions.logout());
-    }
+    console.log('Portal authentication cleared');
 }
 
 /**
- * Initialize and sync authentication systems on page load
+ * Initialize portal authentication check on page load
  */
 function initializeAuthSync() {
     try {
-        // Check if portal is logged in
-        const isPortalLoggedIn = localStorage.getItem(window.PORTAL_CONFIG.storage.loginFlag) === 'true';
-        const portalToken = localStorage.getItem(window.PORTAL_CONFIG.storage.token);
-        const portalEmail = localStorage.getItem(window.PORTAL_CONFIG.storage.userEmail);
+        // Clear the login in progress flag
+        window.portalLoginInProgress = false;
         
-        // Check Redux auth
-        const reduxAuthData = sessionStorage.getItem('cms_auth');
+        // Initialize portal auth without reload checks since we're not reloading anymore
+        console.log('� Initializing portal auth...');
         
-        if (isPortalLoggedIn && portalToken && !reduxAuthData) {
-            // Portal is logged in but Redux store is empty - sync them
-            console.log('Syncing portal auth to Redux store...');
-            syncWithReduxAuth(portalToken, portalEmail, { token: portalToken });
-        } else if (!isPortalLoggedIn && reduxAuthData) {
-            // Redux has auth but portal doesn't - clear Redux
-            console.log('Clearing orphaned Redux auth data...');
-            sessionStorage.removeItem('cms_auth');
+        // Check if portal is logged in using PortalPersistence
+        const isLoggedIn = window.PortalPersistence?.isLoggedIn() || false;
+        
+        if (isLoggedIn) {
+            console.log('✅ Portal session active');
+        } else {
+            console.log('ℹ️ No active portal session');
         }
     } catch (error) {
-        console.error('Error during auth sync initialization:', error);
+        console.error('Error during auth initialization:', error);
     }
 }
 
@@ -328,5 +575,9 @@ function showLoginError(message) {
 // Initialize auth sync when the DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Small delay to ensure all systems are loaded
-    setTimeout(initializeAuthSync, 100);
+    setTimeout(() => {
+        initializeAuthSync();
+        // Also check and show portal if user is logged in
+        checkPortalLoginStatus();
+    }, 200);
 });

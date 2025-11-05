@@ -10,30 +10,67 @@ async function loadAccountsData() {
     const container = document.getElementById('accountsContainer');
     if (!container) return;
     
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading accounts...</p>
+        </div>
+    `;
+    
     try {
-        const response = await makeAuthenticatedRequest('/api/portal/me');
-
-        if (response.ok) {
-            const data = await response.json();
-            const user = data.user;
-            
-            // Combine user accounts and dependent accounts
-            const allAccounts = combineAllAccounts(user);
-            
-            if (allAccounts.length === 0) {
-                container.innerHTML = '<p class="text-muted">No accounts found.</p>';
-                return;
-            }
-            
-            // Render accounts table
-            renderAccountsTable(container, allAccounts, user);
-            
-        } else {
-            throw new Error('Failed to load accounts data');
+        console.log('📦 Loading accounts from login response cache...');
+        
+        // Get user data from login response (cached by PortalPersistence)
+        const user = window.PortalPersistence?.getCurrentUser();
+        
+        if (!user || !user.Accounts) {
+            throw new Error('User data or accounts not found. Please log in again.');
         }
+        
+        console.log('✅ Accounts loaded for user:', user.email);
+        console.log('💳 Account details:', user.Accounts);
+        
+        // User data already includes accounts (attached during login)
+        const accounts = user.Accounts;
+        
+        // Combine user accounts and dependent accounts if we have user data
+        const allAccounts = combineAllAccounts(user);
+        
+        if (allAccounts.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No accounts found.
+                </div>
+            `;
+            return;
+        }
+        
+        // Render accounts table
+        renderAccountsTable(container, allAccounts, user);
+        
     } catch (error) {
         console.error('Error loading accounts data:', error);
-        container.innerHTML = '<p class="text-danger">Error loading accounts data</p>';
+        
+        let errorMessage = 'Error loading accounts data';
+        if (error.message.includes('not found') || error.message.includes('log in')) {
+            errorMessage = 'Authentication required. Please log in to view accounts.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        container.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> ${errorMessage}
+                <button onclick="loadAccountsData()" class="btn btn-sm btn-outline-danger float-end">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -43,31 +80,34 @@ async function loadAccountsData() {
 function combineAllAccounts(user) {
     let allAccounts = [];
     
+    // Handle both 'Accounts' and 'accounts' property names
+    const userAccounts = user.Accounts || user.accounts || [];
+    
     // Add user's own accounts
-    if (user.accounts) {
-        user.accounts.forEach(account => {
-            allAccounts.push({
-                ...account,
-                ownerName: `${user.firstName} ${user.surname}`,
-                ownerType: 'Primary Account Holder',
-                ownerEmail: user.email
-            });
+    userAccounts.forEach(account => {
+        allAccounts.push({
+            ...account,
+            ownerName: `${user.firstName || ''} ${user.surname || user.lastName || ''}`.trim() || 'Current User',
+            ownerType: 'Primary Account Holder',
+            ownerEmail: user.email
         });
-    }
+    });
+    
+    // Handle both 'Dependents' and 'dependents' property names
+    const userDependents = user.Dependents || user.dependents || [];
     
     // Add dependent accounts
-    if (user.Dependents && user.Dependents.length > 0) {
-        user.Dependents.forEach(dependent => {
-            if (dependent.accounts) {
-                dependent.accounts.forEach(account => {
-                    allAccounts.push({
-                        ...account,
-                        ownerName: `${dependent.firstName} ${dependent.surname}`,
-                        ownerType: 'Dependent',
-                        ownerEmail: dependent.email
-                    });
+    if (userDependents.length > 0) {
+        userDependents.forEach(dependent => {
+            const dependentAccounts = dependent.Accounts || dependent.accounts || [];
+            dependentAccounts.forEach(account => {
+                allAccounts.push({
+                    ...account,
+                    ownerName: `${dependent.firstName || ''} ${dependent.surname || dependent.lastName || ''}`.trim() || 'Dependent',
+                    ownerType: 'Dependent',
+                    ownerEmail: dependent.email
                 });
-            }
+            });
         });
     }
     

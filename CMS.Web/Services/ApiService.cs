@@ -910,7 +910,7 @@ namespace CMS.Web.Services
             if (limit.HasValue) qs.Add($"limit={limit.Value}");
             if (!string.IsNullOrEmpty(sortBy)) qs.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
             if (!string.IsNullOrEmpty(sortOrder)) qs.Add($"sortOrder={Uri.EscapeDataString(sortOrder)}");
-            var endpoint = "/admin/products" + (qs.Count > 0 ? "?" + string.Join("&", qs) : string.Empty);
+            var endpoint = "/api/products" + (qs.Count > 0 ? "?" + string.Join("&", qs) : string.Empty);
 
             var wrapper = await GetAsync<AdminProductListResponse>(endpoint);
             return (wrapper?.Data ?? new List<AdminProduct>(), wrapper?.Pagination);

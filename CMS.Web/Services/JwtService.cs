@@ -78,7 +78,9 @@ namespace CMS.Web.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Token validation failed");
+                // Log as Debug instead of Error since external tokens will fail validation
+                // This is expected behavior - fallback methods will handle external tokens
+                _logger.LogDebug(ex, "Token validation failed (expected for external tokens)");
                 return null;
             }
         }
@@ -87,18 +89,20 @@ namespace CMS.Web.Services
         {
             try
             {
+                // First try validating as local token
                 var principal = ValidateToken(token);
-                if (principal == null)
+                if (principal != null)
                 {
-                    return null;
+                    // Try to get email from different claim types
+                    var emailClaim = principal.FindFirst(ClaimTypes.Email) ?? 
+                                    principal.FindFirst("email") ?? 
+                                    principal.FindFirst("Email");
+                    
+                    return emailClaim?.Value;
                 }
 
-                // Try to get email from different claim types
-                var emailClaim = principal.FindFirst(ClaimTypes.Email) ?? 
-                                principal.FindFirst("email") ?? 
-                                principal.FindFirst("Email");
-                
-                return emailClaim?.Value;
+                // If validation fails, try decoding as external token (without signature validation)
+                return GetEmailFromExternalToken(token);
             }
             catch (Exception ex)
             {
@@ -107,16 +111,60 @@ namespace CMS.Web.Services
             }
         }
 
+        private string? GetEmailFromExternalToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                
+                // Extract email from claims without validating signature
+                var emailClaim = jwtToken.Claims.FirstOrDefault(c => 
+                    c.Type == "email" || c.Type == ClaimTypes.Email || c.Type == "Email");
+                
+                return emailClaim?.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not decode external token");
+                return null;
+            }
+        }
+
         public IEnumerable<Claim>? GetClaimsFromToken(string token)
         {
             try
             {
+                // First try validating as local token
                 var principal = ValidateToken(token);
-                return principal?.Claims;
+                if (principal != null)
+                {
+                    return principal.Claims;
+                }
+
+                // If validation fails, try decoding as external token (without signature validation)
+                return GetClaimsFromExternalToken(token);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting claims from token");
+                return null;
+            }
+        }
+
+        private IEnumerable<Claim>? GetClaimsFromExternalToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                
+                // Return claims without validating signature
+                return jwtToken.Claims;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not decode external token for claims");
                 return null;
             }
         }

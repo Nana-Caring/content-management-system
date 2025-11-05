@@ -7,8 +7,8 @@
  * Check portal login status and toggle sidebars
  */
 function checkPortalLoginStatus() {
-    const config = window.PORTAL_CONFIG || { storage: { loginFlag: 'portal-logged-in', userEmail: 'admin-user-email' } };
-    const isPortalLoggedIn = localStorage.getItem(config.storage.loginFlag) === 'true';
+    // Use PortalPersistence for consistent authentication checking
+    const isPortalLoggedIn = window.PortalPersistence?.isLoggedIn() || false;
     const mainSidebar = document.getElementById('mainSidebar');
     const portalSidebar = document.getElementById('portalSidebar');
     const portalUserName = document.getElementById('portalUserName');
@@ -24,10 +24,10 @@ function checkPortalLoginStatus() {
         if (cmsContent) cmsContent.style.display = 'none';
         if (portalContent) portalContent.style.display = 'block';
         
-        // Update portal user name
-        const userEmail = localStorage.getItem(config.storage.userEmail);
-        if (portalUserName && userEmail) {
-            portalUserName.textContent = userEmail;
+        // Update portal user name using PortalPersistence
+        const currentUser = window.PortalPersistence?.getCurrentUser();
+        if (portalUserName && currentUser?.email) {
+            portalUserName.textContent = currentUser.email;
         }
         
         // Show dashboard section by default
@@ -47,19 +47,26 @@ function checkPortalLoginStatus() {
  * Logout from portal
  */
 function logoutFromPortal() {
-    // Clear portal login flag
-    const config = window.PORTAL_CONFIG || { 
-        storage: { 
-            loginFlag: 'portal-logged-in', 
-            token: 'admin-token',
-            userEmail: 'admin-user-email',
-            userPassword: 'admin-user-password'
-        } 
-    };
-    localStorage.removeItem(config.storage.loginFlag);
-    localStorage.removeItem(config.storage.token);
-    localStorage.removeItem(config.storage.userEmail);
-    localStorage.removeItem(config.storage.userPassword);
+    // Use PortalPersistence to clear session data
+    if (window.PortalPersistence) {
+        console.log('🚪 Logging out from portal...');
+        window.PortalPersistence.clearSession();
+    } else {
+        console.warn('⚠️ PortalPersistence not available, clearing localStorage manually');
+        // Fallback to manual cleanup
+        const config = window.PORTAL_CONFIG || { 
+            storage: { 
+                loginFlag: 'portal-logged-in', 
+                token: 'admin-token',
+                userEmail: 'admin-user-email',
+                userPassword: 'admin-user-password'
+            } 
+        };
+        localStorage.removeItem(config.storage.loginFlag);
+        localStorage.removeItem(config.storage.token);
+        localStorage.removeItem(config.storage.userEmail);
+        localStorage.removeItem(config.storage.userPassword);
+    }
     
     // Reload page to show main sidebar
     window.location.reload();
@@ -78,7 +85,7 @@ function showPortalSection(section) {
     });
     
     // Add active class to clicked button
-    if (event && event.target) {
+    if (event && event.target && event.target.classList) {
         event.target.classList.add('active');
         event.target.style.background = 'rgba(255,255,255,0.2)';
         event.target.style.color = '#fff';
@@ -88,10 +95,21 @@ function showPortalSection(section) {
     const portalSections = document.querySelectorAll('.portal-section');
     portalSections.forEach(sec => sec.style.display = 'none');
     
-    // Show selected section
-    const targetSection = document.getElementById(`portal-${section}`);
+    // Show selected section - try both portal-${section} and ${section} IDs
+    let targetSection = document.getElementById(`portal-${section}`) || document.getElementById(section);
     if (targetSection) {
         targetSection.style.display = 'block';
+        console.log(`✅ Showing section: ${section}`);
+        
+        // Special handling for profile section
+        if (section === 'profile' && typeof window.populateProfileWhenVisible === 'function') {
+            console.log('👁️ Profile section shown, populating data...');
+            setTimeout(() => {
+                window.populateProfileWhenVisible();
+            }, 100);
+        }
+    } else {
+        console.warn(`⚠️ Section not found: ${section}`);
     }
     
     // If no event (called programmatically), highlight the correct button
@@ -112,21 +130,34 @@ function showPortalSection(section) {
  * Load data for specific portal sections
  */
 function loadPortalSectionData(section) {
-    const token = getAuthToken();
-    if (!token) return;
+    // Check if user is logged in using PortalPersistence
+    if (!window.PortalPersistence?.isLoggedIn()) {
+        console.warn('⚠️ Not logged in, skipping data load for section:', section);
+        return;
+    }
+
+    console.log('📂 Loading data for portal section:', section);
 
     switch(section) {
         case 'dashboard':
-            loadDashboardData();
+            if (typeof loadDashboardData === 'function') {
+                loadDashboardData();
+            }
             break;
         case 'profile':
-            loadProfileData();
+            if (typeof loadProfileData === 'function') {
+                loadProfileData();
+            }
             break;
         case 'accounts':
-            loadAccountsData();
+            if (typeof loadAccountsData === 'function') {
+                loadAccountsData();
+            }
             break;
         case 'transactions':
-            loadTransactionsData();
+            if (typeof loadTransactionsData === 'function') {
+                loadTransactionsData();
+            }
             break;
         case 'beneficiaries':
             loadBeneficiariesData();
